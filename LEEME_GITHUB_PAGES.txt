@@ -1,0 +1,21 @@
+PLATAFORMA ACADÉMICA LSB · PWA PARA GITHUB PAGES
+Liceo Mixto Particular San Benito
+
+ARCHIVOS PARA GITHUB PAGES (NO ES APK)
+-----------------------------------
+El archivo ZIP se debe EXTRAER antes de subirlo a GitHub: GitHub no publica automáticamente el interior de un ZIP.
+
+1. En GitHub, crea un repositorio PUBLICO llamado plataforma-lsb-pwa-pruebas.
+2. En ese repositorio, Add file > Upload files.
+3. Sube TODOS los archivos de esta carpeta, incluido index.html, manifest.webmanifest, sw.js, offline.html y la carpeta icons, preservando carpetas.
+4. Confirma los archivos con Commit changes.
+5. En Settings > Pages > Build and deployment, selecciona Deploy from a branch.
+6. En Branch: main, carpeta /(root), Save.
+7. Tras desplegar, la URL será https://TU-USUARIO.github.io/plataforma-lsb-pwa-pruebas/
+8. PRIMERO prueba https://TU-USUARIO.github.io/plataforma-lsb-pwa-pruebas/diagnostico-pwa.html
+9. Abre la página en Chrome Android y selecciona menú ⋮ > Instalar aplicación.
+
+No uses el dominio de Netlify para comprobar ESTE ZIP; sube el contenido a GitHub Pages y comprueba allí.
+
+SEGURIDAD: Este HTML contiene acceso a Supabase con clave publicable. Sigue conectado al proyecto REAL del Liceo. No introduzcas datos ficticios ni credentials institucionales reales hasta validar políticas de seguridad y funciones.
+La PWA solo guarda archivos públicos estáticos; las operaciones académicas necesitan internet.

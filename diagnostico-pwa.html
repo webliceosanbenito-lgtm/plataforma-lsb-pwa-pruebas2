@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#3b4193"><title>Diagnóstico PWA · LSB</title>
+<style>body{font:16px system-ui,-apple-system,sans-serif;margin:0;background:#f6f8ff;color:#17224b}main{max-width:700px;margin:24px auto;padding:20px}h1{font-size:24px}.panel{background:white;border:1px solid #d9def0;border-radius:18px;padding:18px;margin:15px 0}p{line-height:1.55}li{padding:10px 0;border-bottom:1px solid #edf0f8;list-style:none}ul{padding:0;margin:0}.ok{color:#11743a}.error{color:#b42e32}.pending{color:#88690f}a{color:#243c9c}button{background:#3b4193;color:white;border:0;border-radius:11px;padding:13px 17px;font-size:16px;cursor:pointer}button:disabled{opacity:.55}code{word-break:break-all}</style>
+<link rel="manifest" href="./manifest.webmanifest"><link rel="icon" href="./icons/icon-192.png"></head><body><main>
+<h1>Diagnóstico de instalación · Plataforma LSB</h1><p>Esta pantalla comprueba archivos públicos de la PWA. No pide usuario, contraseña ni datos académicos.</p>
+<div class="panel"><ul id="results"><li>Comprobando requisitos…</li></ul></div>
+<div class="panel"><button id="install" disabled>Instalar aplicación</button><p id="help">Si el botón no se habilita, revisa los resultados de arriba. Chrome también puede ofrecer la instalación desde su menú ⋮.</p><p><a href="./">Volver a Plataforma LSB</a></p></div>
+<script>
+(()=>{
+ const ul=document.getElementById('results');ul.innerHTML='';const btn=document.getElementById('install');
+ const item=(name,result,note='')=>{const li=document.createElement('li');const strong=document.createElement('strong');strong.className=result==='OK'?'ok':result==='ERROR'?'error':'pending';strong.textContent=(result==='OK'?'✓ ':result==='ERROR'?'✗ ':'• ')+name+' — '+result;li.append(strong);if(note){const p=document.createElement('p');p.textContent=note;li.append(p)}ul.append(li)};
+ window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();window._lsbInstallEvent=e;btn.disabled=false;document.getElementById('help').textContent='Chrome permite solicitar la instalación desde esta página.';item('Evento de instalación','OK')});
+ window.addEventListener('appinstalled',()=>{btn.disabled=true;document.getElementById('help').textContent='La aplicación fue instalada correctamente.';item('Instalación completada','OK')});
+ btn.addEventListener('click',async()=>{if(!window._lsbInstallEvent)return;await window._lsbInstallEvent.prompt();window._lsbInstallEvent=null;btn.disabled=true});
+ (async()=>{
+ item('Conexión segura',window.isSecureContext?'OK':'ERROR',window.isSecureContext?'Origen seguro disponible':'Requiere HTTPS o localhost');
+ item('Service Worker compatible',('serviceWorker' in navigator)?'OK':'ERROR');
+ try{const r=await fetch('./manifest.webmanifest',{cache:'no-store'});if(!r.ok)throw Error('HTTP '+r.status);const m=await r.json();const required=['name','short_name','start_url','scope','display','icons'];const missing=required.filter(k=>!m[k]);item('Manifiesto',missing.length?'ERROR':'OK',missing.length?'Faltan: '+missing.join(', '):'Nombre: '+m.name);let icons=0;for(const icon of m.icons||[]){const ri=await fetch(icon.src,{cache:'no-store'});if(ri.ok&&String(ri.headers.get('content-type')||'').includes('image/'))icons++}item('Iconos',icons>=2?'OK':'ERROR',`${icons} de ${(m.icons||[]).length} recursos comprobados`)}catch(e){item('Manifiesto o iconos','ERROR',String(e))}
+ try{let r=await fetch('./sw.js',{cache:'no-store'});if(!r.ok)throw Error('HTTP '+r.status);let reg=await navigator.serviceWorker.register('./sw.js',{scope:'./'});item('Service worker','OK','Estado: '+(reg.active?.state||reg.installing?.state||reg.waiting?.state||'registro solicitado'));}catch(e){item('Service worker','ERROR',String(e))}
+ item('Modo aplicación',matchMedia('(display-mode:standalone)').matches?'OK':'PENDIENTE',matchMedia('(display-mode:standalone)').matches?'Ya se abre como aplicación':'Todavía estás en Chrome; esto es normal antes de instalar');
+ })();
+})();
+</script></main></body></html>
