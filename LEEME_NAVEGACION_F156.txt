@@ -1,0 +1,14 @@
+PLATAFORMA LSB · F156 NAVEGACIÓN PARA PRUEBAS
+
+- Menú de Dirección en móvil: botón Menú del encabezado y menú inferior; panel no se cierra automáticamente durante la sincronización.
+- Retroceso Android/Chrome: volver a la pantalla anterior sin abandonar la app cuando haya historial interno.
+- Escape: cierra menús y ventanas o vuelve una pantalla; respeta la confirmación de borradores.
+- Estilos, componentes y módulos anteriores conservados.
+
+PARA GITHUB PAGES:
+1. Sustituye los archivos existentes del repositorio (no subir el ZIP sin extraer).
+2. Publicar main/(root).
+3. Abrir la dirección de GitHub Pages.
+4. No introducir estudiantes ficticios con Supabase real.
+
+Este paquete no fue instalado en teléfonos reales, requiere pruebas de sesión y autorización antes de producción.

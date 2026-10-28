@@ -9265,7 +9265,7 @@ const overlay=document.createElement('div');overlay.className='f132-overlay';ove
 root.addEventListener('click',e=>{const btn=e.target.closest('[data-f132-go]');if(btn){if(btn.dataset.f132Go==='menu'){overlay.hidden=false;return;}overlay.hidden=true;let route=btn.dataset.f132Go;const native=root.querySelector(`[data-route="${route}"],[data-path="${route}"],[data-go="${route}"]`);if(native) native.click();else {let orig=document.querySelector(`#nav button[data-go="${route}"]`);if(orig)orig.click();else {try{Function('p','if(typeof go === "function")go(p)')(route)}catch(err){console.warn('F132 route',err)}}}requestAnimationFrame(sync);return;}if(e.target===overlay||e.target.closest('[data-f132-close]'))overlay.hidden=true});
 }
 function decorate(root){const area=root.getElementById('detail-content');if(!area||!mobile())return;for(const table of area.querySelectorAll('.tablewrap table')){if(table.dataset.f132Done==='1')continue;table.dataset.f132Done='1';let heads=[...table.querySelectorAll('thead th')].map(th=>th.innerText?.trim().replace(/\s+/g,' ')||'Detalle');for(const tr of table.querySelectorAll('tbody tr'))[...tr.children].forEach((cell,i)=>{if(cell.tagName==='TD')cell.dataset.f132Label=heads[i]||['Detalle','Información','Acciones'][Math.min(i,2)];});}}
-function sync(){const root=getroot();if(!root)return;install(root);const yes=mobile();root.host.setAttribute('data-f132',yes?'mobile':'desktop');root.getElementById('f132-dock').hidden=!yes;root.getElementById('f132-overlay').hidden=true;if(!yes)return;decorate(root);const isHome=root.getElementById('home-view')?.classList.contains('active');let t=isHome?'home':document.body.dataset.page||'menu';root.querySelectorAll('#f132-dock [data-f132-go]').forEach(b=>b.classList.toggle('on',b.dataset.f132Go===t));const target=root.getElementById('detail-content');if(target&&observed!==target){observed=target;new MutationObserver(()=>{if(raf)cancelAnimationFrame(raf);raf=requestAnimationFrame(()=>decorate(root));}).observe(target,{childList:true,subtree:true});}}
+function sync(){const root=getroot();if(!root)return;install(root);const yes=mobile();const wasMobile=root.host.getAttribute('data-f132')==='mobile';root.host.setAttribute('data-f132',yes?'mobile':'desktop');root.getElementById('f132-dock').hidden=!yes;if(!yes||!wasMobile)root.getElementById('f132-overlay').hidden=true;if(!yes)return;decorate(root);const isHome=root.getElementById('home-view')?.classList.contains('active');let t=isHome?'home':document.body.dataset.page||'menu';root.querySelectorAll('#f132-dock [data-f132-go]').forEach(b=>b.classList.toggle('on',b.dataset.f132Go===t));const target=root.getElementById('detail-content');if(target&&observed!==target){observed=target;new MutationObserver(()=>{if(raf)cancelAnimationFrame(raf);raf=requestAnimationFrame(()=>decorate(root));}).observe(target,{childList:true,subtree:true});}}
 window.addEventListener('resize',sync);const watch=new MutationObserver(()=>{if(busy)return;busy=true;requestAnimationFrame(()=>{busy=false;sync()})});watch.observe(document.body,{attributes:true,attributeFilter:['class','data-page'],childList:true});setTimeout(sync,220);setTimeout(sync,950);
 })();
 </script>
@@ -10539,4 +10539,105 @@ body.lsb-f154-scroll-locked dialog[open]{overscroll-behavior:contain!important;t
   },{capture:true,passive:false});
 })();
 </script>
-<script id="lsb-pwa-registration">(function(){if(!('serviceWorker' in navigator)||!window.isSecureContext)return;window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js',{scope:'./'}).catch(err=>console.warn('Instalación PWA no disponible:',err)));})();</script></body></html>
+<script id="lsb-pwa-registration">(function(){if(!('serviceWorker' in navigator)||!window.isSecureContext)return;window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js',{scope:'./'}).catch(err=>console.warn('Instalación PWA no disponible:',err)));})();</script><script id="lsb-f156-navigation">
+/* F156 · Navegación reversible y menú Dirección móvil. No cambia operaciones Supabase. */
+(function(){'use strict';
+const KEY='lsbNavF156',VERSION=1;
+let active=null,ready=false,restoring=false,skipNextPop=false;
+const shell=()=>document.getElementById('lsb-f23-shell')?.shadowRoot||null;
+function loggedIn(){return !!document.getElementById('login')?.hidden && !document.body.classList.contains('loginmode') && (typeof LSB18!=='undefined' ? !!LSB18.authenticated : true);}
+function snap(){
+ if(!loggedIn())return null;
+ try {return {v:VERSION,role:String(role||''),uid:String(user?.id||''),page:String(page||'home'),course:String(chosenCourse||''),group:String(chosenGroup||''),assignment:String(assignment||''),unit:Number(unit||0),student:String(student||'')};}
+ catch(_){return null;}
+}
+function same(a,b){return !!a&&!!b&&['role','uid','page','course','group','assignment','unit','student'].every(k=>a[k]===b[k]);}
+function update(){
+ if(restoring)return;
+ const next=snap();if(!next)return;
+ try{
+  if(!ready || !active || active.role!==next.role||active.uid!==next.uid){
+   ready=true;active=next;
+   history.replaceState({...history.state,[KEY]:next,lsbIndex:0},'',location.href);
+   return;
+  }
+  if(same(active,next))return;
+  const index=Number(history.state?.lsbIndex)||0;
+  history.pushState({[KEY]:next,lsbIndex:index+1},'',location.href);
+  active=next;
+ }catch(err){console.warn('Historial de LSB no disponible:',err);active=next;}
+}
+function closedMenu(){
+ const r=shell();const sheet=r?.getElementById('f132-overlay');
+ if(sheet&&!sheet.hidden){sheet.hidden=true;return true;}
+ const side=r?.getElementById('side');if(side?.classList.contains('show')){side.classList.remove('show');return true;}
+ const floating=r?.querySelector('.f32-modal.open');
+ if(floating){floating.querySelector('.f32-close')?.click();return true;}
+ const profile=r?.getElementById('profile-menu');if(profile&&!profile.hidden){profile.hidden=true;return true;}
+ const ai=document.getElementById('lsb-f171-float');
+ if(ai&&!ai.hidden){const close=ai.querySelector('[data-f171="close"], [data-action="close"], .f171-top button:last-child');if(close)close.click();else ai.hidden=true;return true;}
+ if(document.body.classList.contains('drawer11')||document.body.classList.contains('menuopen9')||document.body.classList.contains('menuopen')){
+  if(typeof closeDrawer11==='function')closeDrawer11();else document.body.classList.remove('drawer11','menuopen9','menuopen');return true;
+ }
+ return false;
+}
+function restore(state){
+ try{
+  restoring=true;
+  page=state.page;chosenCourse=state.course;chosenGroup=state.group;assignment=state.assignment;unit=state.unit||db.active;student=state.student;
+  render();active=snap()||state;
+  window.scrollTo({top:0,behavior:'instant'});
+ }finally{restoring=false;}
+}
+window.addEventListener('popstate',event=>{
+ if(skipNextPop){skipNextPop=false;return;}
+ const target=event.state?.[KEY];
+ if(!ready||!loggedIn()||!target||target.v!==VERSION||target.uid!==active?.uid)return;
+ if(closedMenu()){
+  // El primer Atrás cierra el panel sin abandonar la pantalla.
+  try{history.pushState({[KEY]:active,lsbIndex:(Number(event.state?.lsbIndex)||0)+1},'',location.href);}catch(_){}
+  return;
+ }
+ if(typeof guardLeave==='function'&&!guardLeave()){
+  skipNextPop=true;history.forward();return;
+ }
+ restore(target);
+});
+// Escape: cerrar diálogos antes de retroceder; nunca cerrar directamente la PWA desde una subvista.
+document.addEventListener('keydown',ev=>{
+ if(ev.key!=='Escape'||ev.defaultPrevented)return;
+ if(document.querySelector('dialog[open]'))return; // Cierre nativo; respeta oncancel.
+ if(closedMenu()){ev.preventDefault();ev.stopImmediatePropagation();return;}
+ if(!loggedIn())return;
+ if((Number(history.state?.lsbIndex)||0)>0){ev.preventDefault();ev.stopImmediatePropagation();history.back();return;}
+ if(page!=='home'){
+  ev.preventDefault();ev.stopImmediatePropagation();
+  if(typeof go==='function')go('home');
+ }
+},true);
+const previousRender=render;
+render=function(){const result=previousRender.apply(this,arguments);update();return result;};
+// Keep the shell's native mobile navigation visible and allow a fallback Menu button in the topbar.
+function ensureMenu(){
+ const r=shell();if(!r)return;
+ const host=document.getElementById('lsb-f23-shell');
+ const mobile=host?.getAttribute('data-f132')==='mobile';
+ if(!mobile||!loggedIn())return;
+ const top=r.querySelector('.topbar');if(!top)return;
+ let button=r.getElementById('lsb-menu-f156');
+ if(!button){
+  button=document.createElement('button');button.id='lsb-menu-f156';button.type='button';
+  button.setAttribute('aria-label','Abrir menú de Dirección');button.setAttribute('aria-controls','f132-overlay');button.textContent='☰ Menú';
+  button.style.cssText='display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;min-height:42px;padding:8px 10px;border-radius:12px;border:1px solid #dce2f1;background:#fff;color:#3b4193;font-weight:700;font-size:12px;cursor:pointer;';
+  button.onclick=()=>{const o=r.getElementById('f132-overlay');if(o){o.hidden=false;button.setAttribute('aria-expanded','true');}};
+  top.insertBefore(button,top.firstChild);
+ }
+ button.hidden=false;
+}
+window.addEventListener('resize',()=>requestAnimationFrame(ensureMenu));
+new MutationObserver(()=>{if(document.body.classList.contains('lsb-f23-director'))requestAnimationFrame(ensureMenu);}).observe(document.body,{attributes:true,attributeFilter:['class']});
+setTimeout(()=>{update();ensureMenu();},120);
+setTimeout(ensureMenu,1100);
+window.lsbNavigationF156={snapshot:snap,refresh:update,closeOverlays:closedMenu};
+})();
+</script></body></html>

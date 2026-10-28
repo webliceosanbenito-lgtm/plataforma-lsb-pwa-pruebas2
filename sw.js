@@ -1,5 +1,5 @@
 // LSB PWA - static assets only. No auth, student information, academic responses or documents cached.
-const STATIC_CACHE='lsb-public-assets-v2-android';
+const STATIC_CACHE='lsb-public-assets-v3-navigation';
 const ASSETS=['./icons/icon-192.png','./icons/icon-512.png','./icons/icon-maskable-192.png','./icons/icon-maskable-512.png','./manifest.webmanifest','./offline.html'];
 self.addEventListener('install',event=>{event.waitUntil(caches.open(STATIC_CACHE).then(cache=>cache.addAll(ASSETS)));self.skipWaiting();});
 self.addEventListener('activate',event=>{event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith('lsb-public-assets-')&&k!==STATIC_CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));});

@@ -2,7 +2,7 @@
   "id": "./",
   "name": "Plataforma Académica LSB",
   "short_name": "Plataforma LSB",
-  "description": "Portal institucional del Liceo Mixto Particular San Benito: Dirección, Profesores y Familias.",
+  "description": "Portal académico LSB: navegación móvil mejorada y regreso entre pantallas.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
