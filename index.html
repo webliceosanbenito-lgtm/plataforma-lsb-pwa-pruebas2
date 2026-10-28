@@ -170,7 +170,11 @@ body[data-page="grade"] #app>.panel .tablewrap td{vertical-align:middle}
 .lsb19114-dialog{padding:16px;border:1px solid var(--line);border-radius:13px;background:var(--bg);margin-top:14px}
 .lsb19114-dialog textarea{width:100%;min-height:80px}
 @media(max-width:650px){.lsb19114-item{display:grid}.lsb19114-item .button{width:100%}}
-</style><style id="lsb19118-bootstrap-style">
+</style><style id="lsb-f1578-boot-visibility">
+#lsb19118-bootstrap:not([data-restoring="true"]){opacity:0!important;visibility:hidden!important;pointer-events:none!important}
+#lsb19118-bootstrap[data-done="true"]{opacity:0!important;visibility:hidden!important;pointer-events:none!important}
+</style>
+<style id="lsb19118-bootstrap-style">
 #lsb19118-bootstrap{position:fixed;inset:0;z-index:2147483000;background:radial-gradient(circle at 15% 15%,#e7efff 0%,transparent 48%),linear-gradient(145deg,#f7f9fe,#eef2fa);display:flex;align-items:center;justify-content:center;padding:24px;transition:opacity .22s ease,visibility .22s ease}
 #lsb19118-bootstrap[data-done="true"]{opacity:0;visibility:hidden;pointer-events:none}
 #lsb19118-bootstrap .lsb19118-card{max-width:360px;width:100%;text-align:center;background:white;border:1px solid #dfe4f2;border-radius:24px;padding:34px 22px;box-shadow:0 14px 60px #24366c0d;color:#28316b}
@@ -1863,13 +1867,13 @@ loginScreen=function(){
  document.querySelector('.test-access')?.remove();
  document.querySelector('.localnote')?.replaceChildren(document.createTextNode('Acceso protegido por Supabase. El ciclo escolar se consulta en el servidor.'));
  const err=document.getElementById('loginerror');
- formEl.onsubmit=async e=>{e.preventDefault();const f=new FormData(formEl);const entered=String(f.get('username')||'').trim(),password=String(f.get('password')||'');const familyPortal=(typeof loginPortal6!=='undefined'&&loginPortal6==='family');const email=familyPortal?entered.toLowerCase()+'@cuentas.lsb.invalid':entered;const submit=formEl.querySelector('[type=submit]');submit.disabled=true;err.textContent='';try{
- if(familyPortal&&!/^(?:familia\.[a-z0-9._-]+|[a-z][a-z0-9]*20\d{2}lsb\d*)$/i.test(entered))throw Error('Escribe el usuario institucional de tu ficha, sin agregar @ ni correo.');const client=lsb18Client();await client.auth.signOut();const {data,error}=await client.auth.signInWithPassword({email,password});if(error)throw error;
+ formEl.onsubmit=async e=>{e.preventDefault();const f=new FormData(formEl);const entered=String(f.get('username')||'').trim(),password=String(f.get('password')||'');const familyPortal=(typeof loginPortal6!=='undefined'&&loginPortal6==='family');const email=familyPortal?entered.toLowerCase()+'@cuentas.lsb.invalid':entered;const submit=formEl.querySelector('[type=submit]');if(window.__LSBAuthLoginInProgress)return;window.__LSBAuthLoginInProgress=true;const originalSubmitText=submit.textContent;submit.disabled=true;submit.textContent='Verificando acceso…';err.textContent='';try{
+ if(familyPortal&&!/^(?:familia\.[a-z0-9._-]+|[a-z][a-z0-9]*20\d{2}lsb\d*)$/i.test(entered))throw Error('Escribe el usuario institucional de tu ficha, sin agregar @ ni correo.');const client=lsb18Client();const {data,error}=await client.auth.signInWithPassword({email,password});if(error)throw error;
  const {data:prof,error:pe}=await client.from('lsb_profiles').select('id,username,full_name,role,active').eq('id',data.user.id).single();if(pe||!prof)throw Error('No se pudo consultar el perfil autorizado.');if(!prof.active)throw Error('Esta cuenta está suspendida.');
  const selected=typeof loginPortal6!=='undefined'?loginPortal6:'admin';const expected=prof.role==='profesor'?'teacher':prof.role==='encargado'?'family':'admin';if(selected!==expected)throw Error('Selecciona la pestaña que corresponde a tu cuenta.');
  if(expected==='family' && !/^(?:familia\.[a-z0-9._-]+|[a-z][a-z0-9]*20\d{2}lsb\d*)$/i.test(String(prof.username||'')))throw Error('La cuenta familiar no tiene usuario institucional válido.');
- LSB18.profile=prof;const account=await lsb18Load();LSB18.authenticated=true;enter(account);err.textContent='';
- }catch(ex){LSB18.authenticated=false;LSB18.profile=null;await LSB18.client?.auth.signOut().catch(()=>{});err.textContent=lsb18Error(ex);}finally{submit.disabled=false;}
+ LSB18.profile=prof;submit.textContent='Preparando tu panel…';const account=await lsb18Load();LSB18.authenticated=true;enter(account);err.textContent='';
+ }catch(ex){LSB18.authenticated=false;LSB18.profile=null;await LSB18.client?.auth.signOut().catch(()=>{});err.textContent=lsb18Error(ex);}finally{window.__LSBAuthLoginInProgress=false;submit.disabled=false;submit.textContent=originalSubmitText;}
  };
  const syncFamilyInput189=()=>{const input=formEl.querySelector('input[name=username]');if(!input)return;const isFam=typeof loginPortal6!=='undefined'&&loginPortal6==='family';input.type=isFam?'text':'email';input.placeholder=isFam?'Ej.: mlopez2027lsb':'correo@ejemplo.com';input.setAttribute('inputmode',isFam?'text':'email');};
  document.querySelectorAll('[data-portal]').forEach(btn=>{const old=btn.onclick;btn.onclick=function(...args){if(old)old.apply(this,args);syncFamilyInput189();};});
@@ -3466,7 +3470,7 @@ async function showHistory18(studentId){
  const oldLoad=lsb18Load;
  lsb18Load=async function(){const result=await oldLoad();try{await readProgress()}catch(err){console.warn('Avances:',err.message)}return result};
  const oldEnter194=enter;
- enter=function(account){const result=oldEnter194(account);if(LSB18?.authenticated){readProgress().then(()=>render()).catch(err=>{console.warn(err.message);render()})}return result};
+ enter=function(account){const result=oldEnter194(account);/* F157.8: los avances ya se consultaron durante lsb18Load; evita repetir la carga. */return result};
  const oldDashboard=dashboard;
  dashboard=function(){
   let html=oldDashboard();
@@ -4118,7 +4122,7 @@ window.lsbMountPeriodHistory122=function(year,holder){
  const oldLoad=lsb18Load;
  lsb18Load=async function(){const result=await oldLoad();try{await refresh1913()}catch(e){console.warn('Seguimiento de calificaciones:',e.message)}return result};
  const oldEnter=enter;
- enter=function(account){const result=oldEnter(account);if(LSB18?.authenticated&&LSB18?.profile?.role==='admin_general')refresh1913().then(()=>render()).catch(e=>{state.error=e.message;render()});return result};
+ enter=function(account){const result=oldEnter(account);/* F157.8: refresh1913 ya fue ejecutado por lsb18Load, evitar doble consulta. */return result};
  document.addEventListener('click',async ev=>{
   const open=ev.target.closest('[data-lsb1913-open]');
   if(open){ev.preventDefault();const aid=open.dataset.lsb1913Open;const a=eligible().find(x=>String(x.id)===aid);if(!a)return;assignment=a.id;unit=Number(open.dataset.lsb1913Unit);page='grade';draft=null;render();return}
@@ -4164,7 +4168,7 @@ dashboard=function(){return previous()+block()};
 const oldLoad=lsb18Load;
 lsb18Load=async function(){const r=await oldLoad();if(admin())try{await refresh()}catch(e){state.error=e.message;state.loaded=false}return r};
 const oldEnter=enter;
-enter=function(a){const v=oldEnter(a);if(admin())refresh().then(()=>render()).catch(e=>{state.loaded=false;state.error=e.message;render()});return v};
+enter=function(a){const v=oldEnter(a);/* F157.8: el estado de publicaciones ya se cargó en lsb18Load. */return v};
 document.addEventListener('click',async e=>{
  const up=e.target.closest('[data-lsb19114-refresh]');if(up){e.preventDefault();if(state.busy)return;state.busy=true;try{await refresh();render();toast('Publicaciones actualizadas.')}catch(x){state.error=x.message;state.loaded=false;render();toast('No se pudo consultar: '+x.message)}finally{state.busy=false}return}
  const btn=e.target.closest('[data-lsb19114-publish]');if(!btn)return;e.preventDefault();if(!admin()||state.busy)return;
@@ -4371,20 +4375,23 @@ document.addEventListener('click',async e=>{
   try{
    if(sessionStorage.getItem('lsb-explicit-logout')==='1'){finish();return;}
 
-   if(document.readyState!=='complete')await new Promise(resolve=>window.addEventListener('load',resolve,{once:true}));
+   if(document.readyState==='loading')await new Promise(resolve=>document.addEventListener('DOMContentLoaded',resolve,{once:true}));
+   if(window.__LSBAuthLoginInProgress){finish();return;}
    if(authenticated()){finish();return;}
    if(typeof lsb18Client!=='function'||typeof lsb18Load!=='function')throw Error('No se pudo inicializar el sistema de acceso.');
    const client=lsb18Client();
    const timeout=(promise,ms)=>Promise.race([promise,new Promise((_,reject)=>setTimeout(()=>reject(new Error('Tiempo de conexión agotado.')),ms))]);
    const {data:sessionData,error:sessionError}=await timeout(client.auth.getSession(),16000);
    if(sessionError)throw sessionError;
-   if(!sessionData?.session){finish();return;}
+   if(!sessionData?.session||window.__LSBAuthLoginInProgress){finish();return;}
    if(message)message.textContent='Restaurando tu sesión y comprobando los permisos de acceso…';
    // Verify the session against Supabase before opening any private screens.
    const {data:userData,error:userError}=await timeout(client.auth.getUser(),16000);
+   if(window.__LSBAuthLoginInProgress){finish();return;}
    if(userError||!userData?.user)throw userError||new Error('La sesión no es válida.');
    if(authenticated()){finish();return;}
    const {data:profile,error:profileError}=await timeout(client.from('lsb_profiles').select('id,username,full_name,role,active').eq('id',userData.user.id).single(),16000);
+   if(window.__LSBAuthLoginInProgress){finish();return;}
    if(profileError||!profile||profile.active!==true)throw profileError||new Error('La cuenta no está habilitada.');
    if(authenticated()){finish();return;}
    // A second legacy recovery handler may be running; ensure only one final entry.
@@ -5954,18 +5961,23 @@ const groupIcons={inicio:'#i-home',academico:'#i-cap',personas:'#i-people',gesti
 const routeIcons={catalog:'#i-folder',attendance:'#i-calendar',exports:'#i-chart',published_grades:'#i-file',courses:'#i-cap',periods:'#i-clock',cycles:'#i-clock',reports:'#i-chart',students:'#i-people',teachers:'#i-cap',families:'#i-people',accounts:'#i-settings',payments:'#i-wallet',schedule:'#i-calendar',notices:'#i-mail',school_reports:'#i-file',home:'#i-home'};
 const iconUse=ref=>`<svg><use href="${ref}"></use></svg>`;
 let f152MenuSignature='';
+let f1578CollapsedGroup=null;
 function drawMenu(){const order=['inicio','academico','personas','gestion','horarios','ciclos','archivos','comunicacion','soporte','ia'];
  const side=q('#side-links');if(!side)return;
- const signature=current+'|'+(q('.railbtn.active')?.dataset.area||'');
+ const signature=current+'|'+(q('.railbtn.active')?.dataset.area||'')+'|'+(f1578CollapsedGroup||'');
  if(side.children.length&&f152MenuSignature===signature)return;
  f152MenuSignature=signature;
- side.innerHTML=order.map(k=>{const g=groups[k],active=(k===q('.railbtn.active')?.dataset.area);const menu=(g[1]||[]);const hasChild=active&&menu.some(x=>x[1]===current);return '<div class="navgroup '+(hasChild?'child-current':'')+'"><button class="navgroup-head '+(active?'expanded':'')+'" data-f23group="'+k+'"><span class="navlabel">'+iconUse(groupIcons[k]||'#i-home')+'<span>'+g[0]+'</span></span><span style="margin-left:auto">'+(active?'⌄':'›')+'</span></button>'+(active&&k!=='inicio'?'<div class="navgroup-items">'+menu.map(([label,route])=>'<button class="navlink '+(route===current?'current':'')+'" data-f23route="'+route+'">'+iconUse(routeIcons[route]||groupIcons[k]||'#i-home')+'<span>'+label+'</span></button>').join('')+'</div>':'')+'</div>'}).join('');
+ side.innerHTML=order.map(k=>{const g=groups[k],active=(k===q('.railbtn.active')?.dataset.area&&f1578CollapsedGroup!==k);const menu=(g[1]||[]);const hasChild=active&&menu.some(x=>x[1]===current);return '<div class="navgroup '+(hasChild?'child-current':'')+'"><button class="navgroup-head '+(active?'expanded':'')+'" data-f23group="'+k+'"><span class="navlabel">'+iconUse(groupIcons[k]||'#i-home')+'<span>'+g[0]+'</span></span><span style="margin-left:auto">'+(active?'⌄':'›')+'</span></button>'+(active&&k!=='inicio'?'<div class="navgroup-items">'+menu.map(([label,route])=>'<button class="navlink '+(route===current?'current':'')+'" data-f23route="'+route+'">'+iconUse(routeIcons[route]||groupIcons[k]||'#i-home')+'<span>'+label+'</span></button>').join('')+'</div>':'')+'</div>'}).join('');
  side.querySelectorAll('[data-f23group]').forEach(b=>b.onclick=()=>chooseGroup(b.dataset.f23group));
  side.querySelectorAll('[data-f23route]').forEach(b=>b.onclick=()=>go(b.dataset.f23route));
 }
 function chooseGroup(k){
+ const wasActive=q('.railbtn.active')?.dataset.area===k;
+ const hasSubmenu=Boolean(groups[k]?.[1]?.length);
+ f1578CollapsedGroup=hasSubmenu&&wasActive&&f1578CollapsedGroup!==k?k:null;
  qAll('.railbtn').forEach(b=>b.classList.toggle('active',b.dataset.area===k));
  drawMenu();
+ if(f1578CollapsedGroup===k)return;
  if(k==='inicio')go('home');
  if(k==='soporte')go('support');
  if(k==='ia')go('lsb_ai');
@@ -10904,6 +10916,25 @@ action=function(name,arg){if(name==='lsb1574-goto-cycles'){go('cycles');return;}
  if(host)obs.observe(host,{attributes:true,attributeFilter:['data-theme']});
  document.addEventListener('visibilitychange',()=>{if(!document.hidden)schedule();});
  schedule();
+})();
+</script>
+<script id="lsb-f1578-login-loading-dedup">
+/* F157.8: evita repetir carga masiva simultánea del mismo perfil.
+   No almacena calificaciones, no evita RLS y no salta autenticación. */
+(function(){
+ 'use strict';
+ if(typeof lsb18Load!=='function')return;
+ const previous=lsb18Load;
+ let running=null, identity=null;
+ lsb18Load=function(...args){
+  const uid=LSB18?.profile?.id||null;
+  if(running&&uid===identity)return running;
+  identity=uid;
+  const task=Promise.resolve().then(()=>previous.apply(this,args));
+  running=task;
+  void task.finally(()=>{if(running===task){running=null;identity=null;}}).catch(()=>{});
+  return task;
+ };
 })();
 </script>
 </body></html>
