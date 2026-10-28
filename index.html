@@ -10839,4 +10839,23 @@ action=function(name,arg){if(name==='lsb1574-goto-cycles'){go('cycles');return;}
  };
 })();
 </script>
+<script id="lsb-f1576-cycle-navigation-sync">
+/* F157.6: Sincroniza la carcasa de Dirección DESPUÉS de que todos los
+   adaptadores heredados concluyen render(); en particular, cyclesView().
+   No modifica datos, roles, credenciales ni las políticas de Supabase. */
+(function(){
+ 'use strict';
+ if(typeof render!=='function')return;
+ const previousRender=render;
+ render=function(){
+  const outcome=previousRender.apply(this,arguments);
+  if(document.body.classList.contains('lsb-f23-director') &&
+     typeof window.lsbF23Sync==='function'){
+    try{window.lsbF23Sync();}
+    catch(error){console.error('LSB: no se pudo sincronizar la vista de Dirección.',error);}
+  }
+  return outcome;
+ };
+})();
+</script>
 </body></html>
