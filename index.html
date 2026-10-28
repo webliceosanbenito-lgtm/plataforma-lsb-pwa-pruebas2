@@ -10640,7 +10640,13 @@ setTimeout(()=>{update();ensureMenu();},120);
 setTimeout(ensureMenu,1100);
 window.lsbNavigationF156={snapshot:snap,refresh:update,closeOverlays:closedMenu};
 })();
-</script><script id="lsb-f157-invitaciones">
+</script><style id="lsb-f157-2-login-link">
+/* F157.2: keep activation link below password recovery in ordered mobile login. */
+body.loginmode #login.access10 #lsb157-action{order:7!important;align-self:center!important;display:block!important;margin:2px auto 0!important;padding:5px 9px!important;border:0!important;border-radius:8px!important;background:transparent!important;box-shadow:none!important;color:#52659d!important;font-size:12px!important;line-height:1.45!important;text-align:center!important;white-space:normal!important;max-width:100%!important}
+body.loginmode #login.access10 #lsb157-action:hover{text-decoration:underline!important}
+body.loginmode.familywelcome10 #login.access10 #lsb157-action{display:none!important}
+html[data-theme=dark] body.loginmode #login.access10 #lsb157-action{color:#bac8f0!important}
+</style><script id="lsb-f157-invitaciones">
 /* F157: safe onboarding for teacher invitations and password recovery. */
 (()=>{
 'use strict';
@@ -10677,7 +10683,7 @@ function close(){if(working)return;overlay?.remove();overlay=null}
 function show(which){
  prepare();mode=which;overlay?.remove();overlay=document.createElement('div');overlay.id='lsb157-screen';overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');
  const isPwd=which==='set';
- overlay.innerHTML=`<section class="lsb157-card"><div class="lsb157-logo"><span></span><span></span><span></span></div><div class="lsb157-brand">Liceo Mixto Particular San Benito</div><h2>${isPwd?'Establece tu contraseña':'Activación y recuperación docente'}</h2><p>${isPwd?'Crea una contraseña personal para acceder al portal de Profesores.':'Si ya aceptaste tu invitación y apareciste en la pantalla de inicio de sesión, solicita aquí el enlace para establecer tu contraseña.'}</p><form id="lsb157-form">${isPwd?`<label for="lsb157-password">Nueva contraseña (mínimo 12 caracteres)</label><input id="lsb157-password" type="password" autocomplete="new-password" minlength="12" maxlength="128" required><label for="lsb157-repeat">Confirmar contraseña</label><input id="lsb157-repeat" type="password" autocomplete="new-password" minlength="12" maxlength="128" required>`:`<label for="lsb157-email">Correo con el que te invitaron</label><input id="lsb157-email" type="email" autocomplete="email" maxlength="254" required placeholder="correo@ejemplo.com">`}<p class="lsb157-status" role="status" aria-live="polite"></p><button type="submit" class="lsb157-primary">${isPwd?'Guardar mi contraseña':'Enviar enlace de recuperación'}</button></form><button type="button" class="lsb157-close">Volver al inicio de sesión</button></section>`;
+ overlay.innerHTML=`<section class="lsb157-card"><div class="lsb157-logo"><span></span><span></span><span></span></div><div class="lsb157-brand">Liceo Mixto Particular San Benito</div><h2>${isPwd?'Establece tu contraseña':'Activación y recuperación docente'}</h2><p>${isPwd?'Crea una contraseña personal para acceder al portal de Profesores.':'Si ya aceptaste tu invitación y apareciste en la pantalla de inicio de sesión, solicita aquí el enlace para establecer tu contraseña.'}</p><form id="lsb157-form">${isPwd?`<label for="lsb157-password">Nueva contraseña</label><input id="lsb157-password" type="password" autocomplete="new-password" required><label for="lsb157-repeat">Confirmar contraseña</label><input id="lsb157-repeat" type="password" autocomplete="new-password" required>`:`<label for="lsb157-email">Correo con el que te invitaron</label><input id="lsb157-email" type="email" autocomplete="email" maxlength="254" required placeholder="correo@ejemplo.com">`}<p class="lsb157-status" role="status" aria-live="polite"></p><button type="submit" class="lsb157-primary">${isPwd?'Guardar mi contraseña':'Enviar enlace de recuperación'}</button></form><button type="button" class="lsb157-close">Volver al inicio de sesión</button></section>`;
  document.body.append(overlay);
  overlay.querySelector('.lsb157-close').addEventListener('click',()=>{if(!working){close();if(mode==='set')window.location.assign(appRoot);}});
  overlay.querySelector('#lsb157-form').addEventListener('submit',async e=>{
@@ -10686,7 +10692,6 @@ function show(which){
    const auth=getClient().auth;
    if(mode==='set'){
     const p=overlay.querySelector('#lsb157-password').value,repeat=overlay.querySelector('#lsb157-repeat').value;
-    if(p.length<12||p.length>128)throw Error('Utiliza una contraseña de 12 a 128 caracteres.');
     if(p!==repeat)throw Error('Las contraseñas no coinciden.');
     const {error}=await auth.updateUser({password:p});if(error)throw error;
     status('Contraseña guardada. Ya puedes iniciar sesión en el portal Profesores.',true);
@@ -10700,7 +10705,11 @@ function show(which){
     const {error}=await auth.resetPasswordForEmail(email,{redirectTo:appRoot});if(error)throw error;
     status('Si ese correo tiene una cuenta habilitada, recibirás un enlace. Revisa Recibidos y Spam. Ábrelo desde este dispositivo.',true);
    }
-  }catch(err){status(err?.message||'No se pudo procesar la solicitud. Inténtalo más tarde.');}
+  }catch(err){
+    const raw=String(err?.message||'No se pudo procesar la solicitud. Inténtalo más tarde.');
+    const minimum=raw.match(/(?:at least|minimum of|minimum length is)\s*(\d+)\s*characters?/i);
+    status(minimum?'Supabase exige al menos '+minimum[1]+' caracteres para esta contraseña.':raw);
+  }
   finally{working=false;button.disabled=false;}
  });
  setTimeout(()=>overlay?.querySelector(isPwd?'#lsb157-password':'#lsb157-email')?.focus(),50);
@@ -10708,8 +10717,8 @@ function show(which){
 function addEntry(){
  const login=document.getElementById('login');if(!login||login.hidden||!document.body.classList.contains('loginmode'))return;
  const forgot=login.querySelector('#forgot');if(!forgot||login.querySelector('#lsb157-action'))return;
- const button=document.createElement('button');button.id='lsb157-action';button.type='button';button.textContent='¿Recibiste una invitación? Crear o recuperar contraseña';
- button.style.cssText='display:block;width:100%;min-height:44px;margin:10px 0 8px;padding:10px;border-radius:12px;border:1px solid #c7d5ec;color:#34468c;background:#f0f5ff;font-size:12px;font-weight:750;cursor:pointer';
+ const button=document.createElement('button');button.id='lsb157-action';button.type='button';button.textContent='¿Recibiste una invitación? Activa o recupera tu acceso';
+ button.style.cssText='order:7!important;align-self:center!important;display:block;max-width:100%;min-height:36px;margin:1px auto 0;padding:5px 9px;border:0;border-radius:8px;box-shadow:none;background:transparent;color:#52659d;font-size:12px;line-height:1.45;font-weight:650;text-align:center;white-space:normal;cursor:pointer';
  button.addEventListener('click',()=>show('request'));forgot.insertAdjacentElement('afterend',button);
 }
 const install=()=>{
