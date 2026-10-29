@@ -11523,4 +11523,31 @@ action=function(name,arg){if(name==='lsb1574-goto-cycles'){go('cycles');return;}
  queueMicrotask(apply);
 })();
 </script>
+<style id="lsb-f1635-logout-identity-style">
+/* F163.5: Ocultar inmediatamente menus de identidad al entrar en la pantalla de acceso. */
+body.loginmode #f66-teacher-profile,
+body.loginmode #f106-family-profile,
+body.loginmode .f65-profile-popup,
+body.loginmode #profile-menu{display:none!important}
+</style>
+<script id="lsb-f1635-logout-identity-cleanup">
+(function(){
+ 'use strict';
+ // Los menus de perfil docente/familiar se adjuntan a body, fuera del portal oculto.
+ // Su contenido se retira cuando termina la sesion; volveran a crearse al entrar.
+ function clearSignedOutView(){
+   if(!document.body.classList.contains('loginmode'))return;
+   document.querySelectorAll('#f66-teacher-profile, #f106-family-profile, .f65-profile-popup').forEach(el=>el.remove());
+   // Quitar del DOM el contenido protegido y la identidad antigua; render() los reconstruye al entrar.
+   document.getElementById('app')?.replaceChildren();
+   document.getElementById('nav')?.replaceChildren();
+   const identity=document.getElementById('identity');
+   if(identity)identity.textContent='';
+   document.getElementById('usermenu7')?.replaceChildren();
+ }
+ new MutationObserver(clearSignedOutView).observe(document.body,{attributes:true,attributeFilter:['class']});
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',clearSignedOutView,{once:true});
+ else clearSignedOutView();
+})();
+</script>
 </body></html>
