@@ -3497,7 +3497,9 @@ async function showHistory18(studentId){
 
  const lookup=(aid,bim)=>PROGRESS.rows.find(x=>String(x.teaching_assignment_id)===String(aid)&&Number(x.bimester)===Number(bim));
  async function readProgress(){
-  if(!LSB18?.authenticated||!LSB18?.profile){PROGRESS.loaded=false;return}
+ /* F163.8: lsb18Load se ejecuta despues de autenticarse con Supabase, pero antes de poner authenticated=true en el estado visual.
+    Usar el perfil verificado evita omitir la lectura inicial de avances para Direccion. */
+ if(!LSB18?.profile){PROGRESS.loaded=false;return}
   const {data,error}=await lsbF2Result('lsb_grade_submissions','id,teaching_assignment_id,bimester,status,submitted_at,submitted_by,reviewed_at,reviewed_by');
   if(error){PROGRESS.loaded=false;PROGRESS.error=error.message;throw Error('No se pudo consultar los envíos: '+error.message)}
   PROGRESS.rows=data||[];PROGRESS.loaded=true;PROGRESS.error='';
