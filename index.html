@@ -11391,4 +11391,127 @@ action=function(name,arg){if(name==='lsb1574-goto-cycles'){go('cycles');return;}
 })();
 
 </script>
+<script id="lsb-f161-calificaciones">
+/* F161: Acciones superiores y autoselección de Entregada al escribir nota.
+   No cambia Supabase ni los permisos. No guarda automáticamente. */
+(function(){
+ 'use strict';
+ function css(){
+  if(document.getElementById('lsb-f161-css'))return;
+  const st=document.createElement('style');st.id='lsb-f161-css';
+  st.textContent=[
+    '.lsb-f161-bar{margin:12px 18px 18px;padding:14px 16px;border:1px solid var(--line,#dce0ec);border-radius:12px;}',
+    '.lsb-f161-actions{display:flex;flex-wrap:wrap;align-items:stretch;gap:9px;}',
+    '.lsb-f161-actions>.button,.lsb-f161-actions>details>summary{display:inline-flex;align-items:center;justify-content:center;min-height:42px;white-space:normal;text-align:center;cursor:pointer;}',
+    '.lsb-f161-more{position:relative}.lsb-f161-more summary{list-style:none;user-select:none}.lsb-f161-more summary::-webkit-details-marker{display:none}',
+    '.lsb-f161-items{position:absolute;right:0;top:calc(100% + 6px);z-index:80;width:min(310px,calc(100vw - 48px));display:grid;gap:8px;padding:12px;border:1px solid var(--line,#dce0ec);border-radius:11px;background:var(--lsb-panel-bg,var(--card-bg,#fff));box-shadow:0 12px 36px rgba(23,31,75,.17)}',
+    '.lsb-f161-more:not([open]) .lsb-f161-items{display:none}.lsb-f161-items .button{width:100%;white-space:normal;text-align:left}',
+    '.lsb-f161-status{margin-top:11px;display:flex;gap:10px;flex-wrap:wrap}.lsb-f161-status #savestate{max-width:100%;white-space:normal}',
+    '.lsb-f161-tip{margin:10px 0 0;font-size:12px;line-height:1.5;opacity:.8}',
+    '@media(max-width:650px){.lsb-f161-bar{margin:10px 12px 16px;padding:12px}.lsb-f161-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.lsb-f161-actions>.button,.lsb-f161-actions>details>summary{width:100%;min-width:0;padding:10px 8px;font-size:12px}.lsb-f161-items{right:0}}'
+  ].join('');
+  document.head.appendChild(st);
+ }
+ function canEdit(){
+  try{
+   if(typeof page==='undefined'||page!=='grade'||typeof role==='undefined'||role!=='teacher'||!draft)return false;
+   const a=assignmentFor();
+   return !!a&&editable(a,recordFor(a,unit))&&!(typeof LSB_F2!=='undefined'&&LSB_F2.gradeBusy);
+  }catch(_){return false;}
+ }
+ function linkInputs(panel){
+  if(!canEdit())return;
+  const find=(type,id,i)=>[...panel.querySelectorAll(type)].find(e=>e.dataset[type==='input[data-grade]'?'grade':'delivery']===id&&Number(e.dataset.i)===i);
+  function total(id){
+   const el=document.getElementById('sum-'+id);
+   if(el)el.textContent=fmt(sum(draft.rows[id]));
+  }
+  function dirty(){
+   const el=document.getElementById('savestate');
+   if(el)el.textContent='Cambios sin guardar';
+  }
+  panel.querySelectorAll('input[data-grade]').forEach(el=>{
+   const id=el.dataset.grade, i=Number(el.dataset.i);
+   if(!Number.isInteger(i)||!draft?.rows?.[id]?.[i])return;
+   el.disabled=false;
+   el.oninput=()=>{
+    if(!canEdit()||el.validity.badInput)return;
+    const cell=draft?.rows?.[id]?.[i];if(!cell)return;
+    const raw=el.value.trim();
+    if(raw===''){cell.grade=null;cell.status='Pendiente';}
+    else {const val=Number(raw);if(!Number.isFinite(val))return;cell.grade=val;cell.status='Entregada';}
+    const select=find('select[data-delivery]',id,i);
+    if(select)select.value=cell.status;
+    total(id);dirty();
+   };
+  });
+  panel.querySelectorAll('select[data-delivery]').forEach(el=>{
+   const id=el.dataset.delivery,i=Number(el.dataset.i);
+   if(!Number.isInteger(i)||!draft?.rows?.[id]?.[i])return;
+   el.onchange=()=>{
+    if(!canEdit())return;
+    const cell=draft?.rows?.[id]?.[i];if(!cell)return;
+    if(el.value==='Entregada')cell.status='Entregada'; // Conserva un cero válido.
+    else if(typeof setDelivery==='function')setDelivery(cell,el.value);
+    else {cell.status=el.value;cell.grade=el.value==='No entregada'?0:null;}
+    const input=find('input[data-grade]',id,i);
+    if(input){input.value=cell.grade==null?'':String(cell.grade);input.disabled=false;}
+    total(id);dirty();
+   };
+  });
+ }
+ function apply(){
+  if(typeof page==='undefined'||page!=='grade'||typeof role==='undefined'||role!=='teacher')return;
+  const app=document.getElementById('app');if(!app||app.querySelector('#lsb-f161-bar'))return;
+  const panel=[...app.querySelectorAll('section.panel')].find(p=>p.querySelector('input[data-grade]'));
+  if(!panel||!canEdit())return;
+  const add=app.querySelector('[data-action="addactivity"]');
+  const save=app.querySelector('[data-action="savedraft"]');
+  const restore=document.getElementById('lsb-f1635-restore');
+  const status=document.getElementById('savestate');
+  if(!add||!save||!status)return;
+  css();
+  const bottom=add.parentElement;
+  const bar=document.createElement('div');bar.id='lsb-f161-bar';bar.className='lsb-f161-bar';
+  bar.setAttribute('aria-label','Acciones del registro de calificaciones');
+  const actions=document.createElement('div');actions.className='lsb-f161-actions';
+  add.textContent='＋ Nueva actividad';add.className='button secondary';
+  save.textContent='Guardar borrador';save.className='button';
+  actions.append(add,save);
+  if(restore){
+   restore.textContent='Recuperar local';restore.className='button secondary';
+   restore.style.cssText='';restore.title='Recuperar borrador cifrado de este dispositivo';
+   actions.appendChild(restore);
+  }
+  const menu=document.createElement('div');menu.className='lsb-f161-items';
+  ['csv','progress7','submit'].forEach(key=>{
+   const button=app.querySelector('.heading [data-action="'+key+'"]');
+   if(button){button.className='button secondary';menu.appendChild(button);}
+  });
+  if(menu.childElementCount){
+   const more=document.createElement('details');more.className='lsb-f161-more';
+   const summary=document.createElement('summary');summary.className='button secondary';
+   summary.textContent='Más opciones ▾';
+   more.append(summary,menu);actions.appendChild(more);
+  }
+  bar.appendChild(actions);
+  const statusRow=document.createElement('div');statusRow.className='lsb-f161-status';
+  statusRow.appendChild(status);bar.appendChild(statusRow);
+  const hint=document.createElement('p');hint.className='lsb-f161-tip';
+  hint.textContent='Escribir una nota, incluso 0, marca Entregada. Dejarla vacía marca Pendiente. Solo Guardar borrador envía cambios a Supabase.';
+  bar.appendChild(hint);
+  const head=panel.querySelector('.panelhead');
+  if(head)head.insertAdjacentElement('afterend',bar);else panel.prepend(bar);
+  const oldMenu=app.querySelector('.heading .savemenu9');
+  if(oldMenu&&!oldMenu.querySelector('[data-action]'))oldMenu.remove();
+  if(bottom&&!bottom.children.length)bottom.remove();
+  linkInputs(panel);
+ }
+ if(typeof render!=='function')return;
+ const oldRender=render;
+ render=function(){const r=oldRender.apply(this,arguments);queueMicrotask(apply);return r;};
+ queueMicrotask(apply);
+})();
+
+</script>
 </body></html>
