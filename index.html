@@ -1266,9 +1266,9 @@ function courseView(){const list=mine();if(role==='teacher'){
  return heading(E(courseName(chosenCourse)),'Elige la sección para abrir su registro de calificaciones.',button('Todas las materias','backcourses','',true))+(selected.length?assignmentCards(selected):panel('Sin secciones','<p class="footnote">Esta materia ya no tiene secciones asignadas.</p>'));
 }if(!chosenCourse)return heading('Revisar calificaciones','Primero selecciona el curso. Después, el grado y sección.')+`<div class="cardgrid">${db.courses.map(c=>`<button class="selection" data-action="selectcourse" data-arg="${c.id}"><span class="coursemark">${E(c.name[0])}</span><h2>${E(c.name)}</h2><p>${list.filter(a=>a.course===c.id).length} grados y secciones</p><span class="link">Ver grados</span></button>`).join('')}</div>`;return heading(E(courseName(chosenCourse)),'Selecciona el grado y sección.',button('Todos los cursos','backcourses','',true))+assignmentCards(list.filter(a=>a.course===chosenCourse));}
 function assignmentCards(list){return `<div class="cardgrid">${list.map(a=>{const r=recordFor(a,workingUnit());return `<article class="selection"><span class="eyebrow">${E(courseName(a.course))}</span><h2>${E(groupName(a.group))}</h2><p>${roster(a).length} estudiantes · ${r.activities.length} actividades</p>${state(r)}<div style="margin-top:22px">${button('Abrir registro','open',a.id)}</div></article>`}).join('')}</div>`}
-function gradeView(){const a=assignmentFor();if(!a||!mine().some(x=>x.id===a.id))return heading('Curso no disponible');const stored=recordFor(a,unit);draft??=clone(stored);const r=draft,can=editable(a,stored);const actions=(role==='teacher'?button('Volver a secciones','teacherbacksections','',true):button('Volver a cursos','go','courses',true))+button('Exportar CSV','csv','',true)+(can?button('Guardar borrador','savedraft','',true)+button('Guardar y enviar a Dirección','submit'):role==='admin'&&stored.submitted?button(stored.published?'Actualizar publicación':'Publicar a familias','publish')+button('Autorizar corrección docente','reopen','',true):'');return heading(courseName(a.course),groupName(a.group)+' · '+E(db.accounts.find(t=>t.id===a.teacher)?.name||''),actions)+`<div class="filters" style="padding-left:0">${unitSelect()}${state(stored)}${!can?badge(role==='admin'?'Revisión de Dirección':'Registro de solo lectura'):badge('Edición habilitada','green')}</div>`+panel('Registro de actividades',`<p class="footnote" style="padding-top:18px">${role==='admin'?'Dirección puede corregir notas con un motivo. La creación de actividades corresponde al docente.':can?'Registra notas y entregas por separado. Las familias verán el estado de entrega cuando guardes el borrador.':'Este bimestre está cerrado o todavía no está habilitado. Puedes consultar y exportar el registro.'}</p><p class="mobilehint" style="padding:0 20px">Desliza la tabla para ver todas las actividades.</p>`+table(['Estudiante',...r.activities.map(t=>E(t.name)+'<small class="maxlabel">Máximo '+t.max+' puntos</small>'),'Total / '+r.activities.reduce((s,t)=>s+t.max,0),'Seguimiento'],roster(a).map(s=>`<tr><td><b>${E(s.name)}</b><small>${E(s.code)}</small></td>${r.activities.map((t,i)=>{const cell=r.rows[s.id]?.[i]||{grade:null,status:'Pendiente'};return `<td>${can?`<input class="grade" type="number" min="0" max="${t.max}" step="0.01" data-grade="${s.id}" data-i="${i}" aria-label="Nota ${E(t.name+' de '+s.name)}" value="${cell.grade??''}" placeholder="—"><select class="delivery" data-delivery="${s.id}" data-i="${i}" aria-label="Entrega ${E(t.name+' de '+s.name)}">${options(['Pendiente','Entregada','No entregada'].map(x=>({id:x,name:x})),cell.status)}</select>`:`<b>${fmt(cell.grade)}</b><small>${cell.status}</small>`}</td>`}).join('')}<td class="score" id="sum-${s.id}">${fmt(sum(r.rows[s.id]))}</td><td>${button('Observaciones','studentinfo',s.id,true)}${role==='admin'?`<div style="margin-top:8px">${button('Corregir notas','correct',s.id,true)}</div>`:''}</td></tr>`).join(''))+`<div class="filters">${can?button('+ Añadir actividad','addactivity','',true):''}<span class="badge" id="savestate">${can?'Borrador guardado':'Solo consulta'}</span></div><p class="footnote">Una nota vacía está pendiente. Para enviar el bimestre, las actividades deben sumar 100 puntos y todas las notas deben estar completas.</p>`)}
+function gradeView(){const a=assignmentFor();if(!a||!mine().some(x=>x.id===a.id))return heading('Curso no disponible');const stored=recordFor(a,unit);draft??=clone(stored);const r=draft,can=editable(a,stored);const actions=(role==='teacher'?button('Volver a secciones','teacherbacksections','',true):button('Volver a cursos','go','courses',true))+button('Exportar CSV','csv','',true)+(can?button('Guardar borrador','savedraft','',true)+button('Guardar y enviar a Dirección','submit'):role==='admin'&&stored.submitted?button(stored.published?'Actualizar publicación':'Publicar a familias','publish')+button('Autorizar corrección docente','reopen','',true):'');return heading(courseName(a.course),groupName(a.group)+' · '+E(db.accounts.find(t=>t.id===a.teacher)?.name||''),actions)+`<div class="filters" style="padding-left:0">${unitSelect()}${state(stored)}${!can?badge(role==='admin'?'Revisión de Dirección':'Registro de solo lectura'):badge('Edición habilitada','green')}</div>`+panel('Registro de actividades',`<p class="footnote" style="padding-top:18px">${role==='admin'?'Dirección puede corregir notas con un motivo. La creación de actividades corresponde al docente.':can?'Las calificaciones se guardan aquí. Los estados oficiales de entrega se registran por separado en Más opciones → Registrar entregas. Guardar borrador no guarda estados de entrega.':'Este bimestre está cerrado o todavía no está habilitado. Puedes consultar y exportar el registro.'}</p><p class="mobilehint" style="padding:0 20px">Desliza la tabla para ver todas las actividades.</p>`+table(['Estudiante',...r.activities.map(t=>E(t.name)+'<small class="maxlabel">Máximo '+t.max+' puntos</small>'),'Total / '+r.activities.reduce((s,t)=>s+t.max,0),'Seguimiento'],roster(a).map(s=>`<tr><td><b>${E(s.name)}</b><small>${E(s.code)}</small></td>${r.activities.map((t,i)=>{const cell=r.rows[s.id]?.[i]||{grade:null,status:'Pendiente'};return `<td>${can?`<input class="grade" type="number" min="0" max="${t.max}" step="0.01" data-grade="${s.id}" data-i="${i}" aria-label="Nota ${E(t.name+' de '+s.name)}" value="${cell.grade??''}" placeholder="—"><select class="delivery" data-delivery="${s.id}" data-i="${i}" aria-label="Entrega ${E(t.name+' de '+s.name)}">${options(['Pendiente','Entregada','No entregada'].map(x=>({id:x,name:x})),cell.status)}</select>`:`<b>${fmt(cell.grade)}</b><small>Estado de entrega: consulta independiente</small>`}</td>`}).join('')}<td class="score" id="sum-${s.id}">${fmt(sum(r.rows[s.id]))}</td><td>${button('Observaciones','studentinfo',s.id,true)}${role==='admin'?`<div style="margin-top:8px">${button('Corregir notas','correct',s.id,true)}</div>`:''}</td></tr>`).join(''))+`<div class="filters">${can?button('+ Añadir actividad','addactivity','',true):''}<span class="badge" id="savestate">${can?'Borrador guardado':'Solo consulta'}</span></div><p class="footnote">Una nota vacía está pendiente. Para enviar el bimestre, las actividades deben sumar 100 puntos y todas las notas deben estar completas.</p>`)}
 function validate(r,a,complete=false){if(r.activities.some(t=>!t.name||!Number.isFinite(t.max)||t.max<=0))return 'Revisa los valores de las actividades.';for(const s of roster(a)){const row=r.rows[s.id];if(!row||row.length!==r.activities.length)return 'Faltan registros de estudiantes.';for(let i=0;i<row.length;i++){const v=row[i].grade;if(v===null){if(complete)return 'Completa todas las notas antes de enviar.';}else if(!Number.isFinite(v)||v<0||v>r.activities[i].max)return 'Hay notas fuera del valor permitido.';}}if(complete&&Math.abs(r.activities.reduce((s,t)=>s+t.max,0)-100)>0.001)return 'La distribución de actividades debe sumar 100 puntos.';return ''}
-function saveDraft(){const a=assignmentFor(),r=recordFor(a,unit);if(!editable(a,r)){toast('El registro ya no está habilitado.');return false}const error=validate(draft,a);if(error){toast(error);return false}db.records[a.id+'-'+unit]=clone(draft);if(!persist())return false;$('#savestate').textContent='Guardado · entregas actualizadas';toast('Borrador guardado. Familias ya puede consultar las entregas.');return true}
+function saveDraft(){const a=assignmentFor(),r=recordFor(a,unit);if(!editable(a,r)){toast('El registro ya no está habilitado.');return false}const error=validate(draft,a);if(error){toast(error);return false}db.records[a.id+'-'+unit]=clone(draft);if(!persist())return false;$('#savestate').textContent='Calificaciones guardadas';toast('Borrador de calificaciones guardado. Registra las entregas por separado.');return true}
 async function submitRecord(){const a=assignmentFor();if(!editable(a,recordFor(a,unit)))return;const err=validate(draft,a,true);if(err){toast(err);return}if(!await window.lsbPwaConfirm('¿Enviar el bimestre a Dirección? Ya no podrás modificar actividades ni notas sin autorización.',{title:'Enviar a Dirección',confirmLabel:'Enviar'}))return;draft.submitted=true;db.records[a.id+'-'+unit]=clone(draft);audit('Envío a Dirección: '+fullAssignment(a)+' · Bimestre '+unit);persist();draft=null;render();toast('Enviado a Dirección. El registro quedó bloqueado para el docente.')}
 function publishRecord(){if(role!=='admin')return;const a=assignmentFor(),r=recordFor(a,unit);if(!r.submitted)return;const err=validate(r,a,true);if(err){toast(err);return}r.published={activities:clone(r.activities),rows:clone(r.rows)};audit('Publicación a familias: '+fullAssignment(a)+' · Bimestre '+unit);persist();draft=null;render();toast('Boleta actualizada para las familias.')}
 function periodView(){return heading('Control de bimestres','Habilita el período de trabajo para los docentes.')+panel('Control del ciclo escolar',`<div class="panelbody"><div class="periodgrid">${[1,2,3,4].map(u=>`<article class="selection"><h2>Bimestre ${u}</h2><p>${u===db.active?'Habilitado para docentes':u<db.active?'Cerrado · solo consulta':'Aún no habilitado'}</p>${button(u===db.active?'Período actual':'Habilitar','enable',u,u!==db.active)}</article>`).join('')}</div><p class="sub" style="margin-top:20px">Cambiar de bimestre bloquea la edición docente de los otros períodos. Las correcciones de períodos anteriores las realiza Dirección con un motivo.</p></div>`)}
@@ -1298,7 +1298,17 @@ async function setPassword(a,p,temp=true){a.salt=id();a.passwordHash=await hash(
 function accountFields(type,a){return `<label class="field">Nombre completo<input name="name" required maxlength="90" value="${E(a?.name||'')}"></label>${type==='teacher'?`<label class="field">Asignatura principal<input name="subject" required maxlength="60" value="${E(a?.subject||'')}"></label><fieldset><legend>Cursos y grados asignados</legend>${db.assignments.map(x=>`<label class="check"><input type="checkbox" name="links" value="${x.id}" ${a&&x.teacher===a.id?'checked':''}> ${fullAssignment(x)}</label>`).join('')}</fieldset><p class="sub">Seleccionar un curso lo reasigna a este docente.</p>`:type==='family'?`<label class="field">Correo del encargado (opcional)<input type="email" name="email" value="${E(a?.email||'')}"></label><fieldset><legend>Estudiantes a cargo</legend>${db.students.map(s=>`<label class="check"><input type="checkbox" name="links" value="${s.id}" ${a?.children?.includes(s.id)?'checked':''}> ${E(s.name)} · ${groupName(s.group)}</label>`).join('')}</fieldset>`:'<p class="sub">Puede administrar usuarios, calificaciones, períodos y pagos.</p>'}`}
 function newAccount(type,existing=null){if(role!=='admin')return;form(existing?'Editar cuenta':'Registrar '+(type==='teacher'?'profesor':type==='family'?'encargado':'administrador'),accountFields(type,existing),async f=>{const name=f.get('name').trim(),links=f.getAll('links');if(!name)return;if(type!=='admin'&&!links.length){toast('Selecciona al menos un '+(type==='teacher'?'curso.':'estudiante.'));return}const a=existing||{id:id(),type,enabled:true,user:username(name)};const assigned=type==='teacher'?db.assignments.filter(x=>links.includes(x.id)&&x.teacher!==a.id):[];if(assigned.some(x=>x.teacher)&&!(await window.lsbPwaConfirm('Se reasignarán '+assigned.length+' cursos a este docente. ¿Continuar?',{title:'Reasignar cursos'})))return;a.name=name;a.subject=String(f.get('subject')||'').trim();a.email=String(f.get('email')||'').trim();if(type==='family')a.children=links;if(type==='teacher')db.assignments.forEach(x=>{if(links.includes(x.id))x.teacher=a.id;else if(x.teacher===a.id)x.teacher=''});let password;if(!existing){password=passphrase();await setPassword(a,password);db.accounts.push(a)}audit((existing?'Actualización':'Registro')+' de cuenta: '+name);persist();$('#dialog').close();render();if(password)credentials(a,password);else toast('Cuenta actualizada.')},existing?'Guardar cambios':'Guardar y generar acceso')}
 function credentials(a,p){modal(`<h2>Acceso de prueba generado</h2><p class="sub">${E(a.name)}</p><div class="credential"><label>Usuario<strong>${E(a.user)}</strong></label><label>Contraseña temporal<strong>${E(p)}</strong></label></div><p class="sub">Palabras aleatorias para facilitar la lectura. Se muestra una sola vez y debe cambiarse al ingresar. No uses contraseñas reales en este prototipo.</p><div class="toolbar"><button class="button secondary" id="downloadaccess">Descargar ficha</button><button class="button" data-close>Listo</button></div>`);$('#downloadaccess').onclick=()=>download(`SAN BENITO · ACCESO DE PRUEBA\nNombre: ${a.name}\nUsuario: ${a.user}\nContraseña temporal: ${p}\nCambiar al ingresar. Solo funciona en este archivo y navegador.`,a.user+'.txt','text/plain')}
-function accountDetail(aid){if(role!=='admin')return;const a=db.accounts.find(a=>a.id===aid);modal(`<h2>${E(a.name)}</h2><p>Usuario: <b>${E(a.user)}</b></p><p>${badge(a.enabled?'Activo':'Suspendido',a.enabled?'green':'')}</p><div class="notice"><h3>${a.passwordHash?'Recuperación de acceso':'Acceso todavía no generado'}</h3><p>${a.passwordHash?'La contraseña anterior no se puede consultar. Puedes generar una nueva contraseña temporal.':'Esta cuenta de ejemplo no tiene contraseña. Genera su primer acceso para probar el inicio de sesión.'}</p></div><div class="toolbar"><button class="button secondary" data-close>Cerrar</button><button class="button secondary" id="editaccount">Editar datos</button>${!a.owner?`<button class="button secondary" id="toggleaccount">${a.enabled?'Suspender':'Activar'}</button>`:''}<button class="button" id="resetpass">${a.passwordHash?'Restablecer contraseña':'Generar primer acceso'}</button></div>`);$('#editaccount').onclick=()=>newAccount(a.type,a);if($('#toggleaccount'))$('#toggleaccount').onclick=()=>{a.enabled=!a.enabled;audit((a.enabled?'Activación':'Suspensión')+' de '+a.name);persist();$('#dialog').close();render()};$('#resetpass').onclick=async()=>{if(a.passwordHash&&!(await window.lsbPwaConfirm('La contraseña anterior dejará de funcionar. ¿Continuar?',{title:'Restablecer contraseña'})))return;const p=passphrase();await setPassword(a,p);audit('Generación de acceso: '+a.name);persist();$('#dialog').close();render();credentials(a,p)}}
+function accountDetail(aid){
+ if(role!=='admin')return;
+ const a=db.accounts.find(x=>x.id===aid);if(!a)return;
+ const real=typeof LSB18!=='undefined'&&LSB18?.authenticated===true;
+ const title=real?'Acceso institucional protegido':'Administración de acceso local';
+ const message=real?'La disponibilidad del acceso depende de Supabase Auth. La ausencia de un hash local no indica que esta cuenta carezca de acceso. Utiliza los procedimientos institucionales de invitación y recuperación; aquí no se muestra ni se crea una contraseña real.':(a.passwordHash?'La contraseña anterior no se puede consultar. Puedes generar una nueva contraseña temporal en el entorno local.':'Este perfil del entorno local no tiene contraseña guardada.');
+ modal(`<h2>${E(a.name)}</h2><p>Usuario: <b>${E(a.user)}</b></p><p>${badge(a.enabled?'Activo':'Suspendido',a.enabled?'green':'')}</p><div class="notice"><h3>${title}</h3><p>${message}</p></div><div class="toolbar"><button class="button secondary" data-close>Cerrar</button><button class="button secondary" id="editaccount">Editar datos</button>${!a.owner?`<button class="button secondary" id="toggleaccount">${a.enabled?'Suspender':'Activar'}</button>`:''}${real?'':`<button class="button" id="resetpass">${a.passwordHash?'Restablecer contraseña':'Generar primer acceso'}</button>`}</div>`);
+ $('#editaccount').onclick=()=>newAccount(a.type,a);
+ if($('#toggleaccount'))$('#toggleaccount').onclick=()=>{a.enabled=!a.enabled;audit((a.enabled?'Activación':'Suspensión')+' de '+a.name);persist();$('#dialog').close();render()};
+ if($('#resetpass'))$('#resetpass').onclick=async()=>{if(a.passwordHash&&!(await window.lsbPwaConfirm('La contraseña anterior dejará de funcionar. ¿Continuar?',{title:'Restablecer contraseña'})))return;const p=passphrase();await setPassword(a,p);audit('Generación de acceso: '+a.name);persist();$('#dialog').close();render();credentials(a,p)};
+}
 function download(content,name,mime){const url=URL.createObjectURL(new Blob([content],{type:mime+';charset=utf-8'})),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}
 function correctGrades(sid){if(role!=='admin')return;const a=assignmentFor(),r=recordFor(a,unit),s=roster(a).find(s=>s.id===sid);if(!s)return;form('Corregir notas · '+E(s.name),r.activities.map((t,i)=>`<label class="field">${E(t.name)} / ${t.max}<input type="number" name="v${i}" min="0" max="${t.max}" step="0.01" value="${r.rows[sid]?.[i]?.grade??''}"></label>`).join('')+'<label class="field">Motivo de la corrección<textarea name="reason" required minlength="5" rows="2"></textarea></label><p class="sub">Si la boleta ya fue publicada, la corrección actualizará también la nota visible para la familia.</p>',f=>{const reason=f.get('reason').trim();if(reason.length<5)return;const values=r.activities.map((t,i)=>{const v=f.get('v'+i);return v===''?null:Number(v)});if(values.some((v,i)=>v!==null&&(!Number.isFinite(v)||v<0||v>r.activities[i].max)))return;if(r.submitted&&values.some(v=>v===null)){toast('Una nota cerrada no puede quedar vacía.');return}values.forEach((v,i)=>{const cell=r.rows[sid][i];cell.grade=v;if(v===null)cell.status='Pendiente';else if(cell.status==='Pendiente'||cell.status==='No entregada'&&v>0)cell.status='Entregada'});if(r.published)r.published.rows[sid]=clone(r.rows[sid]);audit('Corrección de '+s.name+' · '+fullAssignment(a)+' · Bimestre '+unit+' · Motivo: '+reason);persist();draft=null;$('#dialog').close();render();toast('Corrección guardada y registrada.')})}
 function newStudent(){if(role!=='admin')return;form('Registrar estudiante','<label class="field">Nombre completo<input name="name" required maxlength="90"></label><label class="field">Grado y sección<select name="group">'+options(db.groups,chosenGroup||'5b')+'</select></label><label class="field">Código personal<input name="code" required maxlength="30"></label>',f=>{const name=f.get('name').trim(),code=f.get('code').trim(),g=f.get('group');if(!name||!code)return;if(db.students.some(s=>s.code.toLowerCase()===code.toLowerCase())){toast('El código personal ya está registrado.');return}const s={id:id(),name,code,group:g};db.students.push(s);for(const a of db.assignments.filter(a=>a.group===g))for(let u=1;u<=4;u++){const r=recordFor(a,u);r.rows[s.id]=r.activities.map(()=>({grade:null,status:'Pendiente'}));}db.payments[s.id]={};audit('Registro de estudiante: '+name);persist();$('#dialog').close();render();toast('Estudiante registrado. Vincula ahora su encargado en Familias.')})}
@@ -1712,7 +1722,7 @@ const settingsBase9=settings7;
 settings7=function(){let h=settingsBase9().replace('El acceso mantiene el diseño institucional claro.','Elige el aspecto de tu espacio.').replace('</div><div><h3>Color institucional',`${role==='admin'?'<button data-pref="theme:glass" class="'+(user.preferences.theme==='glass'?'selected':'')+'">Vidrio</button>':''}</div><div><h3>Color institucional`);h=h.replace('</div></div></section>','</div></div></section>');h=h.replace('<div class="swatches">','<div class="swatches"><button data-pref="accent:purple" title="Morado" aria-label="Morado" style="--swatch:#9566df">'+(user.preferences.accent==='purple'?'✓':'')+'</button>');if(role==='teacher')h+=panel('Acceso desde tu dispositivo','<div class="panelbody"><h3>Huella o clave de acceso</h3><p class="sub">Vista previa de configuración. La activación estará disponible cuando Dirección la autorice y la plataforma tenga el servicio de acceso conectado. En este borrador ingresa con usuario y contraseña.</p><button class="button secondary" disabled>Disponible en la versión conectada</button></div>');return h};
 const accountBase9=accountDetail;
 accountDetail=function(aid){accountBase9(aid);const a=db.accounts.find(x=>x.id===aid);if(role!=='admin'||a?.type!=='family'||isArchived())return;const staged=clone(a.permissions||{});$$('#dialog [data-permission]').forEach(e=>e.onchange=()=>{const k=e.dataset.permission+'ByStudent';staged[k]??={};staged[k][e.dataset.sid]??={};staged[k][e.dataset.sid][e.dataset.u]=e.checked;$('#permissionstatus9').textContent='Cambios pendientes de guardar.'});$('.permissionbox').insertAdjacentHTML('beforeend','<p id="permissionstatus9" role="status" class="sub">Revisa los permisos y confirma para aplicarlos.</p><button class="button" id="savepermissions9">Guardar y aplicar permisos</button>');$('#savepermissions9').onclick=()=>{const previous=a.permissions;a.permissions=staged;if(!persist()){a.permissions=previous;return}audit('Permisos confirmados para '+a.name);persist();$('#permissionstatus9').textContent='✓ Permisos guardados. Se aplicarán a la vista de esta familia.';toast('Permisos guardados correctamente.')};};
-function activityForm9(index){const a=assignmentFor();if(!a||!editable(a,recordFor(a,unit)))return;const t=index===null?{name:'',max:10,description:'',date:''}:draft.activities[index];const academicYear=Number(cycleYear());const academicYearValid=Number.isInteger(academicYear)&&academicYear>=2000&&academicYear<=2100;const dateMinimum=academicYearValid?`${academicYear}-01-01`:'';const dateMaximum=academicYearValid?`${academicYear}-12-31`:'';const currentDay=new Date().toISOString().slice(0,10);const suggestedDate=t.date||(academicYearValid?(currentDay.startsWith(`${academicYear}-`)?currentDay:dateMinimum):currentDay);form(index===null?'Añadir actividad':'Editar actividad',`<label class="field">Nombre de la actividad<input name="name" required maxlength="100" value="${E(t.name)}"></label><div class="formrow"><label class="field">Valor en puntos<input name="max" type="number" min="1" max="100" step="0.01" required value="${t.max}"></label><label class="field">Fecha de entrega<input name="date" type="date" required ${academicYearValid?`min="${dateMinimum}" max="${dateMaximum}"`:``} value="${E(suggestedDate)}"></label></div><label class="field">Descripción e instrucciones (opcional)<textarea name="description" rows="4" maxlength="2000" placeholder="Explica qué debe realizar y entregar el estudiante.">${E(t.description||'')}</textarea></label><p class="sub">La descripción es opcional. La fecha debe pertenecer al ciclo escolar seleccionado; los límites por bimestre se configurarán desde Dirección.</p>`,f=>{const max=Number(f.get('max')),name=f.get('name').trim(),description=f.get('description').trim();if(!name||!Number.isFinite(max)||max<=0||max>100)throw Error('Indica el nombre y un punteo válido.');const enteredDate=String(f.get('date')||'');if(!enteredDate||academicYearValid&&!enteredDate.startsWith(`${academicYear}-`))throw Error('La fecha de entrega debe pertenecer al ciclo escolar '+academicYear+'.');if(index!==null&&roster(a).some(s=>(draft.rows[s.id]?.[index]?.grade??0)>max))throw Error('El valor es menor que una nota registrada.');const data={name,max,description,date:f.get('date')};if(index===null){draft.activities.push({id:id(),...data});roster(a).forEach(s=>{draft.rows[s.id]??=[];draft.rows[s.id].push({grade:null,status:'Pendiente'})})}else Object.assign(t,data);$('#dialog').close();render();$('#savestate').textContent='Cambios sin guardar'});}
+function activityForm9(index){const a=assignmentFor();if(!a||!editable(a,recordFor(a,unit)))return;const t=index===null?{name:'',max:10,description:'',date:''}:draft.activities[index];const academicYear=Number(cycleYear());const academicYearValid=Number.isInteger(academicYear)&&academicYear>=2000&&academicYear<=2100;const dateMinimum=academicYearValid?`${academicYear}-01-01`:'';const dateMaximum=academicYearValid?`${academicYear}-12-31`:'';const currentDay=new Date().toISOString().slice(0,10);const suggestedDate=t.date||(academicYearValid?(currentDay.startsWith(`${academicYear}-`)?currentDay:dateMinimum):currentDay);form(index===null?'Añadir actividad':'Editar actividad',`<label class="field">Nombre de la actividad<input name="name" required maxlength="100" value="${E(t.name)}"></label><div class="formrow"><label class="field">Valor en puntos<input name="max" type="number" min="1" max="100" step="0.01" required value="${t.max}"></label><label class="field">Fecha de entrega<input name="date" type="date" required ${academicYearValid?`min="${dateMinimum}" max="${dateMaximum}"`:``} value="${E(suggestedDate)}"></label></div><label class="field">Descripción e instrucciones (opcional)<textarea name="description" rows="4" maxlength="2000" placeholder="Explica qué debe realizar y entregar el estudiante.">${E(t.description||'')}</textarea></label><p class="sub">La fecha debe estar dentro del bimestre habilitado en Dirección. Si la fecha propuesta no pertenece al período, se ajustará al primer día permitido.</p>`,f=>{const max=Number(f.get('max')),name=f.get('name').trim(),description=f.get('description').trim();if(!name||!Number.isFinite(max)||max<=0||max>100)throw Error('Indica el nombre y un punteo válido.');const enteredDate=String(f.get('date')||'');if(!enteredDate||academicYearValid&&!enteredDate.startsWith(`${academicYear}-`))throw Error('La fecha de entrega debe pertenecer al ciclo escolar '+academicYear+'.');if(index!==null&&roster(a).some(s=>(draft.rows[s.id]?.[index]?.grade??0)>max))throw Error('El valor es menor que una nota registrada.');const data={name,max,description,date:f.get('date')};if(index===null){draft.activities.push({id:id(),...data});roster(a).forEach(s=>{draft.rows[s.id]??=[];draft.rows[s.id].push({grade:null,status:'Pendiente'})})}else Object.assign(t,data);$('#dialog').close();render();$('#savestate').textContent='Cambios sin guardar'});}
 const deliveryBase9=deliveries;deliveries=function(aid){deliveryBase9(aid);const a=db.assignments.find(x=>x.id===aid);if(!a)return;const r=recordFor(a,unit);$$('#dialog tbody tr').forEach((tr,i)=>{const t=r.activities[i];if(t)tr.children[0].insertAdjacentHTML('beforeend',`<small class="activitydesc9">${E(t.description||'El docente todavía no ha añadido instrucciones.')}<br>Entrega: ${E(t.date||'Sin fecha')} · Valor: ${t.max} puntos</small>`)});};
 let month9=new Date(new Date().getFullYear(),new Date().getMonth(),1),day9=new Date().toISOString().slice(0,10);
 const date9=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
@@ -3760,8 +3770,8 @@ async function commit(plan,btn){
       }
       input.min=data.start_date;input.max=data.end_date;
       if(!input.value||input.value<data.start_date||input.value>data.end_date){
-        if(!input.value)input.value=data.start_date;
-      }
+         input.value=data.start_date;
+       }
       const validate=()=>input.setCustomValidity(input.value&&(input.value<data.start_date||input.value>data.end_date)
           ?`Selecciona una fecha entre ${formatDate(data.start_date)} y ${formatDate(data.end_date)}.`:'');
       input.addEventListener('input',validate);input.addEventListener('change',validate);validate();
@@ -3974,8 +3984,8 @@ window.lsbMountPeriodHistory122=function(year,holder){
    if(badge&&badge.textContent.includes('Registro de solo lectura'))badge.textContent='Cerrado por Dirección · solo lectura';
    if(foot)foot.textContent='Bimestre cerrado por Dirección. Puedes consultar o exportar el registro, pero no modificar notas, actividades ni entregas.';
   } else if(state==='open'){
-   if(badge&&badge.textContent.includes('Registro de solo lectura'))badge.textContent='Pendiente de habilitación · solo lectura';
-   if(foot)foot.textContent='Este bimestre aún no está habilitado para editar por el docente. Puedes consultar o exportar el registro.';
+   if(badge&&badge.textContent.includes('Registro de solo lectura'))badge.textContent=ctx.role==='admin'?'Consulta de Dirección · solo lectura':'No habilitado para edición · solo lectura';
+   if(foot)foot.textContent=ctx.role==='admin'?'Consulta de Dirección. El registro de entregas corresponde al docente autorizado.':'Este bimestre aún no está habilitado para editar por el docente. Puedes consultar o exportar el registro.';
   }
  }
  function deny(button,message){
@@ -3996,7 +4006,7 @@ window.lsbMountPeriodHistory122=function(year,holder){
    notice(root,ctx,state);
    const enabled=state==='open'&&ctx.role==='teacher'&&typeof editable==='function'&&editable(assignmentFor(),recordFor(assignmentFor(),ctx.bimester));
    if(enabled){btn.disabled=false;btn.title='Registrar estados de entrega';btn.textContent='Registrar entregas';btn.removeAttribute('aria-disabled')}
-   else deny(btn,state==='closed'?'El bimestre está cerrado por Dirección.':'El bimestre todavía no está habilitado para edición.');
+   else deny(btn,state==='closed'?'El bimestre está cerrado por Dirección.':ctx.role==='admin'?'Consulta de Dirección; registro de entregas a cargo del docente autorizado.':'El bimestre todavía no está habilitado para edición.');
   }catch(e){
    if(token!==latest)return;
    deny(btn,'No se pudo verificar el estado en Supabase.');
@@ -4018,7 +4028,7 @@ window.lsbMountPeriodHistory122=function(year,holder){
    const current=context();
    if(!current||current.assignment!==ctx.assignment||current.bimester!==ctx.bimester)return;
    if(state==='closed'){toast('Bimestre cerrado por Dirección. No se pueden registrar entregas.');return}
-   if(ctx.role!=='teacher'||!editable(assignmentFor(),recordFor(assignmentFor(),ctx.bimester))){toast('Este bimestre todavía no está habilitado para registrar entregas.');return}
+   if(ctx.role!=='teacher'||!editable(assignmentFor(),recordFor(assignmentFor(),ctx.bimester))){toast(ctx.role==='admin'?'Consulta de Dirección: las entregas las registra el docente autorizado.':'Este bimestre todavía no está habilitado para registrar entregas.');return}
    reentry=true;b.disabled=false;b.click();
   }catch(e){toast('No se pudo verificar el estado académico. No se realizó ningún cambio.');console.warn(e.message)}
   finally{reentry=false;queueMicrotask(sync)}
@@ -7145,7 +7155,18 @@ function bind(){const app=document.getElementById('app');if(!app)return;
  const filterSelect=app.querySelector('#f71-filter');if(filterSelect)filterSelect.onchange=()=>{filter=filterSelect.value;draw()};
  const formElement=app.querySelector('#f71-form');if(!formElement)return;
  const students=formElement.elements.enrollment_id,course=formElement.elements.assignment_id,reason=formElement.elements.reason;
- students.onchange=()=>{const options=targets.filter(t=>t.enrollment_id===students.value);app.querySelector('#f71-section').value=options[0]?.section_name||'';course.innerHTML='<option value="">Seleccionar asignatura</option>'+options.map(t=>'<option value="'+esc(t.teaching_assignment_id)+'">'+esc(t.course_name)+'</option>').join('')};
+ students.onchange=()=>{
+  const options=targets.filter(t=>t.enrollment_id===students.value);
+  const enrollment=LSB18.enrollById?.[students.value];
+  const sections=LSB18.rows?.lsb_sections||[];
+  const section=sections.find(x=>x.id===enrollment?.section_id);
+  const offer=(LSB18.rows?.lsb_offering_grades||[]).find(x=>x.id===section?.offering_grade_id);
+  const grade=(LSB18.rows?.lsb_grades||[]).find(x=>x.id===offer?.grade_id);
+  const year=(LSB18.rows?.lsb_school_years||[]).find(x=>x.id===section?.school_year_id);
+  const display=section&&grade&&year?[grade.name,section.name,year.year].filter(Boolean).join(' · '):'';
+  app.querySelector('#f71-section').value=display||'No se pudo verificar el grado de esta matrícula';
+  course.innerHTML='<option value="">Seleccionar asignatura</option>'+options.map(t=>'<option value="'+esc(t.teaching_assignment_id)+'">'+esc(t.course_name)+'</option>').join('');
+ };
  reason.onchange=()=>{const wrap=app.querySelector('#f71-other-wrap');wrap.hidden=reason.value!=='otro';formElement.elements.other_reason.required=!wrap.hidden};
  formElement.onsubmit=async e=>{e.preventDefault();if(busy)return;busy=true;const submit=formElement.querySelector('[type="submit"]');submit.disabled=true;
  try{const x=new FormData(formElement);const payload={p_enrollment_id:x.get('enrollment_id'),p_teaching_assignment_id:x.get('assignment_id'),p_reason:x.get('reason'),p_description:String(x.get('description')||'').trim(),p_other_reason:x.get('reason')==='otro'?String(x.get('other_reason')||'').trim():null};
@@ -11391,86 +11412,74 @@ action=function(name,arg){if(name==='lsb1574-goto-cycles'){go('cycles');return;}
 })();
 
 </script>
-<script id="lsb-f161-calificaciones">
-/* F161: Acciones superiores y autoselección de Entregada al escribir nota.
-   No cambia Supabase ni los permisos. No guarda automáticamente. */
+<script id="lsb-f163-calificaciones">
+/* F163 · H01/H02. No SQL changes: calificaciones y entregas tienen RPC distintas.
+ * No se anuncia persistencia de entregas desde Guardar borrador.
+ * El control oficial de entregas permanece en su modal autorizado. */
 (function(){
  'use strict';
+ const SELECTOR='select[data-delivery]';
  function css(){
-  if(document.getElementById('lsb-f161-css'))return;
-  const st=document.createElement('style');st.id='lsb-f161-css';
-  st.textContent=[
-    '.lsb-f161-bar{margin:12px 18px 18px;padding:14px 16px;border:1px solid var(--line,#dce0ec);border-radius:12px;}',
-    '.lsb-f161-actions{display:flex;flex-wrap:wrap;align-items:stretch;gap:9px;}',
-    '.lsb-f161-actions>.button,.lsb-f161-actions>details>summary{display:inline-flex;align-items:center;justify-content:center;min-height:42px;white-space:normal;text-align:center;cursor:pointer;}',
-    '.lsb-f161-more{position:relative}.lsb-f161-more summary{list-style:none;user-select:none}.lsb-f161-more summary::-webkit-details-marker{display:none}',
-    '.lsb-f161-items{position:absolute;right:0;top:calc(100% + 6px);z-index:80;width:min(310px,calc(100vw - 48px));display:grid;gap:8px;padding:12px;border:1px solid var(--line,#dce0ec);border-radius:11px;background:var(--lsb-panel-bg,var(--card-bg,#fff));box-shadow:0 12px 36px rgba(23,31,75,.17)}',
-    '.lsb-f161-more:not([open]) .lsb-f161-items{display:none}.lsb-f161-items .button{width:100%;white-space:normal;text-align:left}',
-    '.lsb-f161-status{margin-top:11px;display:flex;gap:10px;flex-wrap:wrap}.lsb-f161-status #savestate{max-width:100%;white-space:normal}',
-    '.lsb-f161-tip{margin:10px 0 0;font-size:12px;line-height:1.5;opacity:.8}',
-    '@media(max-width:650px){.lsb-f161-bar{margin:10px 12px 16px;padding:12px}.lsb-f161-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.lsb-f161-actions>.button,.lsb-f161-actions>details>summary{width:100%;min-width:0;padding:10px 8px;font-size:12px}.lsb-f161-items{right:0}}'
-  ].join('');
+  if(document.getElementById('lsb-f163-css'))return;
+  const st=document.createElement('style');st.id='lsb-f163-css';
+  st.textContent=`
+   .lsb-f161-bar{margin:12px 18px 18px;padding:14px 16px;border:1px solid var(--line,#dce0ec);border-radius:12px;background:var(--surface,#fff)}
+   .lsb-f161-actions{display:flex;flex-wrap:wrap;align-items:stretch;gap:9px}
+   .lsb-f161-actions>.button,.lsb-f161-actions>details>summary{display:inline-flex;align-items:center;justify-content:center;min-height:42px;white-space:normal;text-align:center;cursor:pointer}
+   .lsb-f161-more{position:relative}.lsb-f161-more summary{list-style:none;user-select:none}.lsb-f161-more summary::-webkit-details-marker{display:none}
+   .lsb-f161-items{position:absolute;right:0;top:calc(100% + 6px);z-index:80;width:min(315px,calc(100vw - 48px));display:grid;gap:8px;padding:12px;border:1px solid var(--line,#dce0ec);border-radius:11px;background:var(--surface,#fff);box-shadow:0 12px 36px rgba(23,31,75,.17)}
+   .lsb-f161-more:not([open]) .lsb-f161-items{display:none}.lsb-f161-items .button{width:100%;white-space:normal;text-align:left;justify-content:flex-start}
+   .lsb-f161-status{margin-top:11px;display:flex;gap:10px;flex-wrap:wrap}.lsb-f161-status #savestate{max-width:100%;white-space:normal}
+   .lsb-f161-tip{margin:10px 0 0;font-size:12px;line-height:1.6;opacity:.9}
+   .lsb-f163-split{display:block;font-size:11px;margin-top:6px;color:var(--muted,#667085);white-space:normal;max-width:150px;line-height:1.35}
+   @media(max-width:650px){.lsb-f161-bar{margin:10px 12px 16px;padding:12px}.lsb-f161-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.lsb-f161-actions>.button,.lsb-f161-actions>details>summary{width:100%;min-width:0;padding:10px 8px;font-size:12px}.lsb-f161-items{right:0}}
+  `;
   document.head.appendChild(st);
  }
  function canEdit(){
   try{
-   if(typeof page==='undefined'||page!=='grade'||typeof role==='undefined'||role!=='teacher'||!draft)return false;
+   if(page!=='grade'||role!=='teacher'||!draft)return false;
    const a=assignmentFor();
    return !!a&&editable(a,recordFor(a,unit))&&!(typeof LSB_F2!=='undefined'&&LSB_F2.gradeBusy);
   }catch(_){return false;}
  }
- function linkInputs(panel){
+ function gradeInputs(panel){
   if(!canEdit())return;
-  const find=(type,id,i)=>[...panel.querySelectorAll(type)].find(e=>e.dataset[type==='input[data-grade]'?'grade':'delivery']===id&&Number(e.dataset.i)===i);
-  function total(id){
-   const el=document.getElementById('sum-'+id);
-   if(el)el.textContent=fmt(sum(draft.rows[id]));
-  }
-  function dirty(){
-   const el=document.getElementById('savestate');
-   if(el)el.textContent='Cambios sin guardar';
-  }
-  panel.querySelectorAll('input[data-grade]').forEach(el=>{
-   const id=el.dataset.grade, i=Number(el.dataset.i);
-   if(!Number.isInteger(i)||!draft?.rows?.[id]?.[i])return;
-   el.disabled=false;
-   el.oninput=()=>{
-    if(!canEdit()||el.validity.badInput)return;
-    const cell=draft?.rows?.[id]?.[i];if(!cell)return;
-    const raw=el.value.trim();
-    if(raw===''){cell.grade=null;cell.status='Pendiente';}
-    else {const val=Number(raw);if(!Number.isFinite(val))return;cell.grade=val;cell.status='Entregada';}
-    const select=find('select[data-delivery]',id,i);
-    if(select)select.value=cell.status;
-    total(id);dirty();
-   };
+  // No selector de entregas en el editor de notas: el estado persistido se gestiona por su RPC independiente.
+  panel.querySelectorAll(SELECTOR).forEach(el=>{
+   const note=document.createElement('small');note.className='lsb-f163-split';
+   note.textContent='Entrega: registrar por separado';el.replaceWith(note);
   });
-  panel.querySelectorAll('select[data-delivery]').forEach(el=>{
-   const id=el.dataset.delivery,i=Number(el.dataset.i);
-   if(!Number.isInteger(i)||!draft?.rows?.[id]?.[i])return;
-   el.onchange=()=>{
-    if(!canEdit())return;
-    const cell=draft?.rows?.[id]?.[i];if(!cell)return;
-    if(el.value==='Entregada')cell.status='Entregada'; // Conserva un cero válido.
-    else if(typeof setDelivery==='function')setDelivery(cell,el.value);
-    else {cell.status=el.value;cell.grade=el.value==='No entregada'?0:null;}
-    const input=find('input[data-grade]',id,i);
-    if(input){input.value=cell.grade==null?'':String(cell.grade);input.disabled=false;}
-    total(id);dirty();
+  panel.querySelectorAll('input[data-grade]').forEach(input=>{
+   const sid=input.dataset.grade, i=Number(input.dataset.i);
+   if(!Number.isInteger(i)||!draft?.rows?.[sid]?.[i])return;
+   input.disabled=false;
+   input.oninput=()=>{
+    if(!canEdit()||input.validity.badInput)return;
+    const cell=draft?.rows?.[sid]?.[i];if(!cell)return;
+    const raw=input.value.trim();
+    if(raw===''){cell.grade=null;cell.status='Pendiente';}
+    else {const v=Number(raw);if(!Number.isFinite(v))return;cell.grade=v;cell.status='Entregada';}
+    const total=[...panel.querySelectorAll('[id^="sum-"]')].find(e=>e.id==='sum-'+sid);
+    if(total)total.textContent=fmt(sum(draft.rows[sid]));
+    const savestate=document.getElementById('savestate');
+    if(savestate)savestate.textContent='Calificaciones sin guardar';
    };
   });
  }
  function apply(){
-  if(typeof page==='undefined'||page!=='grade'||typeof role==='undefined'||role!=='teacher')return;
-  const app=document.getElementById('app');if(!app||app.querySelector('#lsb-f161-bar'))return;
-  const panel=[...app.querySelectorAll('section.panel')].find(p=>p.querySelector('input[data-grade]'));
-  if(!panel||!canEdit())return;
+  if(page!=='grade'||role!=='teacher')return;
+  const app=document.getElementById('app');if(!app)return;
   const add=app.querySelector('[data-action="addactivity"]');
   const save=app.querySelector('[data-action="savedraft"]');
   const restore=document.getElementById('lsb-f1635-restore');
   const status=document.getElementById('savestate');
-  if(!add||!save||!status)return;
+  if(!canEdit()||!add||!save||!status)return;
+  // H02: también funciona sin actividades, cuando no existen input[data-grade].
+  const panel=add.closest('section.panel,div.panel')||status.closest('section.panel,div.panel');
+  if(!panel)return;
   css();
+  if(app.querySelector('#lsb-f161-bar')){gradeInputs(panel);return;}
   const bottom=add.parentElement;
   const bar=document.createElement('div');bar.id='lsb-f161-bar';bar.className='lsb-f161-bar';
   bar.setAttribute('aria-label','Acciones del registro de calificaciones');
@@ -11484,6 +11493,8 @@ action=function(name,arg){if(name==='lsb1574-goto-cycles'){go('cycles');return;}
    actions.appendChild(restore);
   }
   const menu=document.createElement('div');menu.className='lsb-f161-items';
+  const delivery=document.getElementById('open1811');
+  if(delivery){delivery.className='button secondary';delivery.title='El registro de entregas se guarda por separado';menu.appendChild(delivery);}
   ['csv','progress7','submit'].forEach(key=>{
    const button=app.querySelector('.heading [data-action="'+key+'"]');
    if(button){button.className='button secondary';menu.appendChild(button);}
@@ -11491,27 +11502,25 @@ action=function(name,arg){if(name==='lsb1574-goto-cycles'){go('cycles');return;}
   if(menu.childElementCount){
    const more=document.createElement('details');more.className='lsb-f161-more';
    const summary=document.createElement('summary');summary.className='button secondary';
-   summary.textContent='Más opciones ▾';
-   more.append(summary,menu);actions.appendChild(more);
+   summary.textContent='Más opciones ▾';more.append(summary,menu);actions.appendChild(more);
   }
   bar.appendChild(actions);
   const statusRow=document.createElement('div');statusRow.className='lsb-f161-status';
   statusRow.appendChild(status);bar.appendChild(statusRow);
   const hint=document.createElement('p');hint.className='lsb-f161-tip';
-  hint.textContent='Escribir una nota, incluso 0, marca Entregada. Dejarla vacía marca Pendiente. Solo Guardar borrador envía cambios a Supabase.';
+  hint.textContent='Guardar borrador guarda calificaciones, no entregas. Los estados oficiales se guardan en Más opciones → Registrar entregas. Una nota de 0 es válida; una nota vacía no se guarda como cero.';
   bar.appendChild(hint);
   const head=panel.querySelector('.panelhead');
   if(head)head.insertAdjacentElement('afterend',bar);else panel.prepend(bar);
   const oldMenu=app.querySelector('.heading .savemenu9');
   if(oldMenu&&!oldMenu.querySelector('[data-action]'))oldMenu.remove();
   if(bottom&&!bottom.children.length)bottom.remove();
-  linkInputs(panel);
+  gradeInputs(panel);
  }
  if(typeof render!=='function')return;
- const oldRender=render;
- render=function(){const r=oldRender.apply(this,arguments);queueMicrotask(apply);return r;};
+ const priorRender=render;
+ render=function(){const r=priorRender.apply(this,arguments);queueMicrotask(apply);return r;};
  queueMicrotask(apply);
 })();
-
 </script>
 </body></html>

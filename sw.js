@@ -1,5 +1,6 @@
 // LSB PWA - static assets only. No auth, student information, academic responses or documents cached.
-const STATIC_CACHE='lsb-public-assets-v4-theme-nav-icon';
+// F163: recache corrected offline.html with an icon already in ASSETS.
+const STATIC_CACHE='lsb-public-assets-v5-f163-offline-icon';
 const ASSETS=['./icon-192-f1577.png','./icon-512-f1577.png','./icon-maskable-192-f1577.png','./icon-maskable-512-f1577.png','./manifest.webmanifest','./offline.html'];
 self.addEventListener('install',event=>{event.waitUntil(caches.open(STATIC_CACHE).then(cache=>cache.addAll(ASSETS)));self.skipWaiting();});
 self.addEventListener('activate',event=>{event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith('lsb-public-assets-')&&k!==STATIC_CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));});
