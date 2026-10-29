@@ -11647,4 +11647,28 @@ body.loginmode #profile-menu{display:none!important}
  refresh();
 })();
 </script>
+
+<style id="lsb-f1639-grade-scroll">
+/* F163.9 — Dirección: permitir desplazar toda la matriz de calificaciones.
+   Elimina solo la fijación de la primera columna que impedía recorrerla
+   cómodamente en móvil. Profesores, Familias, boletas y otras tablas intactos. */
+@media screen {
+ body.lsb-f23-director:not(.loginmode)[data-page="grade"] #app .tablewrap {
+   overflow-x: auto!important;
+   max-width:100%!important;
+   -webkit-overflow-scrolling:touch;
+   overscroll-behavior-x:contain;
+ }
+ body.lsb-f23-director:not(.loginmode)[data-page="grade"] #app .tablewrap :is(th,td):first-child {
+   position:static!important;
+   left:auto!important;
+   right:auto!important;
+   z-index:auto!important;
+   min-width:170px!important;
+   max-width:none!important;
+   width:auto!important;
+   box-shadow:none!important;
+ }
+}
+</style>
 </body></html>
