@@ -11221,4 +11221,109 @@ action=function(name,arg){if(name==='lsb1574-goto-cycles'){go('cycles');return;}
 })();
 
 </script>
+<script id="lsb-f159-apertura-real-bimestres">
+/* LSB F159 — corregir el estado "sin habilitar" de los bimestres.
+   La plataforma consulta Supabase y solo usa la RPC autorizada.
+   No concede privilegios ni modifica RLS. */
+(function () {
+  'use strict';
+  if (typeof lsbPeriodState12 !== 'function' || typeof lsb18Client !== 'function') return;
+  const stateBeforeF159 = lsbPeriodState12;
+  lsbPeriodState12 = async function (year, holder) {
+    await stateBeforeF159.apply(this, arguments);
+    if (!year?.id || !holder?.isConnected) return;
+    const client = lsb18Client();
+    const {data, error} = await client.from('lsb_bimester_states')
+      .select('bimester,is_open').eq('school_year_id', year.id);
+    if (error) return;
+    const configured = new Set((data || []).map(x => Number(x.bimester)));
+    for (let bimester = 1; bimester <= 4; bimester++) {
+      if (configured.has(bimester)) continue;
+      const slot = holder.querySelector('#lsb-period-control12-' + bimester);
+      if (!slot) continue;
+      slot.innerHTML =
+        '<p class="lsb-period-status12 closed">● Sin habilitar · solo lectura</p>' +
+        '<p class="sub">Guarda las fechas y habilita expresamente este bimestre para que el profesor pueda registrar actividades y calificaciones.</p>' +
+        '<button type="button" class="button" id="lsb-f159-enable-' + bimester + '">Habilitar bimestre ' + bimester + '</button>';
+      slot.querySelector('button').onclick = () => {
+        if (!LSB18?.authenticated || LSB18.profile?.role !== 'admin_general' || LSB18.profile?.active !== true) {
+          toast('Solo Dirección general activa puede habilitar bimestres.');
+          return;
+        }
+        if (slot.querySelector('.lsb-f159-confirm')) return;
+        const panel = document.createElement('div');
+        panel.className = 'lsb-period-confirm121 lsb-f159-confirm';
+        panel.innerHTML =
+          '<label>Motivo de habilitación (mínimo 15 caracteres)' +
+          '<textarea maxlength="1500" minlength="15" placeholder="Ejemplo: Habilitación del primer bimestre para pruebas académicas del ciclo 2027"></textarea></label>' +
+          '<p role="alert" aria-live="polite"></p>' +
+          '<div class="toolbar"><button type="button" class="button secondary" data-cancel>Cancelar</button>' +
+          '<button type="button" class="button" data-confirm>Confirmar habilitación</button></div>';
+        slot.appendChild(panel);
+        const toggle = slot.querySelector('#lsb-f159-enable-' + bimester);
+        toggle?.setAttribute('aria-expanded','true');
+        panel.querySelector('[data-cancel]').onclick = () => {
+          panel.remove();
+          toggle?.setAttribute('aria-expanded','false');
+        };
+        panel.querySelector('[data-confirm]').onclick = async () => {
+          const feedback = panel.querySelector('[role=alert]');
+          const reason = String(panel.querySelector('textarea').value || '').trim();
+          if (reason.length < 15) {
+            feedback.textContent = 'Explica la habilitación con al menos 15 caracteres.';
+            return;
+          }
+          const button = panel.querySelector('[data-confirm]');
+          button.disabled = true;
+          button.textContent = 'Verificando y guardando en Supabase…';
+          feedback.textContent = '';
+          try {
+            const {data:identity, error:identityError} = await client.auth.getUser();
+            if (identityError || !identity?.user?.id || LSB18.profile?.id !== identity.user.id) {
+              throw Error('La sesión no coincide con el perfil visible. Inicia sesión nuevamente como Dirección general.');
+            }
+            const {data:profile,error:profileError} = await client.from('lsb_profiles')
+              .select('id,role,active').eq('id', identity.user.id).single();
+            if (profileError || profile?.role !== 'admin_general' || profile.active !== true) {
+              throw Error('Supabase no confirmó una cuenta de Dirección general activa.');
+            }
+            const {data:calendar,error:calendarError} = await client.from('lsb_bimester_calendar')
+              .select('start_date,end_date').eq('school_year_id',year.id).eq('bimester',bimester).maybeSingle();
+            if (calendarError) throw calendarError;
+            if (!calendar?.start_date || !calendar?.end_date) {
+              throw Error('Primero guarda las fechas de inicio y finalización de este bimestre.');
+            }
+            const {data:previous,error:stateError} = await client.from('lsb_bimester_states')
+              .select('is_open').eq('school_year_id',year.id).eq('bimester',bimester).maybeSingle();
+            if (stateError) throw stateError;
+            if (previous) {
+              throw Error(previous.is_open ? 'El bimestre ya fue habilitado. Actualiza la pantalla.' : 'El bimestre ya tiene historial de cierre; utiliza Reabrir, no Habilitar.');
+            }
+            const {error:rpcError} = await client.rpc('lsb_set_bimester_open_secure', {
+              p_school_year_id:year.id,p_bimester:bimester,p_is_open:true,p_reason:reason
+            });
+            if (rpcError) throw rpcError;
+            const {data:saved,error:verifyError} = await client.from('lsb_bimester_states')
+              .select('is_open').eq('school_year_id',year.id).eq('bimester',bimester).maybeSingle();
+            if (verifyError || saved?.is_open !== true) {
+              throw Error('No se pudo confirmar la apertura en Supabase. Consulta el estado antes de repetir.');
+            }
+            await lsbPeriodState12(year,holder);
+            if (typeof lsbLoadPeriodHistory122 === 'function') {
+              try { await lsbLoadPeriodHistory122(year); } catch (e) { console.warn('LSB F159 historial:', e); }
+            }
+            toast('Bimestre ' + bimester + ' habilitado y verificado en Supabase.');
+          } catch (e) {
+            if (panel.isConnected) feedback.textContent = 'No se completó: ' + String(e?.message || e);
+            button.disabled = false;
+            button.textContent = 'Confirmar habilitación';
+          }
+        };
+        panel.querySelector('textarea').focus();
+      };
+    }
+  };
+})();
+
+</script>
 </body></html>
