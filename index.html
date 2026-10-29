@@ -11326,4 +11326,69 @@ action=function(name,arg){if(name==='lsb1574-goto-cycles'){go('cycles');return;}
 })();
 
 </script>
+<script id="lsb-f160-nombres-docentes">
+/* LSB F160 — Nombres de grados del docente, desde consulta autorizada.
+   El profesor recibe únicamente etiquetas de sus propias secciones.
+   No altera matrículas, notas, asignaciones ni políticas RLS. */
+(function () {
+  'use strict';
+  if (typeof lsb18Load !== 'function' ||
+      typeof lsb18Client !== 'function') return;
+
+  const oldLoad = lsb18Load;
+  lsb18Load = async function (...args) {
+    const result = await oldLoad.apply(this, args);
+    if (typeof LSB18 === 'undefined' ||
+        !LSB18.authenticated ||
+        LSB18.profile?.role !== 'profesor') return result;
+
+    try {
+      const {data, error} = await lsb18Client().rpc(
+        'lsb_teacher_section_labels_secure'
+      );
+      if (error) throw error;
+      if (!Array.isArray(data)) throw Error('Respuesta inválida del catálogo académico.');
+
+      const verified = new Map();
+      for (const item of data) {
+        if (!item?.section_id || !item.grade_name || !item.section_name ||
+            !Number.isInteger(Number(item.academic_year))) continue;
+        verified.set(String(item.section_id), item);
+      }
+
+      let updated = 0;
+      for (const group of (db?.groups || [])) {
+        const actual = verified.get(String(group.id));
+        if (!actual) continue;
+        group.name =
+          String(actual.grade_name).trim() + ' · ' +
+          String(actual.section_name).trim() + ' · ' +
+          String(actual.academic_year);
+        updated++;
+      }
+
+      const missing = (db?.groups || []).filter(
+        group => !verified.has(String(group.id))
+      );
+      if (missing.length) {
+        throw Error('Hay ' + missing.length +
+          ' secciones sin etiqueta confirmada. No se asignaron nombres inventados.');
+      }
+      LSB18.f160TeacherLabelsVerified = updated;
+      LSB18.f160TeacherLabelsError = '';
+      if (typeof role !== 'undefined' && role === 'teacher' &&
+          typeof render === 'function' &&
+          !document.body.classList.contains('loginmode')) {
+        render();
+      }
+    } catch (err) {
+      LSB18.f160TeacherLabelsError = String(err?.message || err);
+      console.warn('LSB F160: no fue posible cargar los nombres de las secciones:', err);
+      // No inventar nombres ni adjudicar secciones por orden/color.
+    }
+    return result;
+  };
+})();
+
+</script>
 </body></html>
