@@ -1254,8 +1254,8 @@ let state=r=>r.published&&!r.submitted?badge('Corrección en borrador','gold'):r
 function guardLeave(){if(typeof LSB_F2!=='undefined'&&LSB_F2.gradeBusy){toast('Espera a que termine la operación de calificaciones.');return false;}if(draft&&JSON.stringify(draft)!==JSON.stringify(recordFor(assignmentFor(),unit))){window.lsbPwaGuardDiscard('grade');return false;}draft=null;return true}
 function go(p){if(!guardLeave())return;page=p;search='';chosenCourse='';chosenGroup='';assignment='';unit=db.active;render()}
 function enter(a){user=a;role=a.type;student=a.children?.[0]||db.students[0]?.id||'';page='home';unit=db.active;draft=null;chosenCourse='';chosenGroup='';assignment='';document.body.classList.remove('loginmode');$('#login').hidden=true;$('#role').value=role;render()}
-function nav(){return role==='admin'?[['home','Inicio'],['courses','Revisar calificaciones'],['periods','Bimestres y boletas'],['accounts','Administración general'],['teachers','Profesores'],['families','Familias por grado'],['students','Estudiantes'],['reports','Boletas'],['payments','Control de pagos'],['schedule','Horarios'],['notices','Avisos']]:role==='teacher'?[['home','Mi espacio docente'],['courses','Mis cursos asignados'],['schedule','Mis horarios'],['notices','Avisos de Dirección']]:[['home','Mi estudiante'],['reports','Ver boleta'],['notices','Avisos y reportes'],['payments','Ver mis pagos']]}
-function render(){const list=nav();$('#nav').innerHTML=list.map(([p,t])=>`<button class="${page===p?'active':''}" data-go="${p}">${t}</button>`).join('');$('#crumb').textContent=list.find(x=>x[0]===page)?.[1]||'Registro de actividades';$('#identity').textContent=user?.name||'';const routes={home:role==='family'?familyHome:dashboard,courses:courseView,grade:gradeView,periods:periodView,accounts:()=>accountsView('admin'),teachers:()=>accountsView('teacher'),families:()=>accountsView('family'),students:studentsView,published_grades:lsbF5GradesView,reports:reportView,payments:paymentView,schedule:scheduleView,notices:noticeView};$('#app').innerHTML=(routes[page]||dashboard)();bind();window.lsbF23Sync?.();}
+function nav(){return role==='admin'?[['home','Inicio'],['grade_center','Calificaciones'],['periods','Bimestres y boletas'],['accounts','Administración general'],['teachers','Profesores'],['families','Familias por grado'],['students','Estudiantes'],['reports','Boletas'],['payments','Control de pagos'],['schedule','Horarios'],['notices','Avisos']]:role==='teacher'?[['home','Mi espacio docente'],['courses','Mis cursos asignados'],['schedule','Mis horarios'],['notices','Avisos de Dirección']]:[['home','Mi estudiante'],['reports','Ver boleta'],['notices','Avisos y reportes'],['payments','Ver mis pagos']]}
+function render(){const list=nav();$('#nav').innerHTML=list.map(([p,t])=>`<button class="${page===p?'active':''}" data-go="${p}">${t}</button>`).join('');$('#crumb').textContent=list.find(x=>x[0]===page)?.[1]||(page==='grade_center'?'Calificaciones':'Registro de actividades');$('#identity').textContent=user?.name||'';const routes={home:role==='family'?familyHome:dashboard,grade_center:()=>typeof window.lsbF174GradeCenterView==='function'?window.lsbF174GradeCenterView():heading('Calificaciones','Cargando módulo académico…'),courses:courseView,grade:gradeView,periods:periodView,accounts:()=>accountsView('admin'),teachers:()=>accountsView('teacher'),families:()=>accountsView('family'),students:studentsView,published_grades:lsbF5GradesView,reports:reportView,payments:paymentView,schedule:scheduleView,notices:noticeView};$('#app').innerHTML=(routes[page]||dashboard)();bind();window.lsbF23Sync?.();}
 function dashboard(){const active=workingUnit(),list=mine(),recs=list.map(a=>recordFor(a,active)),published=recs.filter(r=>r.published).length;const stats=role==='admin'?[['Estudiantes',db.students.length,'En '+db.groups.length+' grados y secciones'],['Cursos activos',db.courses.length,list.length+' asignaciones por grado'],['Cursos publicados',published+' / '+list.length,'Bimestre '+active],['Por revisar',recs.filter(r=>r.submitted&&!r.published).length,'Enviados por los docentes']]:[['Cursos asignados',list.length,'Curso y grado'],['Enviados a Dirección',recs.filter(r=>r.submitted).length+' / '+list.length,'Bimestre '+active],['Cursos publicados',published+' / '+list.length,'Disponibles para las familias'],['Avisos recibidos',visibleNotices().length,'Comunicaciones de Dirección']];return heading(role==='admin'?'Todo en un mismo lugar.':'Mi espacio docente',role==='teacher'?E(user.name):'El avance académico de cada curso y grado.',button(role==='admin'?'Revisar calificaciones':'Abrir mis cursos','go','courses'))+`<section class="welcome"><div><h2>El aprendizaje, en perspectiva.</h2><p>${role==='admin'?'Habilita los bimestres, revisa las notas y acompaña a docentes y familias.':'Registra entregas, prepara las notas y envía tu cierre a Dirección.'}</p></div><div class="period"><small>BIMESTRE HABILITADO</small><strong>0${active} / 04</strong><small>${role==='admin'?'Control de Dirección':'Habilitado por Dirección'}</small></div></section><div class="stats">${stats.map(([t,v,s])=>`<div class="stat"><label>${t}</label><strong>${v}</strong><small>${s}</small></div>`).join('')}</div>`+panel('Avance por curso y grado',table(['Curso y grado',role==='admin'?'Docente':'Actividades','Notas completas','Estado',''],list.map(a=>{const r=recordFor(a,active),count=roster(a).filter(s=>sum(r.rows[s.id])!==null).length;return `<tr><td><b>${courseName(a.course)}</b><small>${groupName(a.group)}</small></td><td>${role==='admin'?E(db.accounts.find(t=>t.id===a.teacher)?.name||'Sin asignar'):r.activities.length+' actividades'}</td><td>${count} / ${roster(a).length} estudiantes</td><td>${state(r)}</td><td>${button('Abrir','open',a.id,true)}</td></tr>`}).join('')))+`<div class="grid">${panel('Avisos recientes',`<div class="panelbody">${noticeCards(visibleNotices().slice(0,2))}</div>`)}${panel(role==='admin'?'Publicación de boletas':'Cierre del bimestre',`<div class="panelbody"><p class="sub">${role==='admin'?'Las notas enviadas por el docente se revisan y se publican desde cada curso. Las familias consultan las entregas durante el bimestre.':'Guardar borrador actualiza el avance de entregas. Guardar y enviar a Dirección cierra el registro: las actividades y notas ya no podrán editarse sin autorización.'}</p></div>`)}</div>`}
 function courseView(){const list=mine();if(role==='teacher'){
  const subjects=[...new Set(list.map(a=>String(a.course)))].map(id=>({id,assignments:list.filter(a=>String(a.course)===id)}));
@@ -1271,7 +1271,7 @@ function courseView(){const list=mine();if(role==='teacher'){
  return heading(E(courseName(chosenCourse)),'Elige la sección para abrir su registro de calificaciones.',button('Todas las materias','backcourses','',true))+(selected.length?assignmentCards(selected):panel('Sin secciones','<p class="footnote">Esta materia ya no tiene secciones asignadas.</p>'));
 }if(!chosenCourse)return heading('Revisar calificaciones','Primero selecciona el curso. Después, el grado y sección.')+`<div class="cardgrid">${db.courses.map(c=>`<button class="selection" data-action="selectcourse" data-arg="${c.id}"><span class="coursemark">${E(c.name[0])}</span><h2>${E(c.name)}</h2><p>${list.filter(a=>a.course===c.id).length} grados y secciones</p><span class="link">Ver grados</span></button>`).join('')}</div>`;return heading(E(courseName(chosenCourse)),'Selecciona el grado y sección.',button('Todos los cursos','backcourses','',true))+assignmentCards(list.filter(a=>a.course===chosenCourse));}
 function assignmentCards(list){return `<div class="cardgrid">${list.map(a=>{const r=recordFor(a,workingUnit());return `<article class="selection"><span class="eyebrow">${E(courseName(a.course))}</span><h2>${E(groupName(a.group))}</h2><p>${roster(a).length} estudiantes · ${r.activities.length} actividades</p>${state(r)}<div style="margin-top:22px">${button('Abrir registro','open',a.id)}</div></article>`}).join('')}</div>`}
-function gradeView(){const a=assignmentFor();if(!a||!mine().some(x=>x.id===a.id))return heading('Curso no disponible');const stored=recordFor(a,unit);draft??=clone(stored);const r=draft,can=editable(a,stored);const actions=(role==='teacher'?button('Volver a secciones','teacherbacksections','',true):button('Volver a cursos','go','courses',true))+button('Exportar CSV','csv','',true)+(can?button('Guardar borrador','savedraft','',true)+button('Guardar y enviar a Dirección','submit'):role==='admin'&&stored.submitted?button(stored.published?'Actualizar publicación':'Publicar a familias','publish')+button('Autorizar corrección docente','reopen','',true):'');return heading(courseName(a.course),groupName(a.group)+' · '+E(db.accounts.find(t=>t.id===a.teacher)?.name||''),actions)+`<div class="filters" style="padding-left:0">${unitSelect()}${state(stored)}${!can?badge(role==='admin'?'Revisión de Dirección':'Registro de solo lectura'):badge('Edición habilitada','green')}</div>`+panel('Registro de actividades',`<p class="footnote" style="padding-top:18px">${role==='admin'?'Dirección puede corregir notas con un motivo. La creación de actividades corresponde al docente.':can?'Las calificaciones se guardan aquí. Los estados oficiales de entrega se registran por separado en Más opciones → Registrar entregas. Guardar borrador no guarda estados de entrega.':'Este bimestre está cerrado o todavía no está habilitado. Puedes consultar y exportar el registro.'}</p><p class="mobilehint" style="padding:0 20px">Desliza la tabla para ver todas las actividades.</p>`+table(['Estudiante',...r.activities.map(t=>E(t.name)+'<small class="maxlabel">Máximo '+t.max+' puntos</small>'),'Total / '+r.activities.reduce((s,t)=>s+t.max,0),'Seguimiento'],roster(a).map(s=>`<tr><td><b>${E(s.name)}</b><small>${E(s.code)}</small></td>${r.activities.map((t,i)=>{const cell=r.rows[s.id]?.[i]||{grade:null,status:'Pendiente'};return `<td>${can?`<input class="grade" type="number" min="0" max="${t.max}" step="0.01" data-grade="${s.id}" data-i="${i}" aria-label="Nota ${E(t.name+' de '+s.name)}" value="${cell.grade??''}" placeholder="—"><select class="delivery" data-delivery="${s.id}" data-i="${i}" aria-label="Entrega ${E(t.name+' de '+s.name)}">${options(['Pendiente','Entregada','No entregada'].map(x=>({id:x,name:x})),cell.status)}</select>`:`<b>${fmt(cell.grade)}</b><small>Estado de entrega: consulta independiente</small>`}</td>`}).join('')}<td class="score" id="sum-${s.id}">${fmt(sum(r.rows[s.id]))}</td><td>${button('Observaciones','studentinfo',s.id,true)}${role==='admin'?`<div style="margin-top:8px">${button('Corregir notas','correct',s.id,true)}</div>`:''}</td></tr>`).join(''))+`<div class="filters">${can?button('+ Añadir actividad','addactivity','',true):''}<span class="badge" id="savestate">${can?'Borrador guardado':'Solo consulta'}</span></div><p class="footnote">Una nota vacía está pendiente. Para enviar el bimestre, las actividades deben sumar 100 puntos y todas las notas deben estar completas.</p>`)}
+function gradeView(){const a=assignmentFor();if(!a||!mine().some(x=>x.id===a.id))return heading('Curso no disponible');const stored=recordFor(a,unit);draft??=clone(stored);const r=draft,can=editable(a,stored);const actions=(role==='teacher'?button('Volver a secciones','teacherbacksections','',true):button('Volver a cursos','go','courses',true))+button('Exportar CSV','csv','',true)+(can?button('Guardar borrador','savedraft','',true)+button('Guardar y enviar a Dirección','submit'):role==='admin'&&stored.submitted?button(stored.published?'Actualizar publicación':'Publicar a familias','publish')+button('Autorizar corrección docente','reopen','',true):'');return heading(courseName(a.course),groupName(a.group)+' · '+E(db.accounts.find(t=>t.id===a.teacher)?.name||''),actions)+`<div class="filters" style="padding-left:0">${unitSelect()}${state(stored)}${!can?badge(role==='admin'?'Revisión de Dirección':'Registro de solo lectura'):badge('Edición habilitada','green')}</div>`+panel('Registro de actividades',`<p class="footnote" style="padding-top:18px">${role==='admin'?'Dirección puede corregir notas con un motivo. La creación de actividades corresponde al docente.':can?'Las calificaciones se guardan aquí. Los estados oficiales de entrega se registran por separado en Más opciones → Registrar entregas. Guardar borrador no guarda estados de entrega.':'Este bimestre está cerrado o todavía no está habilitado. Puedes consultar y exportar el registro.'}</p><p class="mobilehint" style="padding:0 20px">Desliza la tabla para ver todas las actividades.</p>`+table(['Estudiante',...r.activities.map(t=>E(t.name)+'<small class="maxlabel">Máximo '+t.max+' puntos</small>'),'Total / '+r.activities.reduce((s,t)=>s+t.max,0),'Seguimiento'],roster(a).slice().sort((a,b)=>window.lsbF174StudentName(a).localeCompare(window.lsbF174StudentName(b),'es',{sensitivity:'base'})).map(s=>`<tr><td><b>${E(window.lsbF174StudentName(s))}</b><small>${E(s.code)}</small></td>${r.activities.map((t,i)=>{const cell=r.rows[s.id]?.[i]||{grade:null,status:'Pendiente'};return `<td>${can?`<input class="grade" type="number" min="0" max="${t.max}" step="0.01" data-grade="${s.id}" data-i="${i}" aria-label="Nota ${E(t.name+' de '+s.name)}" value="${cell.grade??''}" placeholder="—"><select class="delivery" data-delivery="${s.id}" data-i="${i}" aria-label="Entrega ${E(t.name+' de '+s.name)}">${options(['Pendiente','Entregada','No entregada'].map(x=>({id:x,name:x})),cell.status)}</select>`:`<b>${fmt(cell.grade)}</b><small>Estado de entrega: consulta independiente</small>`}</td>`}).join('')}<td class="score" id="sum-${s.id}">${fmt(sum(r.rows[s.id]))}</td><td>${button('Observaciones','studentinfo',s.id,true)}${role==='admin'?`<div style="margin-top:8px">${button('Corregir notas','correct',s.id,true)}</div>`:''}</td></tr>`).join(''))+`<div class="filters">${can?button('+ Añadir actividad','addactivity','',true):''}<span class="badge" id="savestate">${can?'Borrador guardado':'Solo consulta'}</span></div><p class="footnote">Una nota vacía está pendiente. Para enviar el bimestre, las actividades deben sumar 100 puntos y todas las notas deben estar completas.</p>`)}
 function validate(r,a,complete=false){if(r.activities.some(t=>!t.name||!Number.isFinite(t.max)||t.max<=0))return 'Revisa los valores de las actividades.';for(const s of roster(a)){const row=r.rows[s.id];if(!row||row.length!==r.activities.length)return 'Faltan registros de estudiantes.';for(let i=0;i<row.length;i++){const v=row[i].grade;if(v===null){if(complete)return 'Completa todas las notas antes de enviar.';}else if(!Number.isFinite(v)||v<0||v>r.activities[i].max)return 'Hay notas fuera del valor permitido.';}}if(complete&&Math.abs(r.activities.reduce((s,t)=>s+t.max,0)-100)>0.001)return 'La distribución de actividades debe sumar 100 puntos.';return ''}
 function saveDraft(){const a=assignmentFor(),r=recordFor(a,unit);if(!editable(a,r)){toast('El registro ya no está habilitado.');return false}const error=validate(draft,a);if(error){toast(error);return false}db.records[a.id+'-'+unit]=clone(draft);if(!persist())return false;$('#savestate').textContent='Calificaciones guardadas';toast('Borrador de calificaciones guardado. Registra las entregas por separado.');return true}
 async function submitRecord(){const a=assignmentFor();if(!editable(a,recordFor(a,unit)))return;const err=validate(draft,a,true);if(err){toast(err);return}if(!await window.lsbPwaConfirm('¿Enviar el bimestre a Dirección? Ya no podrás modificar actividades ni notas sin autorización.',{title:'Enviar a Dirección',confirmLabel:'Enviar'}))return;draft.submitted=true;db.records[a.id+'-'+unit]=clone(draft);audit('Envío a Dirección: '+fullAssignment(a)+' · Bimestre '+unit);persist();draft=null;render();toast('Enviado a Dirección. El registro quedó bloqueado para el docente.')}
@@ -1294,7 +1294,7 @@ function noticeView(){return heading(role==='teacher'?'Avisos de Dirección':'Av
 function newNotice(){if(role!=='admin')return;form('Enviar aviso',`<label class="field">Destinatario<select name="target">${options([{id:'teachers',name:'Todos los profesores'},{id:'families',name:'Todas las familias'},...db.accounts.filter(a=>a.type==='teacher').map(a=>({id:'user:'+a.id,name:'Profesor: '+a.name})),...db.students.map(s=>({id:'student:'+s.id,name:'Familia de '+s.name}))],'teachers')}</select></label><label class="field">Título<input name="title" required maxlength="100"></label><label class="field">Mensaje<textarea name="body" required maxlength="1500" rows="4"></textarea></label>`,f=>{if(!f.get('title').trim()||!f.get('body').trim())return;db.notices.unshift({id:id(),title:f.get('title').trim(),body:f.get('body').trim(),target:f.get('target'),date:new Date().toLocaleString('es-GT'),by:user.name});persist();$('#dialog').close();render();toast('Aviso publicado para el destinatario seleccionado.')},'Publicar aviso')}
 function studentInfo(sid){const a=assignmentFor(),s=roster(a).find(s=>s.id===sid);if(!s)return;const notes=[1,2,3,4].filter(u=>u<=db.active).map(u=>{const r=recordFor(a,u);return `<tr><td>Bimestre ${u}</td><td>${fmt(sum(r.rows[sid]))}</td><td>${state(r)}</td></tr>`}).join('');modal(`<h2>${E(s.name)}</h2><p class="sub">${E(fullAssignment(a))}</p>${table(['Bimestre','Nota del curso','Estado'],notes)}<div class="panelbody">${db.comments.filter(c=>c.student===sid&&(role==='admin'||c.teacher===user.id)).map(commentCard).join('')||'<p class="sub">Sin observaciones.</p>'}</div><div class="toolbar"><button class="button secondary" data-close>Cerrar</button><button class="button" id="addcomment">Añadir observación</button></div>`);$('#addcomment').onclick=()=>form('Observación de '+E(s.name),'<label class="field">Comentario<textarea name="body" required rows="4" maxlength="1500"></textarea></label><label class="check"><input type="checkbox" name="family"> Compartir también con la familia</label><p class="sub">Si no marcas esta opción, solo estará disponible para el docente autor y Dirección.</p>',f=>{if(!f.get('body').trim())return;db.comments.unshift({id:id(),student:sid,assignment:a.id,teacher:user.id,body:f.get('body').trim(),family:f.get('family')==='on',date:new Date().toLocaleString('es-GT')});persist();$('#dialog').close();toast('Observación guardada.');render()})}
 function scheduleView(){const rows=db.schedule.filter(h=>mine().some(a=>a.id===h.assignment)).sort((a,b)=>['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'].indexOf(a.day)-['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'].indexOf(b.day));return heading(role==='teacher'?'Mis horarios':'Horarios de docentes',role==='teacher'?E(user.name):'Horarios de ejemplo, editables por Dirección.',role==='admin'?button('+ Añadir horario','newslot'):'')+panel('Horario semanal',table(['Día','Horario','Curso y grado',...(role==='admin'?['Docente','']:[])],rows.map(h=>{const a=db.assignments.find(a=>a.id===h.assignment);return `<tr><td>${h.day}</td><td>${h.start} – ${h.end}</td><td>${E(fullAssignment(a))}</td>${role==='admin'?`<td>${E(db.accounts.find(t=>t.id===a.teacher)?.name||'')}</td><td>${button('Quitar','delslot',h.id,true)}</td>`:''}</tr>`}).join('')))}
-function studentsView(){return heading('Estudiantes','Registro por grado y sección.',button('+ Registrar estudiante','newstudent'))+`<div class="filters" style="padding-left:0"><label>Grado y sección<select id="groupfilter">${options([{id:'',name:'Todos los grados'},...db.groups],chosenGroup)}</select></label></div>`+panel('Registro estudiantil',table(['Nombre completo','Código personal','Grado y sección',''],db.students.filter(s=>!chosenGroup||s.group===chosenGroup).map(s=>`<tr><td>${E(s.name)}</td><td>${E(s.code)}</td><td>${E(groupName(s.group))}</td><td>${button('Ver boleta','reportstudent',s.id,true)}</td></tr>`).join('')))}
+function studentsView(){return heading('Estudiantes','Registro por grado y sección.',button('+ Registrar estudiante','newstudent'))+`<div class="filters" style="padding-left:0"><label>Grado y sección<select id="groupfilter">${options([{id:'',name:'Todos los grados'},...db.groups],chosenGroup)}</select></label></div>`+panel('Registro estudiantil',table(['Nombre completo','Código personal','Grado y sección',''],db.students.filter(s=>!chosenGroup||s.group===chosenGroup).sort((a,b)=>window.lsbF174StudentName(a).localeCompare(window.lsbF174StudentName(b),'es',{sensitivity:'base'})).map(s=>`<tr><td>${E(window.lsbF174StudentName(s))}</td><td>${E(s.code)}</td><td>${E(groupName(s.group))}</td><td>${button('Ver boleta','reportstudent',s.id,true)}</td></tr>`).join('')))}
 function accountsView(type){if(type==='family'&&!chosenGroup)return heading('Administración de familias','Selecciona el grado y sección para ver a los encargados.',button('+ Registrar encargado','newaccount',type))+`<div class="cardgrid">${db.groups.map(g=>`<button class="selection" data-action="familygroup" data-arg="${g.id}"><h2>${E(g.name)}</h2><p>${db.students.filter(s=>s.group===g.id).length} estudiantes</p><span class="link">Ver encargados</span></button>`).join('')}</div>`;const list=db.accounts.filter(a=>a.type===type&&(!chosenGroup||type!=='family'||a.children.some(sid=>db.students.some(s=>s.id===sid&&s.group===chosenGroup)))&&(a.name+' '+a.user).toLowerCase().includes(search.toLowerCase()));const title={admin:'Administración general',teacher:'Administración de profesores',family:'Encargados · '+groupName(chosenGroup)}[type];return heading(title,type==='family'?'Estado de cuenta y pagos de cada estudiante.':'Usuarios y permisos de la plataforma.',(type==='family'?button('Todos los grados','familyback','',true):'')+button('+ Registrar '+(type==='teacher'?'profesor':type==='family'?'encargado':'administrador'),'newaccount',type))+panel('Cuentas registradas',`<div class="filters"><label>Buscar por nombre o usuario<input id="accountsearch" value="${E(search)}" placeholder="Buscar…"></label></div>`+table(['Nombre completo','Usuario',type==='family'?'Estudiante vinculado / pagos':type==='teacher'?'Cursos y grados':'Permiso','Estado',''],list.map(a=>`<tr><td><b>${E(a.name)}</b></td><td>${E(a.user)}</td><td>${type==='family'?a.children.map(sid=>{const s=db.students.find(s=>s.id===sid);return s?`<div style="margin:5px 0">${E(s.name)}<small>${groupName(s.group)}</small>${paidState(s.id)}</div>`:''}).join(''):type==='teacher'?(()=>{const aList=db.assignments.filter(x=>x.teacher===a.id);return `<details class="f41-teacher-assignments"><summary>Ver asignaciones (${aList.length})</summary><div class="f41-assignment-list">${aList.map(x=>`<div>${E(fullAssignment(x))}</div>`).join('')||'<span>Sin asignaciones</span>'}</div></details>`})():(a.owner?'Propietario':'Administrador')}</td><td>${badge(a.enabled?'Activo':'Suspendido',a.enabled?'green':'')}</td><td>${button('Ver cuenta','account',a.id,true)}</td></tr>`).join('')))+(type==='admin'?panel('Historial administrativo',table(['Acción','Responsable','Fecha'],db.audit.slice(0,20).map(a=>`<tr><td>${E(a.action)}</td><td>${E(a.by)}</td><td>${E(a.date)}</td></tr>`).join(''))):'')}
 function username(name){const base=name.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9 ]/g,'').trim().split(/\s+/).join('.')||'usuario';let u=base,n=2;while(db.accounts.some(a=>a.user===u))u=base+'.'+n++;return u}
 function passphrase(){const words=['Bosque','Luna','Piedra','Nube','Rio','Monte','Libro','Brisa','Faro','Cielo','Cedro','Trigo','Sol','Lago','Valle','Pino','Mar','Flor','Cobre','Pluma','Roca','Perla','Roble','Campo','Menta','Isla','Nieve','Alba','Miel','Arena','Olmo','Rama'];const r=crypto.getRandomValues(new Uint32Array(5));return [words[r[0]%32],words[r[1]%32],words[r[2]%32],String(r[3]%10000).padStart(4,'0')].join('-')}
@@ -5963,7 +5963,7 @@ root.innerHTML=styles+f38Css+f43Css+f46Css+markup;
 const q=s=>root.querySelector(s);
 const groups={
  inicio:['Inicio',null],
- academico:['Académico',[['Cursos y asignaturas','catalog'],['Revisión de calificaciones','courses'],['Desglose de notas publicadas','published_grades'],['Registro de asistencia','attendance']]],
+ academico:['Académico',[['Calificaciones','grade_center'],['Cursos y asignaturas','catalog'],['Registro de asistencia','attendance']]],
  personas:['Personas',[['Estudiantes','students'],['Profesores','teachers'],['Familias por grado','families']]],
  gestion:['Finanzas',[['Control de pagos','payments']]],
  horarios:['Horarios',[['Horarios de clases','schedule']]],
@@ -5987,7 +5987,7 @@ function go(path){
   q('#lsb-help-view')?.setAttribute('hidden','');
   const btn=document.querySelector('#nav button[data-go="'+path+'"]');
   if(btn){btn.click();return;}
-  const routes=new Set(['home','courses','published_grades','catalog','attendance','exports','accounts','teachers','families','students','reports','payments','schedule','notices','periods','cycles','lsb_ai','school_reports']);
+  const routes=new Set(['home','grade_center','courses','published_grades','catalog','attendance','exports','accounts','teachers','families','students','reports','payments','schedule','notices','periods','cycles','lsb_ai','school_reports']);
   if(routes.has(path)){
     try{document.querySelector('#lsb-f23-shell')?.scrollIntoView({block:'start',behavior:'instant'});
       if(goNative(path))return;
@@ -5996,7 +5996,7 @@ function go(path){
   const notice=q('#detail-sub');if(notice)notice.textContent='No fue posible abrir este apartado. Conserva la versión de respaldo.';
 }
 const groupIcons={inicio:'#i-home',academico:'#i-cap',personas:'#i-people',gestion:'#i-wallet',horarios:'#i-calendar',ciclos:'#i-clock',archivos:'#i-folder',comunicacion:'#i-mail',soporte:'#i-chat',ia:'#i-brain'};
-const routeIcons={catalog:'#i-folder',attendance:'#i-calendar',exports:'#i-chart',published_grades:'#i-file',courses:'#i-cap',periods:'#i-clock',cycles:'#i-clock',reports:'#i-chart',students:'#i-people',teachers:'#i-cap',families:'#i-people',accounts:'#i-settings',payments:'#i-wallet',schedule:'#i-calendar',notices:'#i-mail',school_reports:'#i-file',home:'#i-home'};
+const routeIcons={catalog:'#i-folder',attendance:'#i-calendar',exports:'#i-chart',published_grades:'#i-file',grade_center:'#i-file',courses:'#i-cap',periods:'#i-clock',cycles:'#i-clock',reports:'#i-chart',students:'#i-people',teachers:'#i-cap',families:'#i-people',accounts:'#i-settings',payments:'#i-wallet',schedule:'#i-calendar',notices:'#i-mail',school_reports:'#i-file',home:'#i-home'};
 const iconUse=ref=>`<svg><use href="${ref}"></use></svg>`;
 let f152MenuSignature='';
 let f1578CollapsedGroup=null;
@@ -6161,7 +6161,7 @@ if(document.getElementById('login')?.hidden){sync()}
     {label:'Estudiantes',desc:'Fichas, cursos e historial',color:'purple',area:'personas',nav:'Estudiantes',icon:'#i-people'},
     {label:'Profesores',desc:'Asignaciones y horarios',color:'blue',area:'personas',nav:'Profesores',icon:'#i-cap'},
     {label:'Asistencia',desc:'Registros y reportes',color:'mint',area:'academico',nav:'Registro de asistencia',icon:'#i-calendar'},
-    {label:'Calificaciones',desc:'Bimestres y revisiones',color:'gold',area:'academico',nav:'Revisión de calificaciones',icon:'#i-file'},
+    {label:'Calificaciones',desc:'Bimestres y revisiones',color:'gold',area:'academico',nav:'Calificaciones',icon:'#i-file'},
     {label:'Pagos',desc:'Cobros y colegiaturas',color:'pink',area:'gestion',nav:'Control de pagos',icon:'#i-wallet'},
     {label:'Reportes',desc:'Cuadros y descargas',color:'sky',area:'archivos',nav:'Cuadros y reportes',icon:'#i-chart'},
     {label:'Avisos',desc:'Comunicados institucionales',color:'purple',area:'comunicacion',nav:'Avisos y comunicados',icon:'#i-mail'},
@@ -9261,8 +9261,8 @@ html[data-theme="dark"] #login.access10 #familywelcome10 .f116-activation-help{c
 </script>
 <script id="lsb-f132-mobile-native">
 (()=>{
-const routes=[['Inicio','home','⌂'],['IA','lsb_ai','✧'],['Calificaciones','courses','▤'],['Avisos','notices','✉'],['Menú','menu','▦']];
-const menu=[['Inicio','home','⌂'],['Cursos y asignaturas','catalog','▤'],['Revisión de calificaciones','courses','✓'],['Desglose de notas','published_grades','▥'],['Asistencia','attendance','◷'],['Estudiantes','students','♙'],['Profesores','teachers','♧'],['Familias por grado','families','⌂'],['Pagos','payments','▣'],['Horarios','schedule','▦'],['Ciclos escolares','cycles','◴'],['Bimestres','periods','◷'],['Cuadros y descargas','exports','▤'],['Boletas','reports','▧'],['Avisos','notices','✉'],['Reportes escolares','school_reports','▤'],['Asistente IA','lsb_ai','✧']];
+const routes=[['Inicio','home','⌂'],['IA','lsb_ai','✧'],['Calificaciones','grade_center','▤'],['Avisos','notices','✉'],['Menú','menu','▦']];
+const menu=[['Inicio','home','⌂'],['Cursos y asignaturas','catalog','▤'],['Calificaciones','grade_center','✓'],['Asistencia','attendance','◷'],['Estudiantes','students','♙'],['Profesores','teachers','♧'],['Familias por grado','families','⌂'],['Pagos','payments','▣'],['Horarios','schedule','▦'],['Ciclos escolares','cycles','◴'],['Bimestres','periods','◷'],['Cuadros y descargas','exports','▤'],['Boletas','reports','▧'],['Avisos','notices','✉'],['Reportes escolares','school_reports','▤'],['Asistente IA','lsb_ai','✧']];
 let busy=false,observed=null, raf=0;
 function mobile(){return window.matchMedia('(max-width:900px)').matches&&document.body.classList.contains('lsb-f23-director')&&!document.body.classList.contains('loginmode');}
 function getroot(){return document.getElementById('lsb-f23-shell')?.shadowRoot}
@@ -11798,7 +11798,7 @@ html[data-theme="dark"] body[data-area="teacher"] #app #f71-form :is(.f168-group
    const year=byId(rows.lsb_school_years,section?.school_year_id);
    const person=byId(rows.lsb_students,enr?.student_id);
    const group=[grade?.name||'Grado sin identificar',section?.name||'Sin sección',year?.year].filter(Boolean).join(' · ');
-   return {id:opt.value,name:opt.textContent.trim(),group,code:person?.student_code||''};
+   return {id:opt.value,name:person?.last_name?[person.last_name,person.first_name].filter(Boolean).join(', '):opt.textContent.trim(),group,code:person?.student_code||''};
   }).sort((a,b)=>a.group.localeCompare(b.group,'es')||a.name.localeCompare(b.name,'es'));
   const gradeGroups=Array.from(new Set(entries.map(e=>e.group))).sort((a,b)=>a.localeCompare(b,'es'));
   let selectedGrade='',selectedStudent=native.value||'',search='';
@@ -11845,4 +11845,159 @@ html[data-theme="dark"] body[data-area="teacher"] #app #f71-form :is(.f168-group
 })();
 </script>
 
+<style id="lsb-f174-app-style">
+/* F174 · Uniformar las acciones docentes solo en teléfono. */
+@media(max-width:720px){
+ body[data-area="teacher"] #app .heading .toolbar:has([data-action="teacherbacksections"]),
+ body[data-area="teacher"] #app .heading .toolbar:has([data-action="backcourses"]){display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:10px!important;align-items:stretch!important;width:100%!important;min-width:0!important}
+ body[data-area="teacher"] #app .heading .toolbar:has([data-action="teacherbacksections"])> :is(button,.button,a),
+ body[data-area="teacher"] #app .heading .toolbar:has([data-action="backcourses"])> :is(button,.button,a){width:100%!important;max-width:100%!important;min-width:0!important;min-height:52px!important;margin:0!important;box-sizing:border-box!important;display:flex!important;justify-content:center!important;align-items:center!important;text-align:center!important}
+}
+/* Centro de calificaciones: tarjetas, pestañas y acciones. */
+#app .f174-shell{--f174-b:#dfe5f2;--f174-h:#293c80;max-width:100%;min-width:0}
+#app .f174-heading{margin:6px 0 17px}
+#app .f174-heading h1{font-size:clamp(25px,3vw,31px);font-weight:850;line-height:1.18;margin:0 0 9px;color:var(--ink,#273654)}
+#app .f174-heading p{max-width:750px;color:var(--muted,#6e7790);line-height:1.6;margin:0}
+#app .f174-tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;padding:8px;margin:18px 0 22px;border:1px solid var(--line,#dce3f0);border-radius:17px;background:var(--surface,#fff)}
+#app .f174-tabs button{border:1px solid transparent!important;border-radius:12px!important;min-height:49px!important;padding:12px 7px!important;background:transparent!important;color:var(--ink,#36445d)!important;font-weight:730!important;font-size:13px!important;white-space:normal!important;text-align:center!important;cursor:pointer!important}
+#app .f174-tabs button[aria-selected="true"]{background:var(--primary,#3b4193)!important;color:white!important;box-shadow:0 4px 14px #28398222!important}
+#app .f174-intro{margin-bottom:16px;padding:15px 17px;border-radius:14px;background:var(--soft,#f5f7fe);border:1px solid var(--line,#e1e5f3);color:var(--ink,#3d4968);font-size:13px;line-height:1.55}
+#app .f174-shell .f174-shell-content>.panel,#app .f174-shell .f174-shell-content>.lsb1913-board,#app .f174-shell .f174-shell-content>.lsb19114-publish{margin:16px 0!important;width:100%!important;max-width:100%!important;box-sizing:border-box!important;min-width:0!important}
+#app .f174-shell .lsb19114-list .lsb19114-item{min-width:0!important}
+#app .f174-shell .lsb19114-item small{white-space:normal!important;line-height:1.5!important}
+#app .f174-quick-actions{display:flex;flex-wrap:wrap;gap:10px;margin:12px 0}
+#app .f174-quick-actions button{min-height:44px!important;border:1px solid var(--line,#d6dfec);border-radius:12px;background:var(--surface,#fff);color:var(--primary,#364597);padding:10px 17px;font-weight:730;cursor:pointer}
+#app .f174-statusgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:15px 0}
+#app .f174-statusgrid article{background:var(--surface,#fff);border:1px solid var(--line,#dfe6f3);border-radius:15px;padding:17px;min-width:0}
+#app .f174-statusgrid small{display:block;font-size:12px;color:var(--muted,#7c8597)}
+#app .f174-statusgrid strong{display:block;font-size:23px;color:var(--ink,#29365a);margin-top:7px}
+#app .f174-history{padding:20px;border:1px solid var(--line,#dfe6f3);border-radius:17px;background:var(--surface,#fff)}
+#app .f174-history h2{font-size:19px;margin:0 0 7px}
+#app .f174-history li{padding:12px 0;border-bottom:1px solid var(--line,#e8edf5);list-style:none}
+#app .f174-history ul{list-style:none;margin:8px 0 0;padding:0}
+#app .f174-history li:last-child{border:0}
+#app .f174-history li strong{display:block;color:var(--ink,#29365a)}
+#app .f174-history li small{display:block;color:var(--muted,#65718a);margin-top:5px}
+#app .f174-shell .tablewrap{max-width:100%;overflow-x:auto!important;overscroll-behavior-inline:contain}
+#app .f174-shell .tablewrap table{min-width:0}
+@media(max-width:730px){
+ #app .f174-tabs{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:7px!important;padding:7px!important}
+ #app .f174-tabs button{min-height:48px!important;font-size:12px!important}
+ #app .f174-statusgrid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:9px!important}
+ #app .f174-quick-actions{display:grid!important;grid-template-columns:1fr!important}
+ #app .f174-quick-actions button{width:100%!important}
+ #app .f174-shell .lsb19114-item{display:flex!important;flex-direction:column!important;align-items:stretch!important;gap:10px!important}
+ #app .f174-shell .lsb19114-item button{width:100%!important;min-height:48px!important}
+ #app .f174-shell .lsb1913-head{display:flex!important;flex-wrap:wrap!important;gap:10px!important}
+ #app .f174-shell .lsb1913-head button{width:100%!important}
+}
+</style>
+<script id="lsb-f174-grade-center">
+/* F174: Dirección — seguimiento, revisión, publicación e historial en Calificaciones.
+ * Aprovecha los componentes de revisión y publicación ya conectados a RPC seguras.
+ * No duplica ni cambia operaciones académicas ni permisos de Supabase. */
+(function(){'use strict';
+ const esc=s=>String(s??'').replace(/[&<>"']/g,x=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[x]));
+ const norm=x=>String(x||'').trim();
+ window.lsbF174StudentName=function(student){
+   if(!student)return '';
+   const first=norm(student.firstNames||student.first_name),last=norm(student.lastNames||student.last_name);
+   if(first&&last)return last+', '+first;
+   return norm(student.name||'');
+ };
+ let selectedTab='seguimiento';
+ const labels={seguimiento:'Seguimiento',revision:'Revisión',publicacion:'Publicación',historial:'Historial'};
+ const info={
+  seguimiento:'Consulta el avance académico por bimestre. Los datos de revisión y publicación se consultan desde Supabase.',
+  revision:'Los envíos pendientes se revisan desde el registro del curso. Esta pestaña mantiene el acceso a Revisión de calificaciones.',
+  publicacion:'Solo Dirección General puede publicar cuadros revisados. La boleta familiar se autoriza por separado.',
+  historial:'Consulta los cuadros publicados oficialmente. Las publicaciones no se pueden editar desde esta pantalla.'
+ };
+ function components(){
+   const temp=document.createElement('div');temp.innerHTML=dashboard();
+   const board=temp.querySelector('#lsb1913-board')||[...temp.querySelectorAll('.lsb1913-board')][0];
+   const publish=temp.querySelector('.lsb19114-publish');
+   // El panel de avance anterior es consultivo y usa estado local: generar uno nuevo desde las filas de Supabase.
+   return {board:board?.outerHTML||'<div class="f174-intro">Actualizando seguimiento de Supabase…</div>',
+     publish:publish?.outerHTML||'<div class="f174-intro">Actualizando lista de publicaciones…</div>'};
+ }
+ function activeData(){
+   const assignments=typeof mine==='function'?mine():[];
+   const year=(typeof cycleYear==='function'?cycleYear():'');
+   const counts=assignments.reduce((sum,a)=>{
+     const en=(LSB18?.rows?.lsb_enrollments||[]).filter(e=>e.section_id===a.group&&e.status==='inscrito');
+     const assessments=(LSB18?.rows?.lsb_assessments||[]).filter(t=>t.teaching_assignment_id===a.id&&Number(t.bimester)===Number(db.active));
+     const scoreData=LSB18?.rows?.lsb_assessment_scores||[];
+     const done=en.filter(e=>assessments.length>0&&assessments.every(t=>scoreData.some(s=>s.assessment_id===t.id&&s.enrollment_id===e.id&&s.score!=null))).length;
+     sum.push({a,count:en.length,done,activities:assessments.length,points:assessments.reduce((s,t)=>s+Number(t.max_score||0),0)});
+     return sum;
+   },[]);
+   return {rows:counts,year};
+ }
+ function overview(){
+   const d=activeData();const ready=d.rows.filter(x=>x.count>0&&x.done===x.count&&x.points===100).length;
+   let html='<div class="f174-statusgrid"><article><small>Cursos y secciones</small><strong>'+d.rows.length+'</strong></article><article><small>Cuadros completos</small><strong>'+ready+'</strong></article><article><small>Bimestre</small><strong>'+esc(db.active)+'</strong></article></div>';
+   const cells=d.rows.map(x=>'<tr><td><b>'+esc(courseName(x.a.course))+'</b><small>'+esc(groupName(x.a.group))+'</small></td><td>'+x.activities+' · '+x.points+' puntos</td><td>'+x.done+' / '+x.count+'</td><td><button class="button secondary" type="button" data-f174-open="'+esc(x.a.id)+'">Ver cuadro</button></td></tr>').join('');
+   html+='<section class="panel"><div class="panelhead"><h2>Avance por curso y grado</h2></div>'+table(['Curso y grado','Actividades · puntos','Notas completas',''],cells)+'</section>';
+   return html;
+ }
+ function reviewBlock(c){
+   return '<div class="f174-quick-actions"><button type="button" data-f174-route="courses">Abrir revisión por curso</button></div>'+c.board;
+ }
+ function historyBlock(c){
+   const temp=document.createElement('div');temp.innerHTML=c.publish;
+   const published=[...temp.querySelectorAll('.lsb19114-item')].filter(e=>(e.textContent||'').includes('Publicado'));
+   if(!published.length)return '<section class="f174-history"><h2>Historial de publicaciones</h2><p>No hay cuadros publicados en la lista consultada. Usa «Publicación» para actualizar el estado.</p><button type="button" class="button secondary" data-f174-tab="publicacion">Ir a Publicación</button></section>';
+   return '<section class="f174-history"><h2>Historial de publicaciones</h2><ul>'+published.map(e=>'<li>'+e.querySelector('strong')?.outerHTML+'<small>'+esc(e.querySelector('small')?.textContent)+'</small></li>').join('')+'</ul></section>';
+ }
+ window.lsbF174GradeCenterView=function(){
+   if(role!=='admin'||!LSB18?.authenticated||!['admin_general','admin_secundario'].includes(LSB18.profile?.role||''))return heading('Acceso restringido');
+   const c=components();
+   const tabs='<div class="f174-tabs" role="tablist" aria-label="Áreas de calificaciones">'+Object.entries(labels).map(([id,label])=>'<button type="button" role="tab" aria-selected="'+(id===selectedTab)+'" data-f174-tab="'+id+'">'+label+'</button>').join('')+'</div>';
+   let content=selectedTab==='seguimiento'?overview()+c.board:
+     selectedTab==='revision'?reviewBlock(c):
+     selectedTab==='publicacion'?c.publish:historyBlock(c);
+   return '<div class="f174-shell"><div class="f174-heading"><h1>Calificaciones</h1><p>Gestión académica de Dirección · Ciclo '+esc(cycleYear())+'</p></div>'+tabs+'<div class="f174-intro">'+esc(info[selectedTab])+'</div><div class="f174-shell-content">'+content+'</div></div>';
+ };
+ document.addEventListener('click',event=>{
+   const tab=event.target.closest('[data-f174-tab]');if(tab&&document.querySelector('#app')?.contains(tab)){
+     const key=tab.dataset.f174Tab;if(!labels[key])return;
+     event.preventDefault();selectedTab=key;if(page!=='grade_center')go('grade_center');else render();return;
+   }
+   const route=event.target.closest('[data-f174-route]');if(route&&document.querySelector('#app')?.contains(route)){
+     event.preventDefault();go(route.dataset.f174Route);return;
+   }
+   const open=event.target.closest('[data-f174-open]');if(open&&document.querySelector('#app')?.contains(open)){
+     event.preventDefault();const a=mine().find(item=>String(item.id)===open.dataset.f174Open);if(!a)return;
+     assignment=a.id;unit=db.active;page='grade';draft=null;render();return;
+   }
+ });
+ // F174: retirar las tarjetas antiguas de Inicio (también cuando se usa el diseño heredado).
+ const f174DashboardOriginal=dashboard;
+ dashboard=function(){
+   const html=f174DashboardOriginal.apply(this,arguments);
+   if(role!=='admin'||page!=='home')return html;
+   const temp=document.createElement('div');temp.innerHTML=html;
+   temp.querySelectorAll('.lsb1913-board,.lsb19114-publish').forEach(el=>el.remove());
+   for(const item of temp.querySelectorAll('.panel')){
+     if(item.querySelector('.panelhead h2')?.textContent.trim()==='Avance por curso y grado')item.remove();
+   }
+   return temp.innerHTML;
+ };
+ // Publicación/revisión deben permanecer disponibles en el centro y no al final del Inicio.
+ const shadow=document.getElementById('lsb-f23-shell')?.shadowRoot;
+ if(shadow){
+   const style=document.createElement('style');style.id='lsb-f174-director-menu-style';
+   style.textContent=`
+    #home-view .main-grid>div:first-child{display:none!important}
+    #home-view .main-grid{grid-template-columns:minmax(0,1fr)!important}
+    #home-view .main-grid .rightcol{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:14px!important}
+    #home-view .main-grid .rightcol>*{min-width:0!important}
+    #home-view .rightcol .notice:has(b):nth-child(2){display:none!important}
+    @media(max-width:900px){#home-view .main-grid .rightcol{grid-template-columns:1fr!important}}
+   `;
+   shadow.appendChild(style);
+ }
+})();
+</script>
 </body></html>
