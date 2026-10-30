@@ -11671,4 +11671,76 @@ body.loginmode #profile-menu{display:none!important}
  }
 }
 </style>
+<style id="lsb-f164-family-filter-style">
+/* F164: filtros de Reportes del portal Familias sin selector nativo de Android */
+@media(max-width:700px){
+ body[data-area="family"] #app .f141-report-controls{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;overflow:visible!important}
+ body[data-area="family"] #app .f141-report-controls label{position:relative;gap:8px;font-weight:800!important;color:#48547a!important}
+ body[data-area="family"] #app .f141-report-controls select.f164-source{display:none!important}
+ body[data-area="family"] #app .f141-report-controls .f164-trigger{display:flex!important;align-items:center;justify-content:space-between;gap:7px;width:100%;min-width:0;min-height:54px;padding:13px 13px!important;border:1px solid #dce1f1!important;border-radius:16px!important;background:#fff!important;color:#263b71!important;box-shadow:0 6px 18px #1d367310;font-family:inherit;font-size:13px!important;font-weight:750;text-align:left;cursor:pointer;touch-action:manipulation}
+ body[data-area="family"] #app .f141-report-controls .f164-trigger[aria-expanded="true"]{border-color:#8178e8!important;box-shadow:0 0 0 3px #8178e81c!important}
+ body[data-area="family"] #app .f141-report-controls .f164-trigger:focus-visible{outline:3px solid #31bfc2;outline-offset:3px}
+ body[data-area="family"] #app .f141-report-controls .f164-trigger-name{display:block;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;flex:1;min-width:0}
+ body[data-area="family"] #app .f141-report-controls .f164-chevron{flex:none;width:9px;height:9px;border-right:2px solid #5864ae;border-bottom:2px solid #5864ae;transform:rotate(45deg);margin-right:4px;margin-top:-5px;transition:transform .15s ease}
+ body[data-area="family"] #app .f141-report-controls .f164-trigger[aria-expanded="true"] .f164-chevron{transform:rotate(225deg);margin-top:4px}
+}
+#lsb-f164-popover{position:fixed;z-index:2147480000;box-sizing:border-box;padding:10px;border-radius:20px;border:1px solid #e0e4f2;background:#fff;color:#233052;box-shadow:0 20px 55px #1b25493f;font:14px/1.4 'DM Sans',system-ui,sans-serif;overflow:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+#lsb-f164-popover .f164-heading{padding:6px 9px 11px;border-bottom:1px solid #eef0f9;margin-bottom:6px}
+#lsb-f164-popover .f164-heading strong{display:block;font-size:14px;color:#29376b}
+#lsb-f164-popover .f164-heading small{display:block;margin-top:4px;color:#717c9b;font-size:12px}
+#lsb-f164-popover .f164-choice{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;min-height:49px;border:0!important;border-radius:13px;background:transparent;color:#324064;font:650 14px 'DM Sans',system-ui,sans-serif;text-align:left;padding:12px 13px;cursor:pointer}
+#lsb-f164-popover .f164-choice:hover,#lsb-f164-popover .f164-choice:focus-visible{background:#eff1fc;outline:none}
+#lsb-f164-popover .f164-choice[aria-selected="true"]{background:#f0edff;color:#4f47b4;font-weight:800}
+#lsb-f164-popover .f164-check{font-weight:900;font-size:17px;color:#6554ca}
+</style>
+<script id="lsb-f164-family-filter-controller">
+(()=>{'use strict';
+ const root=document.getElementById('app');if(!root)return;
+ let active=null,queued=false;
+ const relevant=()=>document.body.dataset.area==='family' && window.innerWidth<=700 && !document.body.classList.contains('loginmode');
+ function close(focus=false){if(!active)return;const a=active;active=null;a.menu.remove();if(a.trigger.isConnected)a.trigger.setAttribute('aria-expanded','false');if(focus&&a.trigger.isConnected)a.trigger.focus();}
+ function open(select,trigger,label){
+   if(active?.trigger===trigger){close();return;}
+   close();if(!relevant())return;
+   const opts=Array.from(select.options),menu=document.createElement('div');menu.id='lsb-f164-popover';menu.setAttribute('role','listbox');menu.setAttribute('aria-label','Opciones de '+label);
+   const head=document.createElement('div');head.className='f164-heading';
+   const strong=document.createElement('strong');strong.textContent='Filtrar por '+label.toLowerCase();
+   const hint=document.createElement('small');hint.textContent='Selecciona una opción';head.append(strong,hint);menu.append(head);
+   const buttons=opts.map(o=>{const b=document.createElement('button');b.type='button';b.className='f164-choice';b.setAttribute('role','option');b.setAttribute('aria-selected',String(o.value===select.value));
+     const name=document.createElement('span');name.textContent=o.textContent;
+     const check=document.createElement('span');check.className='f164-check';check.setAttribute('aria-hidden','true');check.textContent=o.value===select.value?'✓':'';
+     b.append(name,check);b.onclick=()=>{select.value=o.value;select.dispatchEvent(new Event('change',{bubbles:true}));const span=trigger.querySelector('.f164-trigger-name');if(span)span.textContent=o.textContent;close(true);};menu.append(b);return b;});
+   document.body.append(menu);active={trigger,select,menu};trigger.setAttribute('aria-expanded','true');
+   const rect=trigger.getBoundingClientRect(),height=window.innerHeight,spaceBelow=height-rect.bottom-14,spaceAbove=rect.top-14;
+   const wanted=Math.min(320,opts.length*49+100);const above=spaceBelow<Math.min(wanted,230)&&spaceAbove>spaceBelow;
+   const maxHeight=Math.max(120,Math.min(wanted,above?spaceAbove-8:spaceBelow-8));
+   menu.style.maxHeight=maxHeight+'px';menu.style.width=Math.min(Math.max(rect.width,235),window.innerWidth-24)+'px';
+   menu.style.left=Math.max(12,Math.min(rect.left,window.innerWidth-12-parseFloat(menu.style.width)))+'px';
+   if(above)menu.style.bottom=Math.max(12,height-rect.top+5)+'px';else menu.style.top=Math.max(12,rect.bottom+6)+'px';
+   const selected=Math.max(0,opts.findIndex(o=>o.value===select.value));buttons[selected]?.focus({preventScroll:true});
+   menu.onkeydown=e=>{const idx=buttons.indexOf(document.activeElement);if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();buttons[(Math.max(0,idx)+(e.key==='ArrowDown'?1:buttons.length-1))%buttons.length]?.focus();}else if(e.key==='Home'){e.preventDefault();buttons[0]?.focus();}else if(e.key==='End'){e.preventDefault();buttons[buttons.length-1]?.focus();}else if(e.key==='Escape'){e.preventDefault();close(true);}};
+ }
+ function install(){queued=false;if(!relevant()){close();return;}if(active&&!active.trigger.isConnected)close();
+   for(const id of ['f141-course','f141-state']){
+     const select=root.querySelector('#'+id);if(!select||select.dataset.f164Ready==='yes')continue;
+     const label=select.closest('label');if(!label)continue;
+     const labelName=id==='f141-course'?'Curso':'Estado';
+     const trigger=document.createElement('button');trigger.type='button';trigger.className='f164-trigger';trigger.setAttribute('aria-haspopup','listbox');trigger.setAttribute('aria-expanded','false');trigger.setAttribute('aria-label','Filtrar por '+labelName);
+     const name=document.createElement('span');name.className='f164-trigger-name';name.textContent=select.selectedOptions[0]?.textContent||'Seleccionar';
+     const chevron=document.createElement('span');chevron.className='f164-chevron';chevron.setAttribute('aria-hidden','true');trigger.append(name,chevron);
+     select.classList.add('f164-source');select.tabIndex=-1;select.setAttribute('aria-hidden','true');select.dataset.f164Ready='yes';select.insertAdjacentElement('afterend',trigger);
+     trigger.onclick=e=>{e.preventDefault();e.stopPropagation();open(select,trigger,labelName);};
+   }
+ }
+ function schedule(){if(!queued){queued=true;requestAnimationFrame(install);}}
+ new MutationObserver(schedule).observe(root,{childList:true,subtree:true});
+ new MutationObserver(schedule).observe(document.body,{attributes:true,attributeFilter:['data-area','class']});
+ document.addEventListener('pointerdown',e=>{if(active&&!active.menu.contains(e.target)&&!active.trigger.contains(e.target))close();},true);
+ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&active){e.preventDefault();close(true);}});
+ window.addEventListener('resize',()=>{close();schedule();},{passive:true});
+ window.addEventListener('scroll',e=>{if(active&&!active.menu.contains(e.target))close();},true);
+ install();
+})();
+</script>
+
 </body></html>
