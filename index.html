@@ -5996,8 +5996,23 @@ function go(path){
   const notice=q('#detail-sub');if(notice)notice.textContent='No fue posible abrir este apartado. Conserva la versión de respaldo.';
 }
 const groupIcons={inicio:'#i-home',academico:'#i-cap',personas:'#i-people',gestion:'#i-wallet',horarios:'#i-calendar',ciclos:'#i-clock',archivos:'#i-folder',comunicacion:'#i-mail',soporte:'#i-chat',ia:'#i-brain'};
-const routeIcons={catalog:'#i-folder',attendance:'#i-calendar',exports:'#i-chart',published_grades:'#i-file',grade_center:'#i-file',courses:'#i-cap',periods:'#i-clock',cycles:'#i-clock',reports:'#i-chart',students:'#i-people',teachers:'#i-cap',families:'#i-people',accounts:'#i-settings',payments:'#i-wallet',schedule:'#i-calendar',notices:'#i-mail',school_reports:'#i-file',home:'#i-home'};
-const iconUse=ref=>`<svg><use href="${ref}"></use></svg>`;
+const routeIcons={catalog:'lsb:catalog',attendance:'lsb:attendance',exports:'lsb:exports',published_grades:'#i-file',grade_center:'lsb:grade_center',courses:'lsb:courses',periods:'lsb:periods',cycles:'lsb:cycles',reports:'lsb:reports',students:'lsb:students',teachers:'lsb:teachers',families:'lsb:families',accounts:'#i-settings',payments:'#i-wallet',schedule:'lsb:schedule',notices:'#i-mail',school_reports:'lsb:school_reports',home:'#i-home'};
+const f175Icons={
+  families:'<circle cx="8" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M2 20v-2a6 6 0 0 1 12 0v2m1-6c4 0 7 2 7 6"/>',
+  students:'<circle cx="12" cy="7" r="4"/><path d="M4 21v-2a8 8 0 0 1 16 0v2"/>',
+  teachers:'<path d="m2 10 10-5 10 5-10 5z"/><path d="M6 12v5q6 5 12 0v-5m4-2v6"/>',
+  grade_center:'<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8m-8 4h8m-8 4h3m3 0 1.5 1.5L19 14"/>',
+  catalog:'<path d="M4 6h8a3 3 0 0 1 3 3v12H7a3 3 0 0 0-3 0zM20 6h-3a3 3 0 0 0-2 1v14h2a3 3 0 0 1 3 0z"/>',
+  periods:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M7 3v4m10-4v4M8 15h3"/>',
+  cycles:'<path d="M4 11a8 8 0 1 1 3 7M4 5v6h6M12 8v4l3 2"/>',
+  reports:'<path d="M6 3h9l4 4v14H6zM14 3v5h5m-10 5h7m-7 4h7"/>',
+  exports:'<path d="M5 3h14v18H5zM12 7v9m-4-4 4 4 4-4M8 19h8"/>',
+  schedule:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l4 3"/>',
+  attendance:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4m10-4v4M3 10h18m5 5 2 2 5-5"/>',
+  courses:'<path d="M3 4h18v16H3zM7 8h10m-10 4h10m-10 4h7"/>',
+  school_reports:'<path d="M5 3h14v18H5zM8 7h8m-8 4h8m-8 4h3m4 0 2 2 3-4"/>'
+};
+const iconUse=ref=>ref.startsWith('lsb:')?`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${f175Icons[ref.slice(4)]||''}</svg>`:`<svg><use href="${ref}"></use></svg>`;
 let f152MenuSignature='';
 let f1578CollapsedGroup=null;
 function drawMenu(){const order=['inicio','academico','personas','gestion','horarios','ciclos','archivos','comunicacion','soporte','ia'];
@@ -9324,9 +9339,33 @@ let style=document.createElement('style');style.id='f132-native-style';style.tex
 :host([data-f132="mobile"]) .f132-overlay[hidden],:host([data-f132="mobile"]) .f132-dock[hidden]{display:none!important}
 @media(max-width:380px){:host([data-f132="mobile"]) .content-view{padding-inline:10px!important}:host([data-f132="mobile"]) .f132-list{grid-template-columns:1fr!important}}
 `;root.appendChild(style);
-const dock=document.createElement('nav');dock.className='f132-dock';dock.id='f132-dock';dock.setAttribute('aria-label','Menú inferior Dirección');dock.innerHTML=routes.map(([name,path,ico])=>`<button type="button" data-f132-go="${path}"><b>${ico}</b><span>${name}</span></button>`).join('');root.appendChild(dock);
-const overlay=document.createElement('div');overlay.className='f132-overlay';overlay.id='f132-overlay';overlay.hidden=true;overlay.innerHTML=`<div class="f132-sheet"><div class="f132-sheethead"><h3>Menú de Dirección</h3><button type="button" data-f132-close>✕</button></div><div class="f132-list">${menu.map(([n,r,i])=>`<button type="button" data-f132-go="${r}"><b>${i}</b><span>${n}</span></button>`).join('')}</div></div>`;root.appendChild(overlay);
-root.addEventListener('click',e=>{const btn=e.target.closest('[data-f132-go]');if(btn){if(btn.dataset.f132Go==='menu'){overlay.hidden=false;return;}overlay.hidden=true;let route=btn.dataset.f132Go;const native=root.querySelector(`[data-route="${route}"],[data-path="${route}"],[data-go="${route}"]`);if(native) native.click();else {let orig=document.querySelector(`#nav button[data-go="${route}"]`);if(orig)orig.click();else {try{Function('p','if(typeof go === "function")go(p)')(route)}catch(err){console.warn('F132 route',err)}}}requestAnimationFrame(sync);return;}if(e.target===overlay||e.target.closest('[data-f132-close]'))overlay.hidden=true});
+/* F175: iconografía propia para cada opción de Dirección; Familia nunca usa casa. */
+const f175Paths={
+ home:'<path d="m3 10 9-7 9 7v10H3z"/><path d="M9 21v-7h6v7"/>',
+ lsb_ai:'<path d="m12 3 1.9 6.1L20 11l-6.1 1.9L12 19l-1.9-6.1L4 11l6.1-1.9z"/><path d="m19 18 .6 1.4L21 20l-1.4.6L19 22l-.6-1.4L17 20l1.4-.6z"/>',
+ grade_center:'<path d="M5 3h14v18H5z"/><path d="M8 7h8M8 11h8M8 15h3m3 0 1.3 1.3L18 13"/>',
+ notices:'<path d="M4 6h16v12H4z"/><path d="m4 7 8 6 8-6"/>',
+ menu:'<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>',
+ catalog:'<path d="M4 6h8a3 3 0 0 1 3 3v12H7a3 3 0 0 0-3 0z"/><path d="M20 6h-3a3 3 0 0 0-2 1v14h2a3 3 0 0 1 3 0z"/>',
+ attendance:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4m10-4v4M3 10h18m-13 5 3 3 5-5"/>',
+ students:'<circle cx="12" cy="7" r="4"/><path d="M4 21v-2a8 8 0 0 1 16 0v2M7 17h10"/>',
+ teachers:'<path d="m2 10 10-5 10 5-10 5z"/><path d="M6 12v5q6 5 12 0v-5m4-2v6"/>',
+ families:'<circle cx="8" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M2 20v-2a6 6 0 0 1 12 0v2M15 14c4 0 7 2 7 6v0"/>',
+ payments:'<rect x="3" y="6" width="18" height="14" rx="2"/><path d="M3 10h18m-14 6h4"/>',
+ schedule:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l4 3"/>',
+ cycles:'<path d="M4 11a8 8 0 1 1 3 7"/><path d="M4 5v6h6"/><path d="M12 8v4l3 2"/>',
+ periods:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M7 3v4m10-4v4M8 15h3"/>',
+ exports:'<path d="M5 3h10l4 4v14H5z"/><path d="M15 3v5h4M8 12h8M8 16h5"/>',
+ reports:'<path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M9 13h7M9 17h7"/>',
+ school_reports:'<path d="M5 3h14v18H5z"/><path d="M8 7h8M8 11h8M8 15h3m4 0 2 2 3-4"/>',
+ accounts:'<circle cx="12" cy="12" r="3"/><path d="M12 2v3m0 14v3M2 12h3m14 0h3M5 5l2 2m10 10 2 2M19 5l-2 2M7 17l-2 2"/>',
+ support:'<path d="M4 5h16v12H9l-5 4z"/><path d="M9 10a3 3 0 0 1 6 0c0 2-3 2-3 4m0 3v.2"/>'
+};
+function f175Icon(route){return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(f175Paths[route]||f175Paths.support)+'</svg>';}
+
+const dock=document.createElement('nav');dock.className='f132-dock';dock.id='f132-dock';dock.setAttribute('aria-label','Menú inferior Dirección');dock.innerHTML=routes.map(([name,path,ico])=>`<button type="button" data-f132-go="${path}"><b>${f175Icon(path)}</b><span>${name}</span></button>`).join('');root.appendChild(dock);
+const overlay=document.createElement('div');overlay.className='f132-overlay';overlay.id='f132-overlay';overlay.hidden=true;overlay.innerHTML=`<div class="f132-sheet"><div class="f132-sheethead"><h3>Menú de Dirección</h3><button type="button" data-f132-close>✕</button></div><div class="f132-list">${menu.map(([n,r,i])=>`<button type="button" data-f132-go="${r}"><b>${f175Icon(r)}</b><span>${n}</span></button>`).join('')}</div></div>`;root.appendChild(overlay);
+root.addEventListener('click',e=>{const btn=e.target.closest('[data-f132-go]');if(btn){if(btn.dataset.f132Go==='menu'){overlay.hidden=false;return;}overlay.hidden=true;let route=btn.dataset.f132Go;if(route==='grade_center'){try{Function('go("grade_center")')();}catch(e){console.warn('F175 calificaciones',e);}requestAnimationFrame(()=>{sync();window.scrollTo({top:0,behavior:'instant'});});return;}const native=root.querySelector(`[data-route="${route}"],[data-path="${route}"],[data-go="${route}"]`);if(native) native.click();else {let orig=document.querySelector(`#nav button[data-go="${route}"]`);if(orig)orig.click();else {try{Function('p','if(typeof go === "function")go(p)')(route)}catch(err){console.warn('F132 route',err)}}}requestAnimationFrame(sync);return;}if(e.target===overlay||e.target.closest('[data-f132-close]'))overlay.hidden=true});
 }
 function decorate(root){const area=root.getElementById('detail-content');if(!area||!mobile())return;for(const table of area.querySelectorAll('.tablewrap table')){if(table.dataset.f132Done==='1')continue;table.dataset.f132Done='1';let heads=[...table.querySelectorAll('thead th')].map(th=>th.innerText?.trim().replace(/\s+/g,' ')||'Detalle');for(const tr of table.querySelectorAll('tbody tr'))[...tr.children].forEach((cell,i)=>{if(cell.tagName==='TD')cell.dataset.f132Label=heads[i]||['Detalle','Información','Acciones'][Math.min(i,2)];});}}
 function sync(){const root=getroot();if(!root)return;install(root);const yes=mobile();const wasMobile=root.host.getAttribute('data-f132')==='mobile';root.host.setAttribute('data-f132',yes?'mobile':'desktop');root.getElementById('f132-dock').hidden=!yes;if(!yes||!wasMobile)root.getElementById('f132-overlay').hidden=true;if(!yes)return;decorate(root);const isHome=root.getElementById('home-view')?.classList.contains('active');let t=isHome?'home':document.body.dataset.page||'menu';root.querySelectorAll('#f132-dock [data-f132-go]').forEach(b=>b.classList.toggle('on',b.dataset.f132Go===t));const target=root.getElementById('detail-content');if(target&&observed!==target){observed=target;new MutationObserver(()=>{if(raf)cancelAnimationFrame(raf);raf=requestAnimationFrame(()=>decorate(root));}).observe(target,{childList:true,subtree:true});}}
@@ -12000,4 +12039,53 @@ html[data-theme="dark"] body[data-area="teacher"] #app #f71-form :is(.f168-group
  }
 })();
 </script>
-</body></html>
+<style id="lsb-f175-mobile-layout">
+/* F175 · Corrección institucional: teléfono, Dirección únicamente. */
+@media (max-width:900px){
+ body.lsb-f23-director:not(.loginmode) #app,body.lsb-f23-director:not(.loginmode) #app *{box-sizing:border-box!important}
+ body.lsb-f23-director:not(.loginmode) #app{width:100%!important;max-width:100%!important;min-width:0!important;overflow-x:clip!important}
+ body.lsb-f23-director:not(.loginmode) #app :is(.panel,.panelbody,.panelhead,.heading,.toolbar,.tablewrap,.f174-shell,.f174-shell-content){min-width:0!important;max-width:100%!important;box-sizing:border-box!important}
+ body.lsb-f23-director:not(.loginmode) #app :is(h1,h2,h3,p,span,strong){overflow-wrap:anywhere}
+ body.lsb-f23-director:not(.loginmode) #app .heading .toolbar{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important}
+ body.lsb-f23-director:not(.loginmode) #app .heading .toolbar>:last-child:nth-child(odd){grid-column:1/-1!important}
+ body.lsb-f23-director:not(.loginmode) #app .heading .toolbar>:is(button,a,.button){min-width:0!important;width:100%!important;white-space:normal!important}
+ /* Catálogo de cursos y grados: tarjetas completas que no se deslizan horizontalmente. */
+ body.lsb-f23-director:not(.loginmode)[data-page="catalog"] #app .panel{overflow:hidden!important}
+ body.lsb-f23-director:not(.loginmode)[data-page="catalog"] #app .tablewrap{overflow:visible!important;width:100%!important;padding:12px!important;margin:0!important}
+ body.lsb-f23-director:not(.loginmode)[data-page="catalog"] #app .tablewrap table{display:block!important;width:100%!important;min-width:0!important;max-width:100%!important;margin:0!important;table-layout:fixed!important;border:0!important}
+ body.lsb-f23-director:not(.loginmode)[data-page="catalog"] #app .tablewrap thead{display:none!important}
+ body.lsb-f23-director:not(.loginmode)[data-page="catalog"] #app .tablewrap tbody{display:grid!important;grid-template-columns:1fr!important;width:100%!important;min-width:0!important;gap:12px!important}
+ body.lsb-f23-director:not(.loginmode)[data-page="catalog"] #app .tablewrap tr{display:flex!important;flex-direction:column!important;gap:0!important;width:100%!important;min-width:0!important;max-width:100%!important;margin:0!important;border:1px solid var(--line,#e5e8f1)!important;border-radius:17px!important;background:var(--surface,#fff)!important;padding:14px!important}
+ body.lsb-f23-director:not(.loginmode)[data-page="catalog"] #app .tablewrap td{display:flex!important;flex-wrap:wrap!important;align-items:center!important;gap:9px!important;width:100%!important;min-width:0!important;max-width:100%!important;padding:12px 0!important;border:0!important;border-bottom:1px solid var(--line,#edf0f7)!important;overflow-wrap:anywhere!important;font-size:14px!important}
+ body.lsb-f23-director:not(.loginmode)[data-page="catalog"] #app .tablewrap td::before{flex:0 0 100%!important;content:attr(data-f132-label)!important;display:block!important;font:750 11px/1.3 system-ui!important;letter-spacing:.04em!important;text-transform:uppercase!important;color:var(--muted,#7984a0)!important}
+ body.lsb-f23-director:not(.loginmode)[data-page="catalog"] #app .tablewrap td:first-child{font-size:18px!important;font-weight:800!important}
+ body.lsb-f23-director:not(.loginmode)[data-page="catalog"] #app .tablewrap td:last-child{border:0!important;padding-bottom:0!important}
+ body.lsb-f23-director:not(.loginmode)[data-page="catalog"] #app .tablewrap td>:is(button,.button,a){display:flex!important;align-items:center!important;justify-content:center!important;width:100%!important;max-width:100%!important;min-width:0!important;min-height:48px!important;margin:0!important;white-space:normal!important;text-align:center!important}
+ body.lsb-f23-director:not(.loginmode)[data-page="catalog"] #app .coursemark{flex:0 0 48px!important;width:48px!important;height:48px!important;min-width:0!important}
+ /* Calificaciones: pestañas legibles y acciones de publicación sin desbordamiento. */
+ body.lsb-f23-director:not(.loginmode)[data-page="grade_center"] #app .f174-tabs{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important;min-width:0!important;max-width:100%!important}
+ body.lsb-f23-director:not(.loginmode)[data-page="grade_center"] #app .f174-tabs>button{min-width:0!important;min-height:51px!important;white-space:normal!important}
+ body.lsb-f23-director:not(.loginmode)[data-page="grade_center"] #app .f174-shell .lsb19114-item{display:flex!important;flex-direction:column!important;align-items:stretch!important;width:100%!important;min-width:0!important}
+ body.lsb-f23-director:not(.loginmode)[data-page="grade_center"] #app .f174-shell .lsb19114-item button{width:100%!important;min-height:49px!important}
+}
+</style><script id="lsb-f175-shadow-mobile">
+/* Estilos en Shadow DOM; CSS externo no atraviesa el encapsulamiento. */
+(()=>{
+ const styleId='lsb-f175-shadow-layout';
+ function install(){const shadow=document.getElementById('lsb-f23-shell')?.shadowRoot;if(!shadow||shadow.getElementById(styleId))return;
+ const st=document.createElement('style');st.id=styleId;st.textContent=`
+ :host([data-f132="mobile"]) .content-view,:host([data-f132="mobile"]) .workspace,:host([data-f132="mobile"]) #detail-view,:host([data-f132="mobile"]) #detail-content{min-width:0!important;width:100%!important;max-width:100%!important;box-sizing:border-box!important;overflow-x:clip!important}
+ :host([data-f132="mobile"]) #detail-content{display:block!important;overflow:visible!important;min-width:0!important}
+ :host([data-f132="mobile"]) .f132-dock b,:host([data-f132="mobile"]) .f132-list b{display:grid!important;place-items:center!important;width:26px!important;height:26px!important;flex:0 0 26px!important;font-size:unset!important}
+ :host([data-f132="mobile"]) .f132-dock svg{width:24px!important;height:24px!important}
+ :host([data-f132="mobile"]) .f132-list svg{width:23px!important;height:23px!important}
+ :host([data-f132="mobile"]) .f132-list{grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important}
+ :host([data-f132="mobile"]) .f132-list button{min-width:0!important;overflow-wrap:anywhere!important;padding:12px 10px!important}
+ :host([data-f132="mobile"]) .f132-list button span{min-width:0!important;overflow-wrap:anywhere!important}
+ :host([data-f132="mobile"]) .f132-dock button.on{background:#ffffffa8!important;color:#3b4193!important;box-shadow:none!important}
+ @media(max-width:420px){:host([data-f132="mobile"]) .f132-list{grid-template-columns:1fr 1fr!important}}
+ `;shadow.appendChild(st);}
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();
+ setTimeout(install,1000);
+})();
+</script></body></html>
