@@ -11985,31 +11985,104 @@ html[data-theme="dark"] body[data-area="teacher"] #app #f71-form :is(.f168-group
    },[]);
    return {rows:counts,year};
  }
+ /* F178: una sola tarjeta por asignatura y navegación a sus secciones. */
+ let f178SelectedCourse=null;
+ let f178PublicationTarget=null;
+ const f178Official={loaded:false,busy:false,error:'',submissions:[],publications:[]};
+ function f178Key(a){return String(a.course||courseName(a.course));}
+ function f178Status(a){
+   if(!f178Official.loaded||f178Official.error)return '';
+   const sid=String(a.id),bim=Number(db.active);
+   const pub=f178Official.publications.find(v=>String(v.teaching_assignment_id)===sid&&Number(v.bimester)===bim);
+   if(pub)return 'publicado';
+   const sub=f178Official.submissions.find(v=>String(v.teaching_assignment_id)===sid&&Number(v.bimester)===bim);
+   return sub?.status==='revisado'?'revisado':sub?.status==='pendiente'?'pendiente':'';
+ }
+ async function f178Refresh(force=false){
+   if(f178Official.busy||(f178Official.loaded&&!force)||!LSB18?.authenticated)return;
+   f178Official.busy=true;
+   try{
+     const [subs,pubs]=await Promise.all([
+       lsbF2Result('lsb_grade_submissions','id,teaching_assignment_id,bimester,status'),
+       lsbF2Result('lsb_grade_publications','id,teaching_assignment_id,bimester')
+     ]);
+     if(subs.error||pubs.error)throw Error(subs.error?.message||pubs.error?.message);
+     f178Official.submissions=subs.data||[];
+     f178Official.publications=pubs.data||[];
+     f178Official.error='';f178Official.loaded=true;
+   }catch(err){f178Official.error=err.message||'No se pudieron confirmar los estados.';f178Official.loaded=true;}
+   finally{
+     f178Official.busy=false;
+     if(page==='grade_center'&&selectedTab==='seguimiento')render();
+   }
+ }
+ function f178Groups(rows){
+   const map=new Map();
+   for(const x of rows){
+     const key=f178Key(x.a);
+     if(!map.has(key))map.set(key,{key,name:courseName(x.a.course),rows:[]});
+     map.get(key).rows.push(x);
+   }
+   return [...map.values()].sort((a,b)=>a.name.localeCompare(b.name,'es',{sensitivity:'base'}));
+ }
+ function f178Badge(x){
+   const state=f178Status(x.a);
+   const complete=x.activities>0&&x.count>0&&x.points===100&&x.done===x.count;
+   if(state==='publicado')return '<span class="f178-badge published">Publicado</span>';
+   if(state==='revisado')return '<span class="f178-badge reviewed">Revisado</span>';
+   if(state==='pendiente')return '<span class="f178-badge pending">En revisión</span>';
+   if(complete)return '<span class="f178-badge complete">Notas completas</span>';
+   return '<span class="f178-badge">En preparación</span>';
+ }
+ function f178CourseCard(group){
+   const reviewed=group.rows.filter(x=>f178Status(x.a)==='revisado').length;
+   const published=group.rows.filter(x=>f178Status(x.a)==='publicado').length;
+   const completed=group.rows.filter(x=>x.activities>0&&x.count>0&&x.points===100&&x.done===x.count).length;
+   const sent=group.rows.filter(x=>f178Status(x.a)==='pendiente').length;
+   const n=group.rows.length;
+   return '<article class="f178-course-card">'+
+      '<div class="f178-course-title"><h3>'+esc(group.name)+'</h3><small>'+n+' '+(n===1?'sección':'secciones')+' · Ciclo '+esc(cycleYear())+'</small></div>'+
+      '<div class="f178-course-metrics">'+
+      '<div><small>Secciones</small><strong>'+n+'</strong></div>'+
+      '<div><small>Con notas completas</small><strong>'+completed+' / '+n+'</strong></div>'+
+      '<div><small>Revisadas</small><strong>'+reviewed+' / '+n+'</strong></div>'+
+      '</div>'+
+      '<p class="f178-course-caption">En revisión: '+sent+' · Publicadas: '+published+'</p>'+
+      '<button class="button secondary f178-full-button" type="button" data-f178-course="'+esc(group.key)+'">Ver secciones</button>'+
+      '</article>';
+ }
+ function f178SectionCard(x){
+   const full=x.count>0&&x.activities>0&&x.points===100&&x.done===x.count;
+   const state=f178Status(x.a);
+   const publish=state==='revisado'&&full&&LSB18?.profile?.role==='admin_general';
+   return '<article class="f178-section-card">'+
+     '<div class="f178-section-head"><div><h3>'+esc(groupName(x.a.group))+'</h3><p>Bimestre '+esc(db.active)+'</p></div>'+f178Badge(x)+'</div>'+
+     '<div class="f178-section-stats">'+
+       '<span><small>Actividades</small><strong>'+x.activities+'</strong></span>'+
+       '<span><small>Puntos</small><strong>'+x.points+' / 100</strong></span>'+
+       '<span><small>Notas completas</small><strong>'+x.done+' / '+x.count+'</strong></span>'+
+     '</div><div class="f178-section-actions">'+
+       '<button class="button secondary" type="button" data-f174-open="'+esc(x.a.id)+'">Ver cuadro</button>'+
+       (publish?'<button class="button" type="button" data-f178-publication="'+esc(x.a.id)+'">Ir a Publicación</button>':'')+
+     '</div></article>';
+ }
  function overview(){
-   const d=activeData();const ready=d.rows.filter(x=>x.count>0&&x.done===x.count&&x.points===100).length;
-   let html='<div class="f174-statusgrid"><article><small>Cursos y secciones</small><strong>'+d.rows.length+'</strong></article><article><small>Cuadros completos</small><strong>'+ready+'</strong></article><article><small>Bimestre</small><strong>'+esc(db.active)+'</strong></article></div>';
-   /* F177: móvil recibe tarjetas auténticas. No depender del antiguo adaptador de tablas F139. */
-   if(window.matchMedia('(max-width:700px)').matches){
-     const cards=d.rows.map(x=>{
-       const name=esc(courseName(x.a.course)),group=esc(groupName(x.a.group));
-       const total=x.count||0;
-       const badge=x.count>0&&x.activities>0&&x.points===100&&x.done===x.count
-         ?'<span class="f177-progress-tag is-ready">Notas completas</span>'
-         :'<span class="f177-progress-tag">En preparación</span>';
-       return '<article class="f177-progress-card">'+
-         '<div class="f177-progress-heading"><div class="f177-progress-heading-text"><h3>'+name+'</h3><p>'+group+'</p></div>'+badge+'</div>'+
-         '<div class="f177-progress-stats">'+
-           '<div class="f177-progress-stat"><small>Actividades</small><strong>'+x.activities+'</strong></div>'+
-           '<div class="f177-progress-stat"><small>Punteo</small><strong>'+x.points+' / 100</strong></div>'+
-           '<div class="f177-progress-stat"><small>Notas completas</small><strong>'+x.done+' / '+total+'</strong></div>'+
-         '</div><button class="button secondary f177-progress-open" type="button" data-f174-open="'+esc(x.a.id)+'">Ver cuadro</button>'+
-         '</article>';
-     }).join('');
-     html+='<section class="panel f177-progress-panel"><div class="panelhead"><h2>Avance por curso y grado</h2></div><div class="f177-progress-list">'+cards+'</div></section>';
+   const d=activeData();const grouped=f178Groups(d.rows);
+   const overallComplete=d.rows.filter(x=>x.count>0&&x.activities>0&&x.points===100&&x.done===x.count).length;
+   const visible=grouped.find(g=>g.key===f178SelectedCourse);
+   if(f178SelectedCourse&&!visible)f178SelectedCourse=null;
+   let html='<div class="f174-statusgrid f178-overview-stats"><article><small>Asignaturas</small><strong>'+grouped.length+'</strong></article><article><small>Secciones con notas completas</small><strong>'+overallComplete+' / '+d.rows.length+'</strong></article><article><small>Bimestre</small><strong>'+esc(db.active)+'</strong></article></div>';
+   if(!f178Official.loaded){html+='<p class="f178-status-note" role="status">Consultando estados de revisión y publicación…</p>';f178Refresh();}
+   else if(f178Official.error)html+='<p class="f178-status-note" role="status">No se pudieron confirmar los estados oficiales. Puedes consultar los cuadros desde sus secciones. <button class="button secondary" data-f178-refresh="1" type="button">Reintentar</button></p>';
+   if(visible){
+      html+='<section class="panel f178-course-panel f178-detail" id="f178-active-course"><div class="panelhead">'+
+       '<button class="f178-back" type="button" data-f178-back="1">← Todas las asignaturas</button>'+
+       '<h2>'+esc(visible.name)+'</h2><p>'+visible.rows.length+' '+(visible.rows.length===1?'sección':'secciones')+' · Ciclo '+esc(cycleYear())+'</p></div>'+
+       '<div class="f178-section-list">'+visible.rows.slice().sort((a,b)=>groupName(a.a.group).localeCompare(groupName(b.a.group),'es',{numeric:true})).map(f178SectionCard).join('')+'</div>'+ 
+       '<p class="f178-explainer">La publicación oficial se autoriza desde <strong>Notas → Publicación</strong>. Entrar en «Ver cuadro» solo permite consultar el registro.</p></section>';
    }else{
-     /* PC: mantener tabla, encabezados, cuatro columnas y botón sin cambios. */
-     const cells=d.rows.map(x=>'<tr><td><b>'+esc(courseName(x.a.course))+'</b><small>'+esc(groupName(x.a.group))+'</small></td><td>'+x.activities+' · '+x.points+' puntos</td><td>'+x.done+' / '+x.count+'</td><td><button class="button secondary" type="button" data-f174-open="'+esc(x.a.id)+'">Ver cuadro</button></td></tr>').join('');
-     html+='<section class="panel"><div class="panelhead"><h2>Avance por curso y grado</h2></div>'+table(['Curso y grado','Actividades · puntos','Notas completas',''],cells)+'</section>';
+      html+='<section class="panel f178-course-panel"><div class="panelhead"><h2>Seguimiento por asignatura</h2><p>Selecciona una materia para consultar todos sus grados y secciones.</p></div>'+ 
+      '<div class="f178-course-list">'+grouped.map(f178CourseCard).join('')+'</div></section>';
    }
    return html;
  }
@@ -12022,19 +12095,60 @@ html[data-theme="dark"] body[data-area="teacher"] #app #f71-form :is(.f168-group
    if(!published.length)return '<section class="f174-history"><h2>Historial de publicaciones</h2><p>No hay cuadros publicados en la lista consultada. Usa «Publicación» para actualizar el estado.</p><button type="button" class="button secondary" data-f174-tab="publicacion">Ir a Publicación</button></section>';
    return '<section class="f174-history"><h2>Historial de publicaciones</h2><ul>'+published.map(e=>'<li>'+e.querySelector('strong')?.outerHTML+'<small>'+esc(e.querySelector('small')?.textContent)+'</small></li>').join('')+'</ul></section>';
  }
+ function f178PublicationView(html){
+   if(!f178PublicationTarget)return html;
+   const a=mine().find(x=>String(x.id)===f178PublicationTarget);
+   if(!a)return html;
+   const temp=document.createElement('div');temp.innerHTML=html;
+   const title=courseName(a.course),section=groupName(a.group);
+   const items=[...temp.querySelectorAll('.lsb19114-item')];
+   const matches=items.filter(x=>(x.querySelector('strong')?.textContent||'').trim()===title&&
+       (x.querySelector('small')?.textContent||'').includes(section));
+   if(!matches.length)return html;
+   items.forEach(x=>{if(!matches.includes(x))x.remove();});
+   const panel=temp.querySelector('.lsb19114-publish');
+   if(panel){
+     const note=document.createElement('div');note.className='f178-pub-focus';
+     note.innerHTML='<strong>Sección seleccionada: '+esc(title)+' · '+esc(section)+'</strong>'+ 
+      '<button class="button secondary" type="button" data-f178-publication-all="1">Ver todas las publicaciones</button>';
+     panel.querySelector('h3')?.insertAdjacentElement('afterend',note);
+   }
+   return temp.innerHTML;
+ }
  window.lsbF174GradeCenterView=function(){
    if(role!=='admin'||!LSB18?.authenticated||!['admin_general','admin_secundario'].includes(LSB18.profile?.role||''))return heading('Acceso restringido');
    const c=components();
    const tabs='<div class="f174-tabs" role="tablist" aria-label="Áreas de calificaciones">'+Object.entries(labels).map(([id,label])=>'<button type="button" role="tab" aria-selected="'+(id===selectedTab)+'" data-f174-tab="'+id+'">'+label+'</button>').join('')+'</div>';
-   let content=selectedTab==='seguimiento'?overview()+c.board:
+   let content=selectedTab==='seguimiento'?overview():
      selectedTab==='revision'?reviewBlock(c):
-     selectedTab==='publicacion'?c.publish:historyBlock(c);
+     selectedTab==='publicacion'?f178PublicationView(c.publish):historyBlock(c);
    return '<div class="f174-shell"><div class="f174-heading"><h1>Calificaciones</h1><p>Gestión académica de Dirección · Ciclo '+esc(cycleYear())+'</p></div>'+tabs+'<div class="f174-intro">'+esc(info[selectedTab])+'</div><div class="f174-shell-content">'+content+'</div></div>';
  };
  document.addEventListener('click',event=>{
    const tab=event.target.closest('[data-f174-tab]');if(tab&&document.querySelector('#app')?.contains(tab)){
      const key=tab.dataset.f174Tab;if(!labels[key])return;
-     event.preventDefault();selectedTab=key;if(page!=='grade_center')go('grade_center');else render();return;
+     event.preventDefault();selectedTab=key;f178SelectedCourse=null;f178PublicationTarget=null;if(page!=='grade_center')go('grade_center');else render();if(key==='seguimiento')f178Refresh(true);return;
+   }
+   const course=event.target.closest('[data-f178-course]');
+   if(course&&document.querySelector('#app')?.contains(course)){
+      event.preventDefault();f178SelectedCourse=course.dataset.f178Course;render();
+      requestAnimationFrame(()=>document.getElementById('f178-active-course')?.scrollIntoView({block:'start',behavior:'auto'}));return;
+   }
+   const back=event.target.closest('[data-f178-back]');
+   if(back&&document.querySelector('#app')?.contains(back)){
+      event.preventDefault();f178SelectedCourse=null;render();return;
+   }
+   const publish=event.target.closest('[data-f178-publication]');
+   if(publish&&document.querySelector('#app')?.contains(publish)){
+      event.preventDefault();f178PublicationTarget=publish.dataset.f178Publication;selectedTab='publicacion';f178SelectedCourse=null;render();return;
+   }
+   const all=event.target.closest('[data-f178-publication-all]');
+   if(all&&document.querySelector('#app')?.contains(all)){
+      event.preventDefault();f178PublicationTarget=null;render();return;
+   }
+   const refresh=event.target.closest('[data-f178-refresh]');
+   if(refresh&&document.querySelector('#app')?.contains(refresh)){
+      event.preventDefault();f178Official.loaded=false;f178Refresh(true);render();return;
    }
    const route=event.target.closest('[data-f174-route]');if(route&&document.querySelector('#app')?.contains(route)){
      event.preventDefault();go(route.dataset.f174Route);return;
@@ -12209,5 +12323,59 @@ setTimeout(apply,800);
  body.lsb-f23-director:not(.loginmode) #app .f174-statusgrid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
  body.lsb-f23-director:not(.loginmode) #app .f174-statusgrid article:last-child:nth-child(odd){grid-column:1/-1!important}
 }
+</style>
+
+<style id="lsb-f178-grouped-courses">
+/* F178: Dirección / Notas / Seguimiento agrupado por asignatura. */
+#app .f178-course-panel{width:100%!important;min-width:0!important;max-width:100%!important;overflow:hidden!important}
+#app .f178-course-panel .panelhead{display:block!important;min-width:0!important;padding:20px 22px!important}
+#app .f178-course-panel .panelhead h2{font-size:20px!important;font-weight:800!important;margin:0 0 5px!important}
+#app .f178-course-panel .panelhead p{font-size:13px!important;color:#77829a!important;line-height:1.5!important;margin:3px 0 0!important}
+#app .f178-course-list{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:14px!important;padding:18px!important;width:100%!important;min-width:0!important;box-sizing:border-box!important}
+#app .f178-course-card,#app .f178-section-card{width:100%!important;min-width:0!important;max-width:100%!important;box-sizing:border-box!important;background:var(--surface,#fff)!important;border:1px solid var(--line,#e0e5ef)!important;border-radius:17px!important;padding:18px!important;display:flex!important;flex-direction:column!important;gap:13px!important;box-shadow:0 4px 13px #2438580a!important;overflow:hidden!important}
+#app .f178-course-title h3,#app .f178-section-head h3{font-size:18px!important;color:var(--ink,#25365a)!important;font-weight:820!important;line-height:1.3!important;margin:0 0 5px!important;overflow-wrap:anywhere!important;white-space:normal!important}
+#app .f178-course-title small,#app .f178-section-head p{font-size:12px!important;color:var(--muted,#77829a)!important;display:block!important;line-height:1.4!important;margin:0!important}
+#app .f178-course-metrics,#app .f178-section-stats{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:8px!important;min-width:0!important}
+#app .f178-course-metrics>div,#app .f178-section-stats>span{display:flex!important;flex-direction:column!important;gap:5px!important;min-width:0!important;padding:12px 9px!important;border:1px solid #ecedf7!important;background:#f6f7fd!important;border-radius:12px!important;box-sizing:border-box!important}
+#app .f178-course-metrics small,#app .f178-section-stats small{font-size:11px!important;line-height:1.3!important;color:#738099!important;overflow-wrap:anywhere!important;white-space:normal!important}
+#app .f178-course-metrics strong,#app .f178-section-stats strong{font-size:18px!important;font-weight:850!important;line-height:1.1!important;color:#27385e!important;overflow-wrap:anywhere!important;white-space:normal!important}
+#app .f178-course-caption{font-size:12px!important;color:var(--muted,#738099)!important;margin:0!important}
+#app .f178-full-button{width:100%!important;min-width:0!important;min-height:46px!important;display:flex!important;justify-content:center!important;align-items:center!important;white-space:normal!important;margin-top:auto!important}
+#app .f178-back{background:transparent!important;border:0!important;display:inline-flex!important;align-items:center!important;padding:4px 0!important;font-size:13px!important;color:#384c96!important;font-weight:800!important;margin:0 0 15px!important;cursor:pointer!important}
+#app .f178-course-panel.f178-detail{scroll-margin-top:110px!important}
+#app .f178-section-list{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:13px!important;padding:16px!important;max-width:100%!important;min-width:0!important}
+#app .f178-section-head{display:flex!important;align-items:flex-start!important;justify-content:space-between!important;flex-wrap:wrap!important;gap:8px!important;min-width:0!important}
+#app .f178-badge{display:inline-block!important;max-width:100%!important;border-radius:99px!important;padding:5px 9px!important;background:#eff0f8!important;color:#676f85!important;font-weight:750!important;font-size:11px!important;white-space:normal!important}
+#app .f178-badge.complete,#app .f178-badge.reviewed{background:#e5f4ec!important;color:#1b725c!important}
+#app .f178-badge.published{background:#e3f1ff!important;color:#235b9e!important}
+#app .f178-badge.pending{background:#fff3dd!important;color:#846026!important}
+#app .f178-section-actions{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important;margin-top:auto!important}
+#app .f178-section-actions>button{width:100%!important;min-width:0!important;min-height:44px!important;white-space:normal!important;line-height:1.25!important}
+#app .f178-section-actions>button:only-child{grid-column:1/-1!important}
+#app .f178-explainer,#app .f178-status-note{margin:0 17px 18px!important;font-size:12px!important;color:var(--muted,#6d7891)!important;line-height:1.55!important}
+@media(max-width:760px){
+ body.lsb-f23-director:not(.loginmode) #app .f178-course-list,
+ body.lsb-f23-director:not(.loginmode) #app .f178-section-list{grid-template-columns:minmax(0,1fr)!important;gap:11px!important;padding:13px!important;max-width:100%!important;overflow:hidden!important}
+ body.lsb-f23-director:not(.loginmode) #app .f178-course-card,
+ body.lsb-f23-director:not(.loginmode) #app .f178-section-card{padding:14px!important;gap:12px!important}
+ body.lsb-f23-director:not(.loginmode) #app .f178-course-metrics,
+ body.lsb-f23-director:not(.loginmode) #app .f178-section-stats{gap:6px!important}
+ body.lsb-f23-director:not(.loginmode) #app .f178-course-metrics>div,
+ body.lsb-f23-director:not(.loginmode) #app .f178-section-stats>span{padding:10px 7px!important}
+ body.lsb-f23-director:not(.loginmode) #app .f178-course-metrics strong,
+ body.lsb-f23-director:not(.loginmode) #app .f178-section-stats strong{font-size:16px!important}
+ body.lsb-f23-director:not(.loginmode) #app .f178-course-title h3,
+ body.lsb-f23-director:not(.loginmode) #app .f178-section-head h3{font-size:17px!important}
+}
+@media(max-width:355px){
+ body.lsb-f23-director:not(.loginmode) #app .f178-course-metrics small,
+ body.lsb-f23-director:not(.loginmode) #app .f178-section-stats small{font-size:10px!important}
+ body.lsb-f23-director:not(.loginmode) #app .f178-section-actions{grid-template-columns:minmax(0,1fr)!important}
+}
+
+#app .f178-pub-focus{background:#f3f6fe;border:1px solid #dce4f5;border-radius:13px;padding:13px 15px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:12px 0;font-size:13px;color:#374a80}
+#app .f178-pub-focus strong{min-width:0;overflow-wrap:anywhere}
+#app .f178-pub-focus button{min-height:40px!important;white-space:normal!important}
+@media(max-width:700px){body.lsb-f23-director:not(.loginmode) #app .f178-pub-focus{flex-direction:column;align-items:stretch}body.lsb-f23-director:not(.loginmode) #app .f178-pub-focus button{width:100%!important}}
 </style>
 </body></html>
