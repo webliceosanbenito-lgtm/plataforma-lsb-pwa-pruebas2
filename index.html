@@ -11743,4 +11743,106 @@ body.loginmode #profile-menu{display:none!important}
 })();
 </script>
 
+<style id="lsb-f168-report-picker-css">
+/* F168: selector docente accesible, temático y sin alterar los formularios RPC. */
+#app #f71-form .f168-picker{grid-column:1 / -1;min-width:0;display:grid;gap:13px;padding:16px;border:1px solid var(--line,#dfe5f1);border-radius:17px;background:var(--surface,#fff);color:var(--ink,#26354f);box-shadow:0 8px 26px #1b2c5010}
+#app #f71-form .f168-picker .f168-title{display:flex;align-items:center;gap:9px;font-size:14px;font-weight:800;letter-spacing:.01em}
+#app #f71-form .f168-picker .f168-title svg{width:19px;height:19px;flex-shrink:0}
+#app #f71-form .f168-controls{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px}
+#app #f71-form .f168-filter-group{position:relative;min-width:0}
+#app #f71-form .f168-filter-label{display:block;font-size:12px;font-weight:800;margin-bottom:7px;color:var(--muted,#64748b)}
+#app #f71-form .f168-select,#app #f71-form .f168-search{width:100%;height:46px;border-radius:12px;border:1px solid var(--line,#d5deec);background:var(--soft,#f7f9fd);color:var(--ink,#26354f);font-family:inherit;font-size:13px;font-weight:600;line-height:1.4;padding:11px 13px;box-sizing:border-box;outline:none;transition:border-color .16s,box-shadow .16s}
+#app #f71-form .f168-select{display:flex;justify-content:space-between;align-items:center;gap:10px;text-align:left;cursor:pointer}
+#app #f71-form .f168-select span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#app #f71-form .f168-select:focus-visible,#app #f71-form .f168-search:focus{border-color:#615ad1;box-shadow:0 0 0 3px #776be233}
+#app #f71-form .f168-select .f168-caret{font-size:12px;flex-shrink:0;opacity:.7}
+#app #f71-form .f168-group-list{position:absolute;top:calc(100% + 6px);left:0;right:0;z-index:99;border:1px solid var(--line,#d8e0ef);border-radius:13px;box-shadow:0 18px 50px #0d173a30;background:var(--surface,#fff);max-height:250px;overflow-y:auto;padding:6px}
+#app #f71-form .f168-group-list[hidden]{display:none!important}
+#app #f71-form .f168-group-option{width:100%;display:block;text-align:left;padding:11px 12px;border:0;border-radius:9px;cursor:pointer;background:transparent;color:var(--ink,#26354f);font-size:13px;font-weight:650}
+#app #f71-form .f168-group-option:hover,#app #f71-form .f168-group-option[aria-selected="true"]{background:var(--soft,#eef1fa)}
+#app #f71-form .f168-student-list{display:grid;gap:6px;max-height:252px;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;padding:3px}
+#app #f71-form .f168-student-item{display:flex;align-items:center;gap:12px;width:100%;padding:10px 12px;text-align:left;border:1px solid var(--line,#e3e8f2);border-radius:11px;background:var(--soft,#f9faff);color:var(--ink,#24324a);cursor:pointer;min-width:0}
+#app #f71-form .f168-student-item:hover,#app #f71-form .f168-student-item[aria-selected="true"]{border-color:#7166da;background:#7770d317}
+#app #f71-form .f168-student-mark{display:grid;place-items:center;width:34px;height:34px;flex:0 0 34px;border-radius:11px;background:#6472ce23;color:#6862ca;font-weight:850;font-size:12px}
+#app #f71-form .f168-student-item .f168-student-info{display:grid;gap:2px;min-width:0;flex:1}
+#app #f71-form .f168-student-item strong{font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#app #f71-form .f168-student-item small{font-size:11px;color:var(--muted,#73819a)}
+#app #f71-form .f168-student-item .f168-check{color:#4d62cf;font-weight:800}
+#app #f71-form .f168-summary{font-size:12px;color:var(--muted,#66758e);margin:0}
+#app #f71-form .f168-hint{padding:15px;color:var(--muted,#66758e);text-align:center;font-size:13px;line-height:1.45}
+#app #f71-form .f168-original{display:none!important}
+html[data-theme="dark"] body[data-area="teacher"] #app #f71-form .f168-picker,html[data-theme="black"] body[data-area="teacher"] #app #f71-form .f168-picker{background:#20283c!important;border-color:#3b4a64!important;color:#f0f4ff!important}
+html[data-theme="dark"] body[data-area="teacher"] #app #f71-form :is(.f168-select,.f168-search,.f168-group-list,.f168-student-item),html[data-theme="black"] body[data-area="teacher"] #app #f71-form :is(.f168-select,.f168-search,.f168-group-list,.f168-student-item){background:#27334b!important;border-color:#435574!important;color:#edf3ff!important}
+html[data-theme="dark"] body[data-area="teacher"] #app #f71-form :is(.f168-group-option,.f168-student-item strong),html[data-theme="black"] body[data-area="teacher"] #app #f71-form :is(.f168-group-option,.f168-student-item strong){color:#edf3ff!important}
+html[data-theme="dark"] body[data-area="teacher"] #app #f71-form :is(.f168-group-option:hover,.f168-group-option[aria-selected="true"],.f168-student-item:hover,.f168-student-item[aria-selected="true"]),html[data-theme="black"] body[data-area="teacher"] #app #f71-form :is(.f168-group-option:hover,.f168-group-option[aria-selected="true"],.f168-student-item:hover,.f168-student-item[aria-selected="true"]){background:#394867!important;border-color:#7c88de!important}
+@media(max-width:650px){#app #f71-form .f168-controls{grid-template-columns:1fr}#app #f71-form .f168-picker{padding:13px}#app #f71-form .f168-student-list{max-height:240px}}
+</style>
+<script id="lsb-f168-report-student-picker">
+(()=>{'use strict';
+ const app=document.getElementById('app');if(!app)return;
+ let scheduled=false;
+ const normalize=x=>String(x||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('es');
+ const make=(tag,cls,text)=>{const el=document.createElement(tag);if(cls)el.className=cls;if(text!==undefined)el.textContent=text;return el;};
+ function install(){
+  const form=app.querySelector('#f71-form');if(!form||form.dataset.f168Ready)return;
+  const native=form.querySelector('select[name="enrollment_id"]');if(!native||native.options.length<2)return;
+  form.dataset.f168Ready='1';
+  const rows=typeof LSB18==='undefined'?{}:LSB18.rows||{};
+  const enrollmentMap=typeof LSB18==='undefined'?{}:LSB18.enrollById||{};
+  const byId=(a,id)=>Array.isArray(a)?a.find(x=>x.id===id):null;
+  const entries=Array.from(native.options).filter(o=>o.value).map(opt=>{
+   const enr=enrollmentMap[opt.value];
+   const section=byId(rows.lsb_sections,enr?.section_id);
+   const offering=byId(rows.lsb_offering_grades,section?.offering_grade_id);
+   const grade=byId(rows.lsb_grades,offering?.grade_id);
+   const year=byId(rows.lsb_school_years,section?.school_year_id);
+   const person=byId(rows.lsb_students,enr?.student_id);
+   const group=[grade?.name||'Grado sin identificar',section?.name||'Sin sección',year?.year].filter(Boolean).join(' · ');
+   return {id:opt.value,name:opt.textContent.trim(),group,code:person?.student_code||''};
+  }).sort((a,b)=>a.group.localeCompare(b.group,'es')||a.name.localeCompare(b.name,'es'));
+  const gradeGroups=Array.from(new Set(entries.map(e=>e.group))).sort((a,b)=>a.localeCompare(b,'es'));
+  let selectedGrade='',selectedStudent=native.value||'',search='';
+  const widget=make('section','f168-picker');widget.setAttribute('aria-label','Buscar estudiante para reporte');
+  const head=make('div','f168-title','Buscar estudiante');
+  const controls=make('div','f168-controls');
+  const gradeBox=make('div','f168-filter-group');gradeBox.append(make('label','f168-filter-label','1. Grado y sección'));
+  const gradeButton=make('button','f168-select');gradeButton.type='button';gradeButton.setAttribute('aria-expanded','false');const gradeName=make('span','', 'Seleccionar grado y sección');gradeButton.append(gradeName,make('span','f168-caret','▾'));
+  const gradeOptions=make('div','f168-group-list');gradeOptions.hidden=true;gradeOptions.setAttribute('role','listbox');gradeOptions.setAttribute('aria-label','Grados y secciones');
+  const searchBox=make('div','f168-filter-group');const searchLabel=make('label','f168-filter-label','2. Buscar por nombre o código');const searchInput=make('input','f168-search');searchInput.type='search';searchInput.placeholder='Escribe un nombre o código';searchInput.autocomplete='off';searchInput.id='f168-search-student';searchLabel.htmlFor=searchInput.id;searchBox.append(searchLabel,searchInput);
+  gradeBox.append(gradeButton,gradeOptions);controls.append(gradeBox,searchBox);
+  const summary=make('p','f168-summary','Selecciona un grado y sección para ver sus estudiantes.');summary.setAttribute('aria-live','polite');
+  const result=make('div','f168-student-list');result.setAttribute('role','listbox');result.setAttribute('aria-label','Estudiantes disponibles');
+  widget.append(head,controls,summary,result);
+  native.closest('label')?.classList.add('f168-original');native.required=false;
+  native.closest('label')?.before(widget);
+  function setStudent(entry){selectedStudent=entry.id;native.value=entry.id;native.dispatchEvent(new Event('change',{bubbles:true}));drawList();summary.textContent='Estudiante seleccionado: '+entry.name+' · '+entry.group;}
+  function drawList(){
+    result.replaceChildren();const query=normalize(search);
+    const list=entries.filter(e=>(selectedGrade?e.group===selectedGrade:!!query)&&(query?(normalize(e.name).includes(query)||normalize(e.code).includes(query)):true));
+    if(!selectedGrade&&!query){result.append(make('p','f168-hint','Primero selecciona un grado/sección, o escribe un nombre para buscar en todas las secciones.'));summary.textContent='Hay '+entries.length+' estudiantes disponibles.';return;}
+    summary.textContent=list.length+' '+(list.length===1?'estudiante encontrado':'estudiantes encontrados')+(selectedGrade?' en '+selectedGrade:'')+'.';
+    if(!list.length){result.append(make('p','f168-hint','No se encontraron estudiantes. Cambia el grado o escribe otro nombre.'));return;}
+    for(const e of list.slice(0,60)){
+      const b=make('button','f168-student-item');b.type='button';b.setAttribute('role','option');b.setAttribute('aria-selected',String(e.id===selectedStudent));
+      const initials=e.name.split(/\s+/).slice(0,2).map(x=>x[0]||'').join('').toUpperCase();
+      const icon=make('span','f168-student-mark',initials);
+      const txt=make('span','f168-student-info');txt.append(make('strong','',e.name),make('small','',e.group+(e.code?' · '+e.code:'')));
+      b.append(icon,txt,make('span','f168-check',e.id===selectedStudent?'✓':''));b.onclick=()=>setStudent(e);result.append(b);
+    }
+    if(list.length>60)result.append(make('p','f168-hint','Mostrando 60 resultados. Escribe parte del nombre para filtrar más.'));
+  }
+  function drawGroups(){gradeOptions.replaceChildren();for(const label of gradeGroups){const opt=make('button','f168-group-option',label);opt.type='button';opt.setAttribute('role','option');opt.setAttribute('aria-selected',String(label===selectedGrade));opt.onclick=()=>{selectedGrade=label;gradeName.textContent=label;gradeOptions.hidden=true;gradeButton.setAttribute('aria-expanded','false');search='';searchInput.value='';native.value='';selectedStudent='';native.dispatchEvent(new Event('change',{bubbles:true}));drawGroups();drawList();searchInput.focus();};gradeOptions.append(opt);}}
+  gradeButton.onclick=()=>{gradeOptions.hidden=!gradeOptions.hidden;gradeButton.setAttribute('aria-expanded',String(!gradeOptions.hidden));};
+  searchInput.oninput=()=>{search=searchInput.value;drawList();};
+  widget.addEventListener('keydown',e=>{if(e.key==='Escape'&&!gradeOptions.hidden){gradeOptions.hidden=true;gradeButton.setAttribute('aria-expanded','false');gradeButton.focus();}});
+  document.addEventListener('pointerdown',e=>{if(widget.isConnected&&!gradeBox.contains(e.target)&&!gradeOptions.hidden){gradeOptions.hidden=true;gradeButton.setAttribute('aria-expanded','false');}},{signal:(()=>{const c=new AbortController();new MutationObserver((_,obs)=>{if(!widget.isConnected){c.abort();obs.disconnect();}}).observe(app,{childList:true,subtree:false});return c.signal})()});
+  form.addEventListener('submit',e=>{if(!native.value){e.preventDefault();e.stopImmediatePropagation();summary.textContent='Selecciona un estudiante antes de enviar el reporte.';summary.style.color='#ca5151';gradeButton.focus();}},{capture:true});
+  if(selectedStudent){const sel=entries.find(x=>x.id===selectedStudent);if(sel){selectedGrade=sel.group;gradeName.textContent=sel.group;}}drawGroups();drawList();
+ }
+ function schedule(){if(scheduled)return;scheduled=true;requestAnimationFrame(()=>{scheduled=false;install();});}
+ new MutationObserver(schedule).observe(app,{childList:true,subtree:false});
+ install();
+})();
+</script>
+
 </body></html>
