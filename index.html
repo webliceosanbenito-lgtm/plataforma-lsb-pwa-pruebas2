@@ -1487,7 +1487,19 @@ async function exportCycle6(){if(role!=='admin')return;toast('Preparando cuadros
 function courseForm6(cid=''){if(role!=='admin'||isArchived())return;const c=db.courses.find(c=>c.id===cid);form(c?'Editar curso':'Crear curso del ciclo '+cycleYear(),`<label class="field">Nombre del curso<input name="name" required maxlength="90" value="${E(c?.name||'')}"></label><p class="sub">El curso pertenece a este ciclo. Después puedes asignarlo a uno o varios grados y docentes.</p>`,f=>{const name=f.get('name').trim();if(!name)return;if(db.courses.some(x=>x.id!==cid&&x.name.toLowerCase()===name.toLowerCase())){toast('Ya existe un curso con ese nombre.');return}if(c)c.name=name;else db.courses.push({id:id(),name});persist();$('#dialog').close();render();toast('Curso guardado en el ciclo '+cycleYear())})}
 function assignmentForm6(){if(role!=='admin'||isArchived())return;if(!db.courses.length||!db.groups.length){toast('Crea primero el curso y el grado.');return}form('Asignar curso a un grado',`<label class="field">Curso<select name="course">${options(db.courses,'')}</select></label><label class="field">Grado y sección<select name="group">${options(db.groups,'')}</select></label><label class="field">Profesor<select name="teacher">${options([{id:'',name:'Pendiente de asignar'},...db.accounts.filter(a=>(a.type==='teacher'||a.type==='admin')&&a.enabled)],'')}</select></label><label class="field">Disponible desde<select name="start">${options([1,2,3,4].map(u=>({id:u,name:'Bimestre '+u})),1)}</select></label><p class="sub">No se duplica el curso por bimestre. El profesor creará las actividades de cada período.</p>`,f=>{const course=f.get('course'),group=f.get('group');if(db.assignments.some(a=>a.course===course&&a.group===group)){toast('Ese curso ya está asignado a este grado. Edita el docente desde Profesores.');return}const a={id:id(),course,group,teacher:f.get('teacher'),startUnit:Number(f.get('start'))};db.assignments.push(a);for(let u=1;u<=4;u++)db.records[a.id+'-'+u]={activities:[],rows:Object.fromEntries(roster(a).map(s=>[s.id,[]])),submitted:false,published:null};persist();$('#dialog').close();render();toast('Asignación creada. El docente puede añadir sus actividades.')})}
 function groupForm6(gid=''){if(role!=='admin'||isArchived())return;const g=db.groups.find(g=>g.id===gid);form(g?'Editar grado y carrera':'Crear grado y sección',`<label class="field">Grado y sección<input name="name" required value="${E(g?.name||'')}" placeholder="Primero Básico · A"></label><label class="field">Carrera o nivel<input name="career" required value="${E(g?.career||'')}" placeholder="Ciclo Básico / Bachillerato en…"></label><label class="field">Jornada<input name="shift" required value="${E(g?.shift||'')}" placeholder="Vespertina"></label>`,f=>{const data=Object.fromEntries(f);if(Object.values(data).some(x=>!x.trim()))return;if(g)Object.assign(g,data);else db.groups.push({id:id(),...data});persist();$('#dialog').close();render()})}
-function catalog6(){return heading('Cursos, grados y asignaciones','Organización académica del ciclo '+cycleYear(),!isArchived()?button('Crear curso','createcourse')+button('Asignar curso','assigncourse','',true)+button('Crear grado','creategroup','',true):'')+panel('Cursos del ciclo',table(['Curso','Grados asignados',''],db.courses.map(c=>`<tr><td><span class="coursemark">${E(c.name[0])}</span> ${E(c.name)}</td><td>${db.assignments.filter(a=>a.course===c.id).length}</td><td>${!isArchived()?button('Editar nombre','editcourse',c.id,true):''}</td></tr>`).join('')))+panel('Grados y carreras',table(['Grado y sección','Carrera / nivel','Jornada',''],db.groups.map(g=>`<tr><td>${E(g.name)}</td><td>${E(g.career||'Por especificar')}</td><td>${E(g.shift||'Por confirmar')}</td><td>${!isArchived()?button('Editar','editgroup',g.id,true):''}</td></tr>`).join('')))}
+function catalog6(){
+const intro=heading('Cursos, grados y asignaciones','Organización académica del ciclo '+cycleYear(),!isArchived()?button('Crear curso','createcourse')+button('Asignar curso','assigncourse','',true)+button('Crear grado','creategroup','',true):'');
+/* F176: jamás cambiar la tabla de escritorio; solo móvil Dirección recibe fichas compactas. */
+if(window.matchMedia('(max-width:900px)').matches&&role==='admin'){
+ const courses=db.courses.map(c=>{
+  const n=db.assignments.filter(a=>a.course===c.id).length;
+  return `<article class="f176-course-card"><div class="f176-course-top"><span class="f176-monogram" aria-hidden="true">${E((c.name||'C')[0])}</span><strong class="f176-course-name">${E(c.name)}</strong></div><div class="f176-course-bottom"><span class="f176-subline"><b>${n}</b> ${n===1?'grado asignado':'grados asignados'}</span>${!isArchived()?button('Editar nombre','editcourse',c.id,true):''}</div></article>`;
+ }).join('');
+ const grades=db.groups.map(g=>`<article class="f176-grade-card"><div class="f176-grade-top"><strong>${E(g.name)}</strong><span>${E(g.career||'Por especificar')}</span><span>${E(g.shift||'Por confirmar')}</span></div>${!isArchived()?button('Editar','editgroup',g.id,true):''}</article>`).join('');
+ return intro+panel('Cursos del ciclo',`<div class="f176-course-list">${courses||'<p class="f176-empty">No hay cursos registrados.</p>'}</div>`)+panel('Grados y carreras',`<div class="f176-grade-list">${grades||'<p class="f176-empty">No hay grados registrados.</p>'}</div>`);
+}
+return intro+panel('Cursos del ciclo',table(['Curso','Grados asignados',''],db.courses.map(c=>`<tr><td><span class="coursemark">${E(c.name[0])}</span> ${E(c.name)}</td><td>${db.assignments.filter(a=>a.course===c.id).length}</td><td>${!isArchived()?button('Editar nombre','editcourse',c.id,true):''}</td></tr>`).join('')))+panel('Grados y carreras',table(['Grado y sección','Carrera / nivel','Jornada',''],db.groups.map(g=>`<tr><td>${E(g.name)}</td><td>${E(g.career||'Por especificar')}</td><td>${E(g.shift||'Por confirmar')}</td><td>${!isArchived()?button('Editar','editgroup',g.id,true):''}</td></tr>`).join('')))
+}
 function tracking6(tid){monitorTeacher=tid;const a=db.accounts.find(a=>a.id===tid);if(role!=='admin'||!a)return;modal(`<h2>Seguimiento · ${E(a.name)}</h2><p class="sub">Bimestre ${unit} · Ciclo ${cycleYear()}</p>${table(['Curso y grado','Actividades creadas','Actividades calificadas completas','Notas registradas','Estado'],db.assignments.filter(a=>a.teacher===tid).map(a=>{const r=recordFor(a,unit),ss=roster(a),total=ss.length*r.activities.length,done=ss.reduce((n,s)=>n+(r.rows[s.id]||[]).filter(c=>c.grade!==null).length,0),complete=r.activities.filter((t,i)=>ss.length&&ss.every(s=>r.rows[s.id]?.[i]?.grade!=null)).length;return `<tr><td>${E(fullAssignment(a))}</td><td>${r.activities.length}</td><td>${complete} / ${r.activities.length}</td><td>${done} / ${total}</td><td>${state(r)}</td></tr>`}).join(''))}<div class="toolbar"><button class="button" data-close>Cerrar</button></div>`)}
 function exportPanel6(){return heading('Cuadros y archivo académico','Descargas con la estructura del formato del Liceo.',button('Descargar ciclo ZIP','cyclezip'))+panel('Exportar por grado',`<div class="panelbody"><div class="filters"><label>Grado y sección<select id="exportgroup">${options(db.groups,reportExportGroup||db.groups[0]?.id)}</select></label><label>Bimestre<select id="exportunit">${options([1,2,3,4].map(u=>({id:u,name:'Bimestre '+u})),unit)}</select></label></div><div class="toolbar">${button('Cuadro del bimestre','exportperiod')}${button('Excel anual y boletas','exportannual','',true)}</div><p class="sub">El Excel anual contiene un resumen, cuatro cuadros bimestrales y boletas individuales listas para imprimir. Las boletas solo usan notas publicadas.</p></div>`)}
 const nav6=nav;nav=function(){const n=nav6();if(role==='admin'){n.splice(2,0,['catalog','Administrar cursos']);n.splice(n.length-1,0,['exports','Cuadros y descargas'])}return n};icons5.catalog=icons5.courses;icons5.exports=icons5.reports;
@@ -9276,7 +9288,7 @@ html[data-theme="dark"] #login.access10 #familywelcome10 .f116-activation-help{c
 </script>
 <script id="lsb-f132-mobile-native">
 (()=>{
-const routes=[['Inicio','home','⌂'],['IA','lsb_ai','✧'],['Calificaciones','grade_center','▤'],['Avisos','notices','✉'],['Menú','menu','▦']];
+const routes=[['Inicio','home','⌂'],['IA','lsb_ai','✧'],['Notas','grade_center','▥'],['Avisos','notices','✉'],['Menú','menu','▦']];
 const menu=[['Inicio','home','⌂'],['Cursos y asignaturas','catalog','▤'],['Calificaciones','grade_center','✓'],['Asistencia','attendance','◷'],['Estudiantes','students','♙'],['Profesores','teachers','♧'],['Familias por grado','families','⌂'],['Pagos','payments','▣'],['Horarios','schedule','▦'],['Ciclos escolares','cycles','◴'],['Bimestres','periods','◷'],['Cuadros y descargas','exports','▤'],['Boletas','reports','▧'],['Avisos','notices','✉'],['Reportes escolares','school_reports','▤'],['Asistente IA','lsb_ai','✧']];
 let busy=false,observed=null, raf=0;
 function mobile(){return window.matchMedia('(max-width:900px)').matches&&document.body.classList.contains('lsb-f23-director')&&!document.body.classList.contains('loginmode');}
@@ -9343,7 +9355,7 @@ let style=document.createElement('style');style.id='f132-native-style';style.tex
 const f175Paths={
  home:'<path d="m3 10 9-7 9 7v10H3z"/><path d="M9 21v-7h6v7"/>',
  lsb_ai:'<path d="m12 3 1.9 6.1L20 11l-6.1 1.9L12 19l-1.9-6.1L4 11l6.1-1.9z"/><path d="m19 18 .6 1.4L21 20l-1.4.6L19 22l-.6-1.4L17 20l1.4-.6z"/>',
- grade_center:'<path d="M5 3h14v18H5z"/><path d="M8 7h8M8 11h8M8 15h3m3 0 1.3 1.3L18 13"/>',
+ grade_center:'<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h3m3 0 1.7 1.7L19 14"/>',
  notices:'<path d="M4 6h16v12H4z"/><path d="m4 7 8 6 8-6"/>',
  menu:'<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>',
  catalog:'<path d="M4 6h8a3 3 0 0 1 3 3v12H7a3 3 0 0 0-3 0z"/><path d="M20 6h-3a3 3 0 0 0-2 1v14h2a3 3 0 0 1 3 0z"/>',
@@ -9552,7 +9564,7 @@ body.lsb-f23-director:not(.loginmode) #app .f49-tablewrap{overflow:auto!importan
 }
 </style>
 <script id="lsb-f136-mobile-fixes">(()=>{'use strict';
-const paths={home:'M3 10.5 12 3l9 7.5V21h-6v-7H9v7H3z',lsb_ai:'M12 2l2.6 6.9L21.5 12l-6.9 3.1L12 22l-2.6-6.9L2.5 12l6.9-3.1z',published_grades:'M6 3h9l4 4v14H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z M9 12h6 M9 16h6',notices:'M3 6h18v12H3z M3 7l9 7 9-7',menu:'M3 3h7v7H3z M14 3h7v7h-7z M3 14h7v7H3z M14 14h7v7h-7z',catalog:'M4 4h16v16H4z M8 9h8 M8 13h8',courses:'M5 12l4 4L19 6',attendance:'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18z M12 7v5l4 2',students:'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8z M4 21v-2a8 8 0 0 1 16 0v2',teachers:'M12 4a4 4 0 1 0 0 8 4 4 0 0 0 0-8z M4 21v-2a8 8 0 0 1 16 0v2 M17 4l4 0',families:'M3 10l9-7 9 7v11H3z M9 21v-8h6v8',payments:'M3 6h18v12H3z M3 10h18 M7 15h4',schedule:'M4 5h16v16H4z M8 2v6 M16 2v6 M4 10h16',periods:'M4 5h16v16H4z M4 10h16 M8 14h3 M14 14h3',exports:'M7 3h7l5 5v13H7z M14 3v5h5 M10 13h6 M10 17h6',reports:'M6 3h12v18H6z M9 7h6 M9 11h6 M9 15h6',school_reports:'M4 5h16v14H4z M8 9h8 M8 13h6',};
+const paths={home:'M3 10.5 12 3l9 7.5V21h-6v-7H9v7H3z',lsb_ai:'M12 2l2.6 6.9L21.5 12l-6.9 3.1L12 22l-2.6-6.9L2.5 12l6.9-3.1z',published_grades:'M6 3h9l4 4v14H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z M9 12h6 M9 16h6',grade_center:'M5 3h14v18H5z M9 8h6 M9 12h6 M9 16h2 M13 16l2 2 4-5',notices:'M3 6h18v12H3z M3 7l9 7 9-7',menu:'M3 3h7v7H3z M14 3h7v7h-7z M3 14h7v7H3z M14 14h7v7h-7z',catalog:'M4 4h16v16H4z M8 9h8 M8 13h8',courses:'M5 12l4 4L19 6',attendance:'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18z M12 7v5l4 2',students:'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8z M4 21v-2a8 8 0 0 1 16 0v2',teachers:'M12 4a4 4 0 1 0 0 8 4 4 0 0 0 0-8z M4 21v-2a8 8 0 0 1 16 0v2 M17 4l4 0',families:'M8 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z M1.8 21v-2.3a6.2 6.2 0 0 1 12.4 0V21 M17.5 11.5a2.7 2.7 0 1 0 0-5.4 2.7 2.7 0 0 0 0 5.4z M15.5 15c4 0 6.5 2 6.5 6',payments:'M3 6h18v12H3z M3 10h18 M7 15h4',schedule:'M4 5h16v16H4z M8 2v6 M16 2v6 M4 10h16',periods:'M4 5h16v16H4z M4 10h16 M8 14h3 M14 14h3',exports:'M7 3h7l5 5v13H7z M14 3v5h5 M10 13h6 M10 17h6',reports:'M6 3h12v18H6z M9 7h6 M9 11h6 M9 15h6',school_reports:'M4 5h16v14H4z M8 9h8 M8 13h6',};
 const svg=p=>'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="'+p+'"/></svg>';
 const css=document.createElement('style');css.id='lsb-f136-shadow-css';css.textContent=`@media(max-width:900px){
 :host([data-f132="mobile"]) .f132-dock button b,:host([data-f132="mobile"]) .f132-list button b{font-size:0!important;display:grid!important;place-items:center!important;flex:none!important}
@@ -12087,5 +12099,71 @@ html[data-theme="dark"] body[data-area="teacher"] #app #f71-form :is(.f168-group
  `;shadow.appendChild(st);}
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();
  setTimeout(install,1000);
+})();
+</script>
+<style id="lsb-f176-responsive-catalog">/* F176: tarjetas de catálogo, solo teléfono; sin scroll horizontal. */
+@media(max-width:900px){
+.f176-course-list,.f176-grade-list{display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:10px!important;padding:12px!important;min-width:0!important;max-width:100%!important;width:100%!important;box-sizing:border-box!important}
+.f176-course-card,.f176-grade-card{display:flex!important;flex-direction:column!important;gap:11px!important;min-width:0!important;max-width:100%!important;width:100%!important;box-sizing:border-box!important;border:1px solid #dfe5f1!important;background:#fff!important;border-radius:15px!important;padding:13px 14px!important;box-shadow:0 3px 10px #263b6810!important;overflow:hidden!important}
+.f176-course-top{display:flex!important;align-items:center!important;gap:11px!important;min-width:0!important;max-width:100%!important;width:100%!important}
+.f176-monogram{display:grid!important;place-items:center!important;flex:0 0 40px!important;width:40px!important;height:40px!important;min-width:40px!important;border:1px solid #e1e5f0!important;border-radius:12px!important;background:#f0f2fb!important;color:#3b4193!important;font-weight:800!important;font-size:19px!important}
+.f176-course-name{display:block!important;min-width:0!important;flex:1!important;max-width:100%!important;overflow-wrap:anywhere!important;white-space:normal!important;line-height:1.28!important;font-size:15px!important;font-weight:800!important;color:#23304f!important}
+.f176-course-bottom{display:flex!important;align-items:center!important;justify-content:space-between!important;flex-wrap:wrap!important;gap:10px!important;min-width:0!important;padding-top:9px!important;border-top:1px solid #edf0f6!important}
+.f176-subline{font-size:12px!important;color:#69758f!important;flex:1 1 110px!important;white-space:normal!important}
+.f176-subline b{font-size:14px!important;color:#3c4772!important}
+.f176-course-card .button,.f176-grade-card .button{display:inline-flex!important;justify-content:center!important;align-items:center!important;min-height:38px!important;min-width:0!important;max-width:100%!important;width:auto!important;padding:9px 12px!important;margin:0!important;border:1px solid #dfe5f1!important;background:#fff!important;color:#364586!important;box-shadow:none!important;font-weight:750!important;font-size:12px!important;line-height:1.25!important;white-space:normal!important;text-align:center!important;border-radius:11px!important}
+.f176-grade-top{display:flex!important;flex-direction:column!important;gap:3px!important;min-width:0!important;overflow-wrap:anywhere!important}
+.f176-grade-top strong{color:#23304f!important;font-size:15px!important;white-space:normal!important}
+.f176-grade-top span{color:#717d96!important;font-size:12px!important;overflow-wrap:anywhere!important}
+.f176-grade-card{gap:9px!important}
+.f176-grade-card .button{align-self:flex-start!important}
+.f176-empty{font-size:13px!important;color:#7c87a0!important;margin:0!important;padding:12px!important}
+/* Dock y menú: iconos distintos, etiqueta abreviada; todo dentro del teléfono. */
+.f132-dock button{min-width:0!important;overflow:hidden!important}
+.f132-dock button span{font-size:10px!important;max-width:100%!important;overflow-wrap:anywhere!important;line-height:1.18!important;white-space:normal!important}
+.f132-dock b svg,.f132-list b svg{display:block!important;fill:none!important;stroke:currentColor!important;stroke-width:1.8!important;width:23px!important;height:23px!important}
+.f132-dock button[data-f132-go="grade_center"] b svg{width:25px!important;height:25px!important}
+.f132-list button{overflow:hidden!important;min-width:0!important}
+.f132-list button span{max-width:100%!important;overflow-wrap:anywhere!important}
+}
+</style>
+<script id="lsb-f176-shadow-catalog">
+(()=>{'use strict';
+const css=`/* F176: tarjetas de catálogo, solo teléfono; sin scroll horizontal. */
+@media(max-width:900px){
+.f176-course-list,.f176-grade-list{display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:10px!important;padding:12px!important;min-width:0!important;max-width:100%!important;width:100%!important;box-sizing:border-box!important}
+.f176-course-card,.f176-grade-card{display:flex!important;flex-direction:column!important;gap:11px!important;min-width:0!important;max-width:100%!important;width:100%!important;box-sizing:border-box!important;border:1px solid #dfe5f1!important;background:#fff!important;border-radius:15px!important;padding:13px 14px!important;box-shadow:0 3px 10px #263b6810!important;overflow:hidden!important}
+.f176-course-top{display:flex!important;align-items:center!important;gap:11px!important;min-width:0!important;max-width:100%!important;width:100%!important}
+.f176-monogram{display:grid!important;place-items:center!important;flex:0 0 40px!important;width:40px!important;height:40px!important;min-width:40px!important;border:1px solid #e1e5f0!important;border-radius:12px!important;background:#f0f2fb!important;color:#3b4193!important;font-weight:800!important;font-size:19px!important}
+.f176-course-name{display:block!important;min-width:0!important;flex:1!important;max-width:100%!important;overflow-wrap:anywhere!important;white-space:normal!important;line-height:1.28!important;font-size:15px!important;font-weight:800!important;color:#23304f!important}
+.f176-course-bottom{display:flex!important;align-items:center!important;justify-content:space-between!important;flex-wrap:wrap!important;gap:10px!important;min-width:0!important;padding-top:9px!important;border-top:1px solid #edf0f6!important}
+.f176-subline{font-size:12px!important;color:#69758f!important;flex:1 1 110px!important;white-space:normal!important}
+.f176-subline b{font-size:14px!important;color:#3c4772!important}
+.f176-course-card .button,.f176-grade-card .button{display:inline-flex!important;justify-content:center!important;align-items:center!important;min-height:38px!important;min-width:0!important;max-width:100%!important;width:auto!important;padding:9px 12px!important;margin:0!important;border:1px solid #dfe5f1!important;background:#fff!important;color:#364586!important;box-shadow:none!important;font-weight:750!important;font-size:12px!important;line-height:1.25!important;white-space:normal!important;text-align:center!important;border-radius:11px!important}
+.f176-grade-top{display:flex!important;flex-direction:column!important;gap:3px!important;min-width:0!important;overflow-wrap:anywhere!important}
+.f176-grade-top strong{color:#23304f!important;font-size:15px!important;white-space:normal!important}
+.f176-grade-top span{color:#717d96!important;font-size:12px!important;overflow-wrap:anywhere!important}
+.f176-grade-card{gap:9px!important}
+.f176-grade-card .button{align-self:flex-start!important}
+.f176-empty{font-size:13px!important;color:#7c87a0!important;margin:0!important;padding:12px!important}
+/* Dock y menú: iconos distintos, etiqueta abreviada; todo dentro del teléfono. */
+.f132-dock button{min-width:0!important;overflow:hidden!important}
+.f132-dock button span{font-size:10px!important;max-width:100%!important;overflow-wrap:anywhere!important;line-height:1.18!important;white-space:normal!important}
+.f132-dock b svg,.f132-list b svg{display:block!important;fill:none!important;stroke:currentColor!important;stroke-width:1.8!important;width:23px!important;height:23px!important}
+.f132-dock button[data-f132-go="grade_center"] b svg{width:25px!important;height:25px!important}
+.f132-list button{overflow:hidden!important;min-width:0!important}
+.f132-list button span{max-width:100%!important;overflow-wrap:anywhere!important}
+}
+`;
+let installed=null;
+function apply(){
+ const host=document.getElementById('lsb-f23-shell');const root=host?.shadowRoot;
+ if(!root||root===installed)return;
+ installed=root;
+ const style=document.createElement('style');style.id='lsb-f176-catalog-mobile';style.textContent=css;root.appendChild(style);
+}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',apply,{once:true});else apply();
+const watch=new MutationObserver(apply);watch.observe(document.documentElement,{childList:true,subtree:true});
+setTimeout(apply,800);
 })();
 </script></body></html>
