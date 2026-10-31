@@ -13067,7 +13067,14 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
    '<section class="lsb184-panel"><h3>Reglas de seguridad</h3><p class="lsb184-sub">Los ciclos existentes conservan matrículas, calificaciones, cuentas y boletas. Al crear otro ciclo, las materias y los grados se reutilizan sin duplicarse. La preparación solo crea nuevas secciones, asignaciones autorizadas y matrículas seleccionadas.</p>'+
    '<div class="lsb184-note">Para cambiar el estado de un ciclo, utiliza <b>Configurar ciclo</b>. Supabase no permite desactivar un año con bimestres abiertos o notas pendientes de publicación. La eliminación completa de ciclos con historial está bloqueada hasta contar con una recuperación externa verificada.</div></section>';
  };
- function dialog(html){const d=document.getElementById('dialog');d.innerHTML=html;if(!d.open)d.showModal();d.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>d.close());return d;}
+ function dialog(html){
+  const d=document.getElementById('dialog');
+  if(!d)throw Error('No se encontró la ventana de Dirección. Recarga la plataforma.');
+  if(!d.open){d.showModal();}
+  d.innerHTML=html;
+  d.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>d.close());
+  return d;
+ }
  function fieldStatus(msg,isErr){const el=document.getElementById('lsb184-feedback');if(el){el.textContent=msg;el.style.color=isErr?'#b13d3d':'#27715f';}}
  const rpc=async(name,args)=>{if(!permitted())throw Error('La sesión de Dirección ya no es válida.');const {data:r,error}=await lsb18Client().rpc(name,args);if(error)throw Error(error.message||'Error de Supabase');return r;};
  async function refresh(){await lsb18Load();render();}
@@ -13275,6 +13282,54 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
     catch(ex){fieldStatus('No se cambió el ciclo: '+String(ex.message||ex),true);btn.disabled=false;}
    };
  };
+
+ /* F185: Enlace de eventos estable para la carcasa Dirección (incluido Shadow DOM).
+    Escucha en captura para no depender de los bindings heredados que se pierden al reconstruir Ciclos.
+    Un clic verdadero ejecuta una sola acción. Los errores se muestran en pantalla. */
+ const f185Actions = new Set([
+  'lsbf1659new','lsbf1659configure',
+  'lsb184-prepare','lsb184-preview','lsb184-delete','lsb184-cleanup','lsb184-withdraw'
+ ]);
+ function f185HandleAction(name,arg){
+   if(!permitted()){toast('La sesión de Dirección General no está activa. Ingresa nuevamente.');return;}
+   switch(name){
+    case 'lsbf1659new': return oldAction('lsbf1659new',arg);
+    case 'lsbf1659configure': {
+      const year = years().find(y=>String(y.year)===String(arg));
+      if(!year)throw Error('No se encontró el ciclo seleccionado. Actualiza la lista.');
+      if(typeof openSchoolYear17 !== 'function')throw Error('No se cargó el módulo de configuración de ciclos.');
+      void Promise.resolve(openSchoolYear17(year.year)).catch(f185Error);
+      return;
+    }
+    case 'lsb184-prepare': {
+      wizard.target=String(arg);wizard.step=1;wizard.source=null;showWizard(1);return;
+    }
+    case 'lsb184-preview': void openPreview(String(arg));return;
+    case 'lsb184-delete': void openDelete(String(arg));return;
+    case 'lsb184-cleanup': void openCleanup(String(arg));return;
+    case 'lsb184-withdraw': void openWithdraw(String(arg));return;
+   }
+ }
+ function f185Error(ex){
+   const msg=String(ex?.message||ex||'Error desconocido');
+   console.error('LSB F185 Ciclos:',ex);
+   const feedback=document.getElementById('lsb184-feedback');
+   if(feedback){feedback.textContent='No se pudo completar la consulta: '+msg;feedback.style.color='#b13d3d';}
+   else toast('Ciclos: '+msg);
+ }
+ document.addEventListener('click',function f185CycleClick(ev){
+   if(ev.defaultPrevented)return;
+   const path=typeof ev.composedPath==='function'?ev.composedPath():[ev.target];
+   const btn=path.find(n=>n?.nodeType===1&&n.matches?.('button[data-action]'));
+   if(!btn||!f185Actions.has(btn.dataset.action)||!btn.isConnected||btn.disabled)return;
+   const app=document.getElementById('app');
+   if(!app?.contains(btn))return;
+   const cyclesVisible=typeof page==='string'&&page==='cycles';
+   if(!cyclesVisible)return;
+   ev.preventDefault();ev.stopImmediatePropagation();
+   try{f185HandleAction(btn.dataset.action,btn.dataset.arg||'');}
+   catch(ex){f185Error(ex);}
+ },true);
 
  const oldAction=action;
  action=function(name,arg){
