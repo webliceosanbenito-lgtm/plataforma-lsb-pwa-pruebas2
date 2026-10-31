@@ -3053,11 +3053,11 @@ body.lsb-modal-open{overflow:hidden}
      const rows=records.map(s=>`<tr><td>${E(window.lsbF174StudentName(s))}</td><td>${E(s.code||'')}</td><td>${E(groupName(s.group))}</td><td class="lsb19112-action">${button('Expediente','lsb19111-view',s.id,true)}</td></tr>`).join('');
      const head=heading('Estudiantes · '+groupName(chosenGroup),'Consulta y administración de matrículas.',button('+ Registrar estudiante','newstudent'))+
       '<div class="toolbar" style="margin-bottom:18px">'+button('Todos los grados','backstudents','',true)+button('Descargar Excel de este grado','lsb19114-export-grade',chosenGroup,true)+'</div>';
-     if(window.matchMedia('(max-width:700px)').matches){
-       const cards=records.map(s=>`<article class="f181-entry"><div class="f181-entry-main"><h3>${E(window.lsbF174StudentName(s))}</h3><span>${E(s.code||'Sin código')}</span></div><div class="f181-entry-footer"><span>${E(groupName(s.group))}</span>${button('Expediente','lsb19111-view',s.id,true)}</div></article>`).join('')||'<p class="f181-empty">No hay estudiantes en esta sección.</p>';
-       return head+panel('Registro estudiantil',`<div class="f181-entry-list">${cards}</div>`);
-     }
-     return head+panel('Registro estudiantil',table(['Nombre completo','Código personal','Grado y sección','Acciones'],rows));
+     // F190: misma tabla horizontal de expedientes en PC y móvil.
+     // Las fichas F181 anteriores impedían mostrar encabezados, columnas y desplazamiento lateral.
+     return head+panel('Registro estudiantil',
+       '<p class="lsb190-swipe-guide">↔ Desliza la tabla hacia los lados. El nombre permanece visible.</p>'+
+       '<div id="lsb190-roster" class="lsb190-student-table">'+table(['Nombre completo','Código personal','Grado y sección','Acciones'],rows)+'</div>');
   };
   const beforeAction=action;
   action=function(name,arg){
@@ -3395,9 +3395,20 @@ action=function(name,arg){
 async function openSchoolYear17(year){
  if(!LSB18?.authenticated||LSB18.profile?.role!=='admin_general')return toast('Solo la Dirección general puede administrar secciones.');
  const r=data17();if(!r)return toast('Primero inicia sesión y sincroniza Supabase.');
- try{r.lsb_academic_offerings=await lsb18Fetch('lsb_academic_offerings');}catch(e){console.warn('LSB: ofertas académicas no disponibles',e);}
  const y=(r.lsb_school_years||[]).find(v=>String(v.year)===String(year));
  if(!y)return toast('Ese ciclo escolar no está disponible en Supabase.');
+ // F190: respuesta visual inmediata; antes una consulta opcional podía dejar el botón aparentemente inactivo.
+ modal('<h2>Configurando ciclo '+esc17(y.year)+'</h2><p class="sub" role="status">Cargando secciones y catálogo académico…</p>');
+ let offeringsWarning='';
+ try{
+  const offerings=await Promise.race([lsb18Fetch('lsb_academic_offerings'),new Promise((_,reject)=>setTimeout(()=>reject(new Error('Consulta del catálogo excedió 10 segundos')),10000))]);
+  if(Array.isArray(offerings))r.lsb_academic_offerings=offerings;
+ }catch(e){
+  offeringsWarning='No se pudo actualizar el catálogo académico: '+String(e?.message||e)+'. Podrás consultar el ciclo; vuelve a intentar si necesitas crear secciones.';
+  console.warn('LSB: ofertas académicas no disponibles',e);
+ }
+ // No reabrir una ventana antigua si el usuario navegó a otra acción mientras cargaba.
+ if(!document.getElementById('dialog')?.open)return;
  const sections=(r.lsb_sections||[]).filter(v=>v.school_year_id===y.id).sort((a,b)=>{
   const x=name17(a,r),z=name17(b,r);return (x.offering+' '+x.grade+' '+x.code).localeCompare(z.offering+' '+z.grade+' '+z.code,'es');
  });
@@ -3405,6 +3416,7 @@ async function openSchoolYear17(year){
  body+='<div class="tablewrap"><table><thead><tr><th>Grado / oferta</th><th>Sección</th><th>Cupo</th><th>Estado</th></tr></thead><tbody>';
  body+=sections.length?sections.map(s=>{const n=name17(s,r);return '<tr><td>'+esc17(n.offering?n.offering+' · '+n.grade:n.grade)+'</td><td>'+esc17(s.name)+'</td><td>'+esc17(s.capacity??'Sin límite')+'</td><td>'+esc17(s.active?'Activa':'Inactiva')+'</td></tr>'}).join(''):'<tr><td colspan="4">Todavía no existen secciones para este ciclo.</td></tr>';
  body+='</tbody></table></div>';
+ body+=(offeringsWarning?'<p class="lsb190-warning" role="status">'+esc17(offeringsWarning)+'</p>':'');
  body+='<p class="sub">Los grados y carreras se toman de Supabase. Para crear una sección, selecciona una oferta académica existente. No se modificarán estudiantes ni matrículas.</p>';
  body+='<p class="sub" style="margin-top:12px">El estado del ciclo controla las nuevas matrículas. Cambiarlo no modifica estudiantes, pagos ni calificaciones.</p>';
  const activeOther=(r.lsb_school_years||[]).filter(v=>v.active===true&&v.id!==y.id);
@@ -3672,6 +3684,7 @@ async function showHistory18(studentId){
    if(authorLookupError)html+='<tr><td colspan="5" class="sub">No fue posible consultar algunos nombres de administradores. Comprueba los permisos de lectura de perfiles en Supabase.</td></tr>';
    html+='</tbody></table></div></section>';
    if(transferReadError)html+='<p class="lsb-f189-warn" role="status">Las matrículas están disponibles, pero no se pudo consultar la tabla de traslados: '+el18(transferReadError)+'</p>';
+   if(LSB18.profile?.role==='admin_secundario')html+='<p class="lsb-f189-warn" role="status">La lectura de matrículas históricas y traslados puede estar limitada para Dirección Secundaria por las políticas RLS actuales. Si faltan datos, consulta con Dirección General.</p>';
   html+='<p class="sub">La etiqueta de vigencia se determina por el ciclo activo; el estado original de cada matrícula no se modifica.</p>';
   html+='<p class="sub">Las calificaciones, asistencias y pagos anteriores permanecen vinculados a su matrícula de origen. Esta consulta no modifica ni consolida esos datos en las boletas.</p>';
   html+='<div class="toolbar lsb-f189-history-footer"><button class="button secondary" type="button" data-close>Cerrar historial</button></div></div>';
@@ -13773,5 +13786,82 @@ html[data-theme=dark] #dialog .lsb-f189-history-scroll :is(td,table){background:
 html[data-theme=dark] #dialog .lsb-f189-history-scroll th{background:#252f49!important;color:#e4eafa!important}
 html[data-theme=dark] #dialog .lsb-f189-history-scroll tbody tr:nth-child(even) td{background:#202943!important}
 html[data-theme=dark] #dialog .lsb-f189-history-scroll tbody tr:nth-child(even) td:first-child{background:#202943!important}
+</style>
+
+<style id="lsb-f190-student-roster">
+/* F190: horizontal student roster; the mobile renderer now creates tables rather than cards. */
+@media(max-width:950px){
+ body.lsb-f23-director:not(.loginmode) #app .lsb190-student-table{width:100%!important;min-width:0!important;max-width:100%!important;overflow:hidden!important;box-sizing:border-box!important}
+ body.lsb-f23-director:not(.loginmode) #app .lsb190-student-table>.tablewrap,
+ body.lsb-f23-director:not(.loginmode) #app .lsb190-student-table .tablewrap{
+ display:block!important;overflow-x:auto!important;overflow-y:auto!important;width:100%!important;max-width:100%!important;
+ min-width:0!important;box-sizing:border-box!important;-webkit-overflow-scrolling:touch!important;overscroll-behavior-x:contain!important;
+ border:1px solid #dfe6f3!important;border-radius:15px!important;background:var(--surface,#fff)!important;padding:0!important
+ }
+ body.lsb-f23-director:not(.loginmode) #app .lsb190-student-table .tablewrap>table{
+ display:table!important;min-width:780px!important;width:max-content!important;max-width:none!important;table-layout:auto!important;
+ border-collapse:separate!important;border-spacing:0!important;white-space:normal!important
+ }
+ body.lsb-f23-director:not(.loginmode) #app .lsb190-student-table .tablewrap thead{display:table-header-group!important}
+ body.lsb-f23-director:not(.loginmode) #app .lsb190-student-table .tablewrap tbody{display:table-row-group!important;grid-template-columns:none!important;padding:0!important;gap:0!important}
+ body.lsb-f23-director:not(.loginmode) #app .lsb190-student-table .tablewrap tr{display:table-row!important;width:auto!important;max-width:none!important;padding:0!important;margin:0!important;background:transparent!important;box-shadow:none!important;border:0!important}
+ body.lsb-f23-director:not(.loginmode) #app .lsb190-student-table .tablewrap :is(th,td){
+ display:table-cell!important;min-width:140px!important;max-width:280px!important;width:auto!important;position:static!important;
+ padding:12px 15px!important;height:auto!important;min-height:0!important;vertical-align:middle!important;text-align:left!important;
+ white-space:nowrap!important;overflow:visible!important;overflow-wrap:normal!important;word-break:normal!important;
+ border:0!important;border-bottom:1px solid #e7ecf5!important;box-sizing:border-box!important;font-size:13px!important
+ }
+ body.lsb-f23-director:not(.loginmode) #app .lsb190-student-table .tablewrap th{background:#f1f4fa!important;color:#4b5977!important;font-weight:800!important}
+ body.lsb-f23-director:not(.loginmode) #app .lsb190-student-table .tablewrap :is(th,td):first-child{
+ position:sticky!important;left:0!important;z-index:2!important;min-width:190px!important;
+ white-space:normal!important;background:var(--surface,#fff)!important;box-shadow:2px 0 0 #e3e8f2!important
+ }
+ body.lsb-f23-director:not(.loginmode) #app .lsb190-student-table .tablewrap th:first-child{background:#f1f4fa!important;z-index:3!important}
+ body.lsb-f23-director:not(.loginmode) #app .lsb190-student-table .tablewrap td::before{content:none!important;display:none!important}
+ body.lsb-f23-director:not(.loginmode) #app .lsb190-student-table .tablewrap td :is(button,.button){width:auto!important;display:inline-flex!important;max-width:none!important;white-space:nowrap!important;min-height:36px!important;margin:0!important}
+ .lsb190-swipe-guide{display:block;font-size:12px;line-height:1.45;color:#3b4193;background:#f1f5fd;border:1px solid #e0e7fa;border-radius:12px;padding:10px 13px;margin:0 0 12px}
+}
+@media(min-width:951px){.lsb190-swipe-guide{display:none}}
+.lsb190-warning{border:1px solid #e9d9a2;background:#fff9ea;color:#744d1d;border-radius:10px;padding:11px 14px;margin:14px 0;line-height:1.5;font-size:13px}
+
+/* Scope-id escalation is intentional: earlier F132/F180/F187 rules use !important to turn cells into cards. */
+@media(max-width:950px){
+ html body.lsb-f23-director:not(.loginmode) #app #lsb190-roster .tablewrap{
+  overflow-x:auto!important;overflow-y:auto!important;display:block!important;max-width:100%!important;
+  width:100%!important;min-width:0!important;overscroll-behavior-x:contain!important
+ }
+ html body.lsb-f23-director:not(.loginmode) #app #lsb190-roster .tablewrap > table{
+  display:table!important;min-width:780px!important;width:max-content!important;max-width:none!important;
+  table-layout:auto!important;white-space:normal!important;overflow:visible!important
+ }
+ html body.lsb-f23-director:not(.loginmode) #app #lsb190-roster .tablewrap thead{display:table-header-group!important}
+ html body.lsb-f23-director:not(.loginmode) #app #lsb190-roster .tablewrap tbody{
+  display:table-row-group!important;grid-template-columns:none!important;gap:0!important;
+  min-width:0!important;max-width:none!important;width:auto!important;padding:0!important
+ }
+ html body.lsb-f23-director:not(.loginmode) #app #lsb190-roster .tablewrap tr{
+  display:table-row!important;width:auto!important;min-width:0!important;max-width:none!important;
+  margin:0!important;padding:0!important;border-radius:0!important;box-shadow:none!important;
+  background:transparent!important;position:static!important
+ }
+ html body.lsb-f23-director:not(.loginmode) #app #lsb190-roster .tablewrap :is(th,td){
+  display:table-cell!important;position:static!important;float:none!important;width:auto!important;
+  min-width:135px!important;max-width:330px!important;white-space:normal!important;vertical-align:middle!important;
+  border:0!important;border-bottom:1px solid #e8edf5!important;border-radius:0!important;
+  padding:12px 14px!important;box-shadow:none!important;background:var(--surface,#fff)!important;
+  font-size:13px!important;line-height:1.45!important;overflow-wrap:anywhere!important
+ }
+ html body.lsb-f23-director:not(.loginmode) #app #lsb190-roster .tablewrap th{background:#f1f4fa!important;font-weight:800!important;color:#4b5977!important}
+ html body.lsb-f23-director:not(.loginmode) #app #lsb190-roster .tablewrap :is(th,td):first-child{
+  position:sticky!important;left:0!important;min-width:180px!important;z-index:2!important;
+  box-shadow:2px 0 0 #e1e6f0!important
+ }
+ html body.lsb-f23-director:not(.loginmode) #app #lsb190-roster .tablewrap th:first-child{z-index:3!important;background:#f1f4fa!important}
+ html body.lsb-f23-director:not(.loginmode) #app #lsb190-roster .tablewrap td::before{display:none!important;content:none!important}
+ html body.lsb-f23-director:not(.loginmode) #app #lsb190-roster .tablewrap td :is(button,.button){
+  display:inline-flex!important;width:auto!important;max-width:none!important;white-space:nowrap!important;
+  min-width:0!important;min-height:38px!important;align-items:center!important;justify-content:center!important
+ }
+}
 </style>
 </body></html>
