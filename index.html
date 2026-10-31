@@ -3389,7 +3389,7 @@ cyclesView=function(){
 };
 const oldAction17=action;
 action=function(name,arg){
- if(name==='switchcycle') {openSchoolYear17(arg);return;}
+ if(name==='switchcycle') {return openSchoolYear17(arg);}
  return oldAction17(name,arg);
 };
 async function openSchoolYear17(year){
@@ -12791,7 +12791,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
      const combined=headers.join(' ').toLowerCase();
      const isStudent=combined.includes('código personal')&&combined.includes('grado y sección');
      const isAccount=combined.includes('asignaciones')&&combined.includes('estado')&&(combined.includes('usuario')||combined.includes('rol'));
-     if(isStudent||isAccount)buildCards(table,isStudent?'student':'account');
+     if(isAccount)buildCards(table,'account');
    }
  }
  let scheduled=false;
@@ -13327,7 +13327,8 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   const shell=document.getElementById('lsb-f23-shell')?.shadowRoot;
   if(!btn.closest('.lsb184-years')&&!((app?.contains(btn)||shell?.contains(btn))&&btn.dataset.action==='lsbf1659new'))return;
   if(!btn.closest('.lsb184-years')&&btn.dataset.action!=='lsbf1659new')return;
-  if(ev.defaultPrevented)return;
+  if(ev.__lsb184Handled)return;
+  ev.__lsb184Handled=true;
   ev.preventDefault();ev.stopPropagation();ev.stopImmediatePropagation();
   try{f185HandleAction(btn.dataset.action,btn.dataset.arg||'');}
   catch(ex){f185Error(ex);}
@@ -13611,4 +13612,79 @@ body.lsb-f23-director:not(.loginmode) #app .tablewrap.lsb187-admin-cards tbody t
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
 </script>
+
+<!-- F188: Historial de estudiantes horizontal. -->
+<style id="lsb-f188-horizontal-students">@media(max-width:950px){
+html body.lsb-f23-director:not(.loginmode) #app .tablewrap.lsb188-horizontal-students.lsb188-horizontal-students,#detail-content .tablewrap.lsb188-horizontal-students.lsb188-horizontal-students{display:block!important;max-width:100%!important;width:100%!important;min-width:0!important;box-sizing:border-box!important;overflow-x:auto!important;overflow-y:auto!important;scrollbar-width:thin!important;-webkit-overflow-scrolling:touch!important;overscroll-behavior-x:contain!important;border:1px solid #dae3f3!important;border-radius:16px!important;background:var(--surface,#fff)!important;padding:0!important}
+html body.lsb-f23-director:not(.loginmode) #app .tablewrap.lsb188-horizontal-students.lsb188-horizontal-students>table,#detail-content .tablewrap.lsb188-horizontal-students.lsb188-horizontal-students>table{display:table!important;width:max-content!important;min-width:100%!important;max-width:none!important;table-layout:auto!important;white-space:normal!important;border-collapse:separate!important;border-spacing:0!important;overflow:visible!important}
+html body.lsb-f23-director:not(.loginmode) #app .lsb188-horizontal-students.lsb188-horizontal-students thead,#detail-content .lsb188-horizontal-students.lsb188-horizontal-students thead{display:table-header-group!important}
+html body.lsb-f23-director:not(.loginmode) #app .lsb188-horizontal-students.lsb188-horizontal-students tbody,#detail-content .lsb188-horizontal-students.lsb188-horizontal-students tbody{display:table-row-group!important;min-width:0!important;width:auto!important;max-width:none!important;padding:0!important;gap:0!important;grid-template-columns:none!important;background:transparent!important}
+html body.lsb-f23-director:not(.loginmode) #app .lsb188-horizontal-students.lsb188-horizontal-students tr,#detail-content .lsb188-horizontal-students.lsb188-horizontal-students tr{display:table-row!important;width:auto!important;max-width:none!important;height:auto!important;min-width:0!important;float:none!important;margin:0!important;padding:0!important;border:0!important;border-radius:0!important;box-shadow:none!important;background:transparent!important;transform:none!important}
+html body.lsb-f23-director:not(.loginmode) #app .lsb188-horizontal-students.lsb188-horizontal-students :is(th,td),#detail-content .lsb188-horizontal-students.lsb188-horizontal-students :is(th,td){display:table-cell!important;float:none!important;position:static!important;left:auto!important;right:auto!important;box-sizing:border-box!important;width:auto!important;min-width:130px!important;max-width:none!important;height:auto!important;padding:13px 15px!important;border:0!important;border-bottom:1px solid #e6edf7!important;border-radius:0!important;white-space:nowrap!important;overflow:visible!important;word-break:normal!important;overflow-wrap:normal!important;text-align:left!important;vertical-align:middle!important;line-height:1.45!important;font-size:12.5px!important;order:initial!important}
+html body.lsb-f23-director:not(.loginmode) #app .lsb188-horizontal-students.lsb188-horizontal-students th,#detail-content .lsb188-horizontal-students.lsb188-horizontal-students th{background:#eef2fb!important;color:#3f4e70!important;font-weight:800!important}
+html body.lsb-f23-director:not(.loginmode) #app .lsb188-horizontal-students.lsb188-horizontal-students :is(th,td):first-child,#detail-content .lsb188-horizontal-students.lsb188-horizontal-students :is(th,td):first-child{position:sticky!important;left:0!important;z-index:2!important;min-width:190px!important;max-width:255px!important;white-space:normal!important;background:var(--surface,#fff)!important;box-shadow:2px 0 0 #e6ebf5!important}
+html body.lsb-f23-director:not(.loginmode) #app .lsb188-horizontal-students.lsb188-horizontal-students th:first-child,#detail-content .lsb188-horizontal-students.lsb188-horizontal-students th:first-child{z-index:3!important;background:#eef2fb!important}
+html body.lsb-f23-director:not(.loginmode) #app .lsb188-horizontal-students.lsb188-horizontal-students td::before,#detail-content .lsb188-horizontal-students.lsb188-horizontal-students td::before{content:none!important;display:none!important}
+html body.lsb-f23-director:not(.loginmode) #app .lsb188-horizontal-students.lsb188-horizontal-students td :is(button,.button),#detail-content .lsb188-horizontal-students.lsb188-horizontal-students td :is(button,.button){display:inline-flex!important;width:auto!important;max-width:none!important;min-width:0!important;min-height:37px!important;padding:8px 12px!important;white-space:nowrap!important}
+.lsb188-swipe-hint{display:flex!important;padding:10px 13px!important;margin:8px 0!important;background:#eff4ff!important;border:1px solid #d7e1f5!important;border-radius:12px!important;color:#354c7b!important;font-size:12px!important;line-height:1.4!important;font-weight:750!important}
+}
+@media(min-width:951px){.lsb188-swipe-hint{display:none!important}}</style>
+<script id="lsb-f188-controller">(function(){
+'use strict';
+const normal=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+let scheduled=false;
+function studentTable(table){
+ const title=[...table.querySelectorAll('thead tr:first-child th')].map(th=>normal(th.textContent)).join(' ');
+ const hasName=title.includes('nombre')||title.includes('apellido')||title.includes('estudiante');
+ const hasGrade=title.includes('grado')||title.includes('seccion');
+ return (title.includes('codigo')&&hasGrade&&hasName)||(title.includes('ciclo')&&hasGrade&&hasName&&!title.includes('calificacion'));
+}
+function restore(table){
+ const wrap=table.closest('.tablewrap');if(!wrap)return;
+ const cards=wrap.nextElementSibling;
+ if(wrap.classList.contains('f182-origin-table')&&cards?.matches('.f182-admin-list[aria-label="Estudiantes matriculados"]')){
+  const rows=[...table.querySelectorAll('tbody>tr')].filter(tr=>tr.querySelectorAll(':scope>td').length>=3);
+  const list=[...cards.querySelectorAll(':scope>.f182-admin-item')];
+  rows.forEach((tr,i)=>{const last=tr.querySelector('td:last-child');if(last&&list[i])list[i].querySelectorAll('.f182-admin-item-actions>*').forEach(btn=>last.append(btn));});
+  cards.remove();
+ }
+ wrap.classList.remove('f182-origin-table','f180-card-table','lsb186-wide-table');
+ if(wrap.style.getPropertyValue('display')==='none')wrap.style.removeProperty('display');
+ wrap.classList.add('lsb188-horizontal-students');
+ wrap.setAttribute('role','region');wrap.setAttribute('aria-label','Tabla horizontal de estudiantes, desplazar hacia los lados');
+ if(!wrap.previousElementSibling?.classList.contains('lsb188-swipe-hint')){
+  const hint=document.createElement('div');hint.className='lsb188-swipe-hint';
+  hint.textContent='↔ Desliza hacia los lados para ver todas las columnas. El nombre permanece visible.';
+  wrap.insertAdjacentElement('beforebegin',hint);
+ }
+}
+function apply(root){if(!root)return;for(const table of root.querySelectorAll('.tablewrap>table')){
+ if(!studentTable(table))continue;
+ const wrap=table.closest('.tablewrap');if(wrap&&!wrap.classList.contains('lsb188-horizontal-students'))restore(table);
+}}
+function run(){
+ scheduled=false;
+ if(!document.body.classList.contains('lsb-f23-director')||document.body.classList.contains('loginmode'))return;
+ try{
+  apply(document.getElementById('app'));
+  const shadow=document.getElementById('lsb-f23-shell')?.shadowRoot;
+  if(shadow){
+   const style=document.getElementById('lsb-f188-horizontal-students');
+   if(style&&!shadow.getElementById('lsb-f188-shadow')){const clone=style.cloneNode(true);clone.id='lsb-f188-shadow';shadow.appendChild(clone);}
+   apply(shadow.getElementById('detail-content'));
+  }
+ }catch(e){console.warn('F188: tabla de estudiantes',e)}
+}
+function schedule(){if(scheduled)return;scheduled=true;requestAnimationFrame(run)}
+function start(){
+ const app=document.getElementById('app');if(app)new MutationObserver(schedule).observe(app,{childList:true,subtree:true});
+ const host=document.getElementById('lsb-f23-shell');
+ if(host){
+  const attach=()=>{const content=host.shadowRoot?.getElementById('detail-content');if(content&&!content.__lsb188Watch){content.__lsb188Watch=true;new MutationObserver(schedule).observe(content,{childList:true,subtree:true});}schedule();};
+  new MutationObserver(attach).observe(host,{childList:true});attach();
+ }
+ window.addEventListener('resize',schedule,{passive:true});schedule();
+}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
+})();</script>
 </body></html>
