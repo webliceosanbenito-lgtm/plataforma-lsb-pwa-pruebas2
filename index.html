@@ -3471,6 +3471,7 @@ async function openBimesterCalendar20(y){
 }
 
 async function setSchoolYearState19(y,btn){
+ if(typeof window.lsbF184SetSchoolYearState==='function')return window.lsbF184SetSchoolYearState(y,btn);
  if(!LSB18?.authenticated||LSB18.profile?.role!=='admin_general')return toast('Solo Dirección general puede administrar los ciclos.');
  const desired=!y.active;
  const dialog=document.getElementById('dialog');
@@ -3609,10 +3610,10 @@ async function showHistory18(studentId){
  if(!LSB18?.authenticated||!['admin_general','admin_secundario'].includes(LSB18.profile?.role))return toast('Solo Dirección puede consultar el historial de matrículas.');
  const student=(LSB18.rows?.lsb_students||[]).find(x=>x.id===studentId);
  if(!student)return toast('No se encontró al estudiante autorizado.');
- modal('<h2>Historial de matrículas</h2><p class="sub">Consultando matrículas y movimientos autorizados en Supabase…</p>');
+ modal('<div class="lsb-f189-history"><header class="lsb-f189-history-header"><span class="lsb-f189-kicker">EXPEDIENTE ESTUDIANTIL</span><h2>Historial de matrículas</h2><p>Consultando matrículas y movimientos autorizados en Supabase…</p></header></div>');
  const client=lsb18Client();
  try{
-  const [enrollments,transfers]=await Promise.all([
+  const [enrollmentsResult,transfersResult]=await Promise.allSettled([
    lsbF2ReadPages(
     ()=>client.from('lsb_enrollments')
       .select('id,student_id,section_id,status,enrollment_date,created_at',{count:'exact'})
@@ -3622,6 +3623,10 @@ async function showHistory18(studentId){
       .select('id,previous_enrollment_id,new_enrollment_id,previous_section_id,new_section_id,reason,authorized_by,transferred_at',{count:'exact'})
       .eq('student_id',studentId),['id'],'Historial de traslados')
   ]);
+  if(enrollmentsResult.status!=='fulfilled')throw Error('No se pudieron consultar las matrículas: '+String(enrollmentsResult.reason?.message||enrollmentsResult.reason));
+  const enrollments=Array.isArray(enrollmentsResult.value)?enrollmentsResult.value:[];
+  const transfers=transfersResult.status==='fulfilled'&&Array.isArray(transfersResult.value)?transfersResult.value:[];
+  const transferReadError=transfersResult.status==='rejected'?String(transfersResult.reason?.message||transfersResult.reason):null;
   enrollments.sort((a,b)=>String(b.created_at||'').localeCompare(String(a.created_at||''))||String(b.id).localeCompare(String(a.id)));
   transfers.sort((a,b)=>String(b.transferred_at||'').localeCompare(String(a.transferred_at||''))||String(b.id).localeCompare(String(a.id)));
   // F16.2.2: una matrícula histórica con estado «inscrito» no es vigente en el ciclo actual.
@@ -3634,19 +3639,19 @@ async function showHistory18(studentId){
   const current=(enrollments||[]).filter(x=>x.status==='inscrito'&&
    String(sectionsById.get(String(x.section_id))?.school_year_id)===String(LSB18.schoolYearId));
   const fullName=[student.first_name,student.last_name].filter(Boolean).join(' ');
-  let html='<h2>Historial de matrículas</h2><p><strong>'+el18(fullName)+'</strong> · '+el18(student.student_code||'Sin código')+'</p>';
+  let html='<div class="lsb-f189-history"><header class="lsb-f189-history-header"><span class="lsb-f189-kicker">EXPEDIENTE ESTUDIANTIL</span><h2>Historial de matrículas</h2><p class="lsb-f189-student"><strong>'+el18(fullName)+'</strong><span> · '+el18(student.student_code||'Sin código')+'</span></p></header>';
   if(current.length===1)html+='<p><strong>Matrícula vigente:</strong> '+el18(descript18(current[0].section_id))+'</p>';
   else if(current.length>1)html+='<p style="color:#ad3434"><strong>Revisión requerida:</strong> hay más de una matrícula vigente.</p>';
   else html+='<p class="sub">No se encontró una matrícula vigente en el ciclo escolar activo.</p>';
-  html+='<h3>Matrículas del estudiante</h3><div class="tablewrap"><table><thead><tr><th>Ciclo</th><th>Grado y sección</th><th>Estado registrado</th><th>Fecha de inscripción</th></tr></thead><tbody>';
+  html+='<section class="lsb-f189-history-section"><div class="lsb-f189-section-heading"><h3>Matrículas del estudiante</h3><span>Desliza a los lados para consultar las columnas →</span></div><div class="tablewrap lsb-f189-history-scroll" role="region" aria-label="Historial horizontal de matrículas" tabindex="0"><table><thead><tr><th>Ciclo</th><th>Grado y sección</th><th>Estado registrado</th><th>Fecha de inscripción</th></tr></thead><tbody>';
   html+=(enrollments||[]).length?(enrollments||[]).map(x=>{
    const sec=sectionsById.get(String(x.section_id));
    const activeCycle=sec&&String(sec.school_year_id)===String(LSB18.schoolYearId);
    const status=x.status==='inscrito'?(activeCycle?'Vigente en ciclo activo':'Inscrito en ciclo histórico'):(statuses18[x.status]||x.status);
    return '<tr><td>'+el18(enrollmentYear(x)??'Sin ciclo')+'</td><td>'+el18(descript18(x.section_id))+'</td><td>'+el18(status)+'</td><td>'+el18(dates18(x.enrollment_date||x.created_at))+'</td></tr>';
   }).join(''):'<tr><td colspan="4">No hay matrículas visibles para esta cuenta.</td></tr>';
-  html+='</tbody></table></div><h3>Traslados registrados</h3>';
-   html+='<div class="tablewrap"><table><thead><tr><th>Fecha</th><th>Origen</th><th>Destino</th><th>Motivo</th><th>Autorizó</th></tr></thead><tbody>';
+  html+='</tbody></table></div></section><section class="lsb-f189-history-section"><div class="lsb-f189-section-heading"><h3>Traslados registrados</h3><span>Desplazamiento horizontal →</span></div>';
+   html+='<div class="tablewrap lsb-f189-history-scroll" role="region" aria-label="Historial horizontal de traslados" tabindex="0"><table><thead><tr><th>Fecha</th><th>Origen</th><th>Destino</th><th>Motivo</th><th>Autorizó</th></tr></thead><tbody>';
    // Resolver autorizadores por su perfil institucional, no mostrar UUID crudos en pantalla.
    const profileMap=new Map((LSB18.rows?.lsb_profiles||[]).filter(p=>p&&p.id).map(p=>[p.id,p]));
    const authorIds=[...new Set((transfers||[]).map(x=>x.authorized_by).filter(Boolean))];
@@ -3665,12 +3670,13 @@ async function showHistory18(studentId){
     return '<tr><td>'+el18(dates18(x.transferred_at))+'</td><td>'+el18(descript18(x.previous_section_id))+'</td><td>'+el18(descript18(x.new_section_id))+'</td><td>'+el18(x.reason)+'</td><td>'+el18(authorLabel)+'</td></tr>';
    }).join(''):'<tr><td colspan="5">No hay traslados registrados o visibles para esta cuenta.</td></tr>';
    if(authorLookupError)html+='<tr><td colspan="5" class="sub">No fue posible consultar algunos nombres de administradores. Comprueba los permisos de lectura de perfiles en Supabase.</td></tr>';
-   html+='</tbody></table></div>';
+   html+='</tbody></table></div></section>';
+   if(transferReadError)html+='<p class="lsb-f189-warn" role="status">Las matrículas están disponibles, pero no se pudo consultar la tabla de traslados: '+el18(transferReadError)+'</p>';
   html+='<p class="sub">La etiqueta de vigencia se determina por el ciclo activo; el estado original de cada matrícula no se modifica.</p>';
   html+='<p class="sub">Las calificaciones, asistencias y pagos anteriores permanecen vinculados a su matrícula de origen. Esta consulta no modifica ni consolida esos datos en las boletas.</p>';
-  html+='<div class="toolbar"><button class="button secondary" type="button" data-close>Cerrar</button></div>';
+  html+='<div class="toolbar lsb-f189-history-footer"><button class="button secondary" type="button" data-close>Cerrar historial</button></div></div>';
   modal(html);
- }catch(err){modal('<h2>Historial de matrículas</h2><p style="color:#ad3434">'+el18(err.message||err)+'</p><div class="toolbar"><button class="button secondary" data-close>Cerrar</button></div>')}
+ }catch(err){modal('<div class="lsb-f189-history"><header class="lsb-f189-history-header"><h2>Historial de matrículas</h2></header><p class="lsb-f189-warn" role="alert">'+el18(err.message||err)+'</p><div class="toolbar lsb-f189-history-footer"><button class="button secondary" type="button" data-close>Cerrar</button></div></div>')}
 }
 })();
 </script>
@@ -13083,7 +13089,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
  async function overview(id){const res=await rpc('lsb_f184_cycle_overview',{p_year_id:id});return res;}
  function statsView(p){const map=[['Estudiantes','students'],['Encargados vinculados','guardians'],['Secciones','sections'],['Asignaciones','assignments'],['Matrículas','enrollments'],['Actividades','assessments'],['Calificaciones','scores'],['Publicaciones','publications'],['Asistencias','attendance'],['Pagos','payments'],['Bimestres','bimesters']];return '<div class="lsb184-grid">'+map.map(([n,k])=>'<div class="lsb184-person"><small>'+n+'</small><b>'+Number(p[k]||0)+'</b></div>').join('')+'</div>';}
  async function openPreview(id){
-   const y=years().find(x=>x.id===id);if(!y)return;
+   const y=years().find(x=>String(x.id)===String(id));if(!y)return;
    dialog('<h2>Contenido del ciclo '+esc(y.year)+'</h2><p id="lsb184-feedback">Consultando Supabase…</p>');
    try{const p=await overview(id);dialog('<h2>Contenido del ciclo '+esc(y.year)+'</h2>'+statsView(p)+'<p class="lsb184-sub">Estos datos siguen vinculados al historial. No se borran al preparar un ciclo nuevo.</p><div class="lsb184-actions"><button class="lsb184-btn" data-close>Cerrar</button></div>');}
    catch(e){fieldStatus(String(e.message||e),true)}
@@ -13097,10 +13103,10 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
    if(error||verified?.user?.id!==id||verified?.user?.id!==LSB18.profile?.id)throw Error('La contraseña no corresponde a la cuenta de Dirección General.');
  }
  async function openDelete(id){
-   const y=years().find(x=>x.id===id);if(!y)return;
+   const y=years().find(x=>String(x.id)===String(id));if(!y)return;
    dialog('<h2>Eliminar ciclo '+esc(y.year)+'</h2><p id="lsb184-feedback">Comprobando contenido y riesgos…</p>');
    try{
-    const info=await overview(id);const totallyEmpty=!info.enrollments&&!info.assessments&&!info.scores&&!info.publications&&!info.attendance&&!info.payments&&!info.guardians;
+    const info=await overview(id);const totallyEmpty=['students','guardians','sections','assignments','enrollments','assessments','scores','publications','attendance','payments','bimesters'].every(k=>Number(info?.[k]||0)===0);
     dialog('<h2>¿Eliminar el ciclo '+esc(y.year)+'?</h2><p class="lsb184-sub">Primera confirmación: revisa los registros que contiene este año.</p>'+statsView(info)+
      (totallyEmpty?'<div class="lsb184-note">El ciclo está vacío. Se solicitará nuevamente la contraseña de Dirección antes de eliminarlo.</div>':
      '<div class="lsb184-warn"><b>Eliminación bloqueada.</b> Este ciclo contiene registros o estructura académica. Para proteger notas, matrículas, pagos y auditorías no se permite borrarlo definitivamente desde esta operación. Puedes conservarlo en preparación o archivarlo después del cierre correspondiente.</div>')+
@@ -13129,20 +13135,20 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
  function studentDetails(e){const st=byId(data().lsb_students||[],e.student_id);const sec=byId(data().lsb_sections||[],e.section_id);return {name:studentName(st),code:st?.student_code||'',origin:sectionLabel(sec)};}
  function stageTop(){return '<div class="lsb184-stage"><span class="'+(wizard.step===1?'active':'')+'">1. Estructura y profesores</span><span class="'+(wizard.step===2?'active':'')+'">2. Ascender estudiantes</span><span class="'+(wizard.step===3?'active':'')+'">3. Activación</span></div>'}
  function summary(){
-   const target=years().find(x=>x.id===wizard.target),source=years().find(x=>x.id===wizard.source);
+   const target=years().find(x=>String(x.id)===String(wizard.target)),source=years().find(x=>x.id===wizard.source);
    return '<h2>Preparar ciclo '+esc(target?.year||'')+'</h2><p class="lsb184-sub">Ciclo de origen: '+esc(source?.year||'Seleccionar')+' · Destino: '+esc(target?.year||'')+' (en preparación)</p>'+stageTop();
  }
  function showWizard(step=wizard.step){
-  const target=years().find(x=>x.id===wizard.target);if(!target||target.active)return toast('Elige un ciclo en preparación.');
+  const target=years().find(x=>String(x.id)===String(wizard.target));if(!target||target.active)return toast('Elige un ciclo en preparación.');
   wizard.step=step;
-  const sources=availableSources(target);if(!sources.some(y=>y.id===wizard.source))wizard.source=sources[sources.length-1]?.id||null;
-  const source=years().find(y=>y.id===wizard.source);
+  const sources=availableSources(target);if(!sources.some(y=>String(y.id)===String(wizard.source)))wizard.source=sources[sources.length-1]?.id||null;
+  const source=years().find(y=>String(y.id)===String(wizard.source));
   let html=summary();
   if(!source){dialog(html+'<div class="lsb184-note">Primero crea o selecciona un ciclo anterior con estructura académica.</div><button class="lsb184-btn" data-close>Cerrar</button>');return;}
   if(step===1){
    const assigns=assignsForYear(source.id),byTeacher=new Map();for(const a of assigns)byTeacher.set(a.teacher_id,(byTeacher.get(a.teacher_id)||0)+1);
    const teacherList=[...byTeacher.entries()].map(([id,n])=>({id,n,teacher:teachers().find(t=>t.id===id)}));
-   html+='<section class="lsb184-panel"><h3>Importar estructura del ciclo anterior</h3><label class="lsb184-field">Ciclo de origen<select id="lsb184-source">'+sources.map(y=>'<option value="'+esc(y.id)+'" '+(y.id===source.id?'selected':'')+'>'+esc(y.year)+'</option>').join('')+'</select></label>'+
+   html+='<section class="lsb184-panel"><h3>Importar estructura del ciclo anterior</h3><label class="lsb184-field">Ciclo de origen<select id="lsb184-source">'+sources.map(y=>'<option value="'+esc(y.id)+'" '+(String(y.id)===String(source.id)?'selected':'')+'>'+esc(y.year)+'</option>').join('')+'</select></label>'+
     '<div class="lsb184-note">Se reutilizan las materias y grados ya existentes. Se copian las secciones del año anterior y solo las asignaciones de los docentes seleccionados. Se mantienen intactos los archivos, las notas y las matrículas del origen.</div>'+
     '<h3>Profesores que continuarán</h3><div class="lsb184-moves">'+(teacherList.length?teacherList.map(t=>'<label class="lsb184-person"><input type="checkbox" class="lsb184-teacher" value="'+esc(t.id)+'" checked> <b style="display:inline">'+esc(fmtTeacher(t.teacher))+'</b><small>'+t.n+' asignaciones en '+esc(source.year)+'</small></label>').join(''):'<p class="lsb184-sub">No hay asignaciones docentes en el ciclo de origen.</p>')+'</div>'+
     '<div class="lsb184-actions"><button class="lsb184-btn primary" type="button" id="lsb184-import">Importar estructura y docentes</button><button class="lsb184-btn" type="button" id="lsb184-go2">Siguiente: estudiantes</button><button class="lsb184-btn" type="button" data-close>Cerrar</button></div><p id="lsb184-feedback" class="lsb184-sub"></p></section>';
@@ -13156,7 +13162,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
     const nextRank=gradeRank(originGrade?.name)+1;
     const options=targetSecs.filter(x=>gradeRank(gForSec(x)?.name)===nextRank);
     const suggested=options.find(x=>x.name===origin.name)||options[0];
-    return '<label class="lsb184-person lsb184-studentrow" data-lookup="'+esc([info.name,info.code,info.origin].join(' ').toLocaleLowerCase('es'))+'"><input type="checkbox" class="lsb184-student-check" data-student="'+esc(e.student_id)+'" '+(suggested?'checked':'disabled')+'> <b style="display:inline">'+esc(info.name)+'</b><small>'+esc(info.code)+' · '+esc(info.origin)+'</small>'+ (options.length?'<select class="lsb184-dest" aria-label="Destino para '+esc(info.name)+'">'+options.map(x=>'<option value="'+esc(x.id)+'" '+(x.id===suggested?.id?'selected':'')+'>'+esc(sectionLabel(x))+'</option>').join('')+'</select>':'<small>Sin sección de grado superior: egresado o requiere configuración de destino.</small>')+'</label>';
+    return '<label class="lsb184-person lsb184-studentrow" data-lookup="'+esc([info.name,info.code,info.origin].join(' ').toLocaleLowerCase('es'))+'"><input type="checkbox" class="lsb184-student-check" data-student="'+esc(e.student_id)+'" '+(suggested?'checked':'disabled')+'> <b style="display:inline">'+esc(info.name)+'</b><small>'+esc(info.code)+' · '+esc(info.origin)+'</small>'+ (options.length?'<select class="lsb184-dest" aria-label="Destino para '+esc(info.name)+'">'+options.map(x=>'<option value="'+esc(x.id)+'" '+(String(x.id)===String(suggested?.id)?'selected':'')+'>'+esc(sectionLabel(x))+'</option>').join('')+'</select>':'<small>Sin sección de grado superior: egresado o requiere configuración de destino.</small>')+'</label>';
    };
    html+='<section class="lsb184-panel"><h3>Ascender estudiantes</h3><p class="lsb184-sub">'+en.length+' matriculados en el ciclo de origen · '+existing.length+' ya preparados en el destino. Se conserva la cuenta y contraseña de cada encargado vinculado.</p>'+
     '<label class="lsb184-field">Buscar estudiante<input type="search" id="lsb184-search" placeholder="Apellidos, nombres o código"/></label>'+
@@ -13176,7 +13182,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   dialog(html);bindWizard(step);
  }
  async function activate(){
-  const target=years().find(x=>x.id===wizard.target);const src=activeYear();
+  const target=years().find(x=>String(x.id)===String(wizard.target));const src=activeYear();
   if(!target||target.active)return toast('El ciclo ya está activo.');
   if(src){fieldStatus('El ciclo '+src.year+' sigue activo. Debe cerrarse desde Configurar ciclo, después de cumplir sus protecciones. No se desactivará automáticamente.',true);return;}
   dialog('<h2>Activar ciclo '+esc(target.year)+'</h2><p class="lsb184-sub">Esta operación habilita el nuevo ciclo para la comunidad educativa. Confirma tu identidad con la contraseña de Dirección General.</p>'+ 
@@ -13269,7 +13275,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   });
  }
  // Exigir verificación de contraseña para activar o poner en preparación un ciclo.
- setSchoolYearState19=function(y,button){
+ window.lsbF184SetSchoolYearState=function(y,button){
    if(!permitted())return toast('Requiere Dirección General.');
    const desired=!y.active;
    dialog('<h2>'+(desired?'Activar':'Poner en preparación')+' ciclo '+esc(y.year)+'</h2>'+ 
@@ -13300,8 +13306,13 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
       const year = years().find(y=>String(y.year)===String(arg));
       if(!year)throw Error('No se encontró el ciclo seleccionado. Actualiza la lista.');
       // F186: la función está encapsulada en el módulo anterior; ejecutar su acción pública.
-      try{toast('Abriendo configuración del ciclo '+year.year+'…'); const result=oldAction('switchcycle',String(year.year)); if(result&&typeof result.catch==='function')result.catch(f185Error);}catch(ex){f185Error(ex);}
-      return;
+      try{
+       const result=oldAction('switchcycle',String(year.year));
+       if(result&&typeof result.then==='function'){
+        void result.catch(f185Error);
+       }
+       return result;
+      }catch(ex){f185Error(ex);return;}
     }
     case 'lsb184-prepare': {
       wizard.target=String(arg);wizard.step=1;wizard.source=null;showWizard(1);return;
@@ -13334,7 +13345,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   catch(ex){f185Error(ex);}
  },true);
  document.addEventListener('click',function f185CycleClick(ev){
-   if(ev.defaultPrevented)return;
+   if(ev.defaultPrevented||ev.__lsb184Handled)return;
    const path=typeof ev.composedPath==='function'?ev.composedPath():[ev.target];
    const btn=path.find(n=>n?.nodeType===1&&n.matches?.('button[data-action]'));
    if(!btn||!f185Actions.has(btn.dataset.action)||!btn.isConnected||btn.disabled)return;
@@ -13687,4 +13698,80 @@ function start(){
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })();</script>
+
+<style id="lsb-f189-history-and-cycles">
+/* F189. Historial real de matrículas, dentro de #dialog, sin cambiar su consulta ni la seguridad. */
+body.lsb-f23-director:not(.loginmode) #dialog:has(.lsb-f189-history),
+#dialog:has(.lsb-f189-history){
+ width:min(1060px,calc(100vw - 22px))!important;
+ max-width:calc(100vw - 22px)!important;
+ max-height:min(92dvh,920px)!important;
+ padding:0!important;
+ border-radius:20px!important;
+ border:1px solid #dee6f3!important;
+ background:var(--surface,#fff)!important;
+ color:var(--ink,#253353)!important;
+ overflow-y:auto!important;
+ overflow-x:hidden!important;
+ box-shadow:0 25px 90px #18284c55!important;
+}
+#dialog .lsb-f189-history{padding:clamp(16px,2.5vw,28px);min-width:0;max-width:100%;box-sizing:border-box}
+#dialog .lsb-f189-history-header{position:static;display:block;background:linear-gradient(112deg,#26336f,#474f9b);padding:22px 25px;margin:calc(-1 * clamp(16px,2.5vw,28px)) calc(-1 * clamp(16px,2.5vw,28px)) 20px;min-height:0;height:auto;color:#fff;border:0}
+#dialog .lsb-f189-kicker{font-size:10px;font-weight:850;letter-spacing:.14em;color:#a5f1ea}
+#dialog .lsb-f189-history-header h2{color:white;font-size:clamp(20px,3vw,27px);font-weight:800;margin:7px 0 7px}
+#dialog .lsb-f189-history-header p{font-size:13px;margin:0;color:#e6ecff;line-height:1.5}
+#dialog .lsb-f189-history-header strong{color:#fff;font-size:15px}
+#dialog .lsb-f189-history-header span{font-size:12px;color:#d5e0ff}
+#dialog .lsb-f189-history-section{border:1px solid #dfe6f2;background:var(--surface,#fff);border-radius:16px;overflow:hidden;margin:18px 0;min-width:0}
+#dialog .lsb-f189-section-heading{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:15px 17px 12px;flex-wrap:wrap}
+#dialog .lsb-f189-section-heading h3{color:var(--ink,#263655);font-size:16px;line-height:1.4;font-weight:800;margin:0}
+#dialog .lsb-f189-section-heading span{color:var(--muted,#68758e);font-size:11px}
+#dialog .lsb-f189-history-scroll{
+ display:block!important;width:100%!important;min-width:0!important;max-width:100%!important;
+ box-sizing:border-box!important;overflow-x:auto!important;overflow-y:auto!important;max-height:360px;
+ -webkit-overflow-scrolling:touch!important;overscroll-behavior-x:contain!important;
+ margin:0!important;padding:0!important;border:0!important;border-top:1px solid #e9edf5!important;
+ background:var(--surface,#fff)!important;scrollbar-width:thin;
+}
+#dialog .lsb-f189-history-scroll>table{
+ display:table!important;width:max-content!important;min-width:100%!important;max-width:none!important;
+ table-layout:auto!important;border-collapse:separate!important;border-spacing:0!important;
+ white-space:normal!important;background:var(--surface,#fff)!important;font-size:13px;
+}
+#dialog .lsb-f189-history-scroll thead{display:table-header-group!important}
+#dialog .lsb-f189-history-scroll tbody{display:table-row-group!important;width:auto!important;min-width:0!important;max-width:none!important;gap:0!important;padding:0!important}
+#dialog .lsb-f189-history-scroll tr{display:table-row!important;position:static!important;width:auto!important;min-width:0!important;max-width:none!important;border:0!important;box-shadow:none!important;background:none!important;margin:0!important;padding:0!important}
+#dialog .lsb-f189-history-scroll :is(th,td){
+ display:table-cell!important;float:none!important;box-sizing:border-box!important;position:static!important;
+ min-width:130px!important;max-width:380px!important;width:auto!important;padding:13px 16px!important;
+ height:auto!important;border:0!important;border-bottom:1px solid #edf0f6!important;
+ text-align:left!important;white-space:normal!important;word-break:normal!important;overflow-wrap:anywhere!important;
+ vertical-align:middle!important;line-height:1.5!important;font-size:12.5px!important;
+ background:var(--surface,#fff)!important;color:var(--ink,#293550)!important;
+}
+#dialog .lsb-f189-history-scroll th{font-weight:800!important;color:#4a5775!important;background:#f0f4fb!important;position:sticky!important;top:0!important;z-index:3!important;white-space:nowrap!important}
+#dialog .lsb-f189-history-scroll tbody tr:nth-child(even) td{background:#f8faff!important}
+#dialog .lsb-f189-history-scroll :is(th,td):first-child{position:sticky!important;left:0!important;z-index:2!important;min-width:108px!important;max-width:165px!important;box-shadow:2px 0 0 #e6ebf5!important}
+#dialog .lsb-f189-history-scroll tbody tr:nth-child(even) td:first-child{background:#f8faff!important}
+#dialog .lsb-f189-history-scroll th:first-child{z-index:4!important;background:#f0f4fb!important}
+#dialog .lsb-f189-history-scroll td::before{display:none!important;content:none!important}
+#dialog .lsb-f189-history .lsb-f189-warn{margin:14px 0;padding:12px 15px;border-radius:12px;border:1px solid #ecc9c9;background:#fff7f7;color:#9b3345;font-size:12.5px;overflow-wrap:anywhere}
+#dialog .lsb-f189-history-footer{margin-top:22px;display:flex;justify-content:flex-end}
+#dialog .lsb-f189-history-footer button{min-height:42px;border-radius:11px}
+@media(max-width:700px){
+ #dialog .lsb-f189-history{padding:15px!important}
+ #dialog .lsb-f189-history-header{padding:18px 16px!important;margin:-15px -15px 18px!important}
+ #dialog .lsb-f189-section-heading{align-items:flex-start;flex-direction:column;padding:13px}
+ #dialog .lsb-f189-section-heading span{font-size:11px;color:#3b4193}
+ #dialog .lsb-f189-history-scroll{max-height:310px!important}
+ #dialog .lsb-f189-history-scroll :is(th,td){min-width:140px!important;padding:12px!important}
+ #dialog .lsb-f189-history-scroll :is(th,td):first-child{min-width:92px!important;max-width:130px!important}
+ #dialog .lsb-f189-history-footer button{width:100%}
+}
+/* Conserva las variables institucionales de tema oscuro. */
+html[data-theme=dark] #dialog .lsb-f189-history-scroll :is(td,table){background:#1a2236!important;color:#e4eafa!important}
+html[data-theme=dark] #dialog .lsb-f189-history-scroll th{background:#252f49!important;color:#e4eafa!important}
+html[data-theme=dark] #dialog .lsb-f189-history-scroll tbody tr:nth-child(even) td{background:#202943!important}
+html[data-theme=dark] #dialog .lsb-f189-history-scroll tbody tr:nth-child(even) td:first-child{background:#202943!important}
+</style>
 </body></html>
