@@ -13319,6 +13319,18 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
    if(feedback){feedback.textContent='No se pudo completar la consulta: '+msg;feedback.style.color='#b13d3d';}
    else toast('Ciclos: '+msg);
  }
+ window.addEventListener('click',function lsbF187CycleCapture(ev){
+  const path=typeof ev.composedPath==='function'?ev.composedPath():[ev.target];
+  const btn=path.find(el=>el?.nodeType===1&&el.matches?.('button[data-action]'));
+  if(!btn||!f185Actions.has(btn.dataset.action)||btn.disabled||!btn.isConnected)return;
+  const app=document.getElementById('app');
+  if(!app?.contains(btn)||!app.querySelector('.lsb184-years'))return;
+  if(!btn.closest('.lsb184-years')&&btn.dataset.action!=='lsbf1659new')return;
+  if(ev.defaultPrevented)return;
+  ev.preventDefault();ev.stopPropagation();ev.stopImmediatePropagation();
+  try{f185HandleAction(btn.dataset.action,btn.dataset.arg||'');}
+  catch(ex){f185Error(ex);}
+ },true);
  document.addEventListener('click',function f185CycleClick(ev){
    if(ev.defaultPrevented)return;
    const path=typeof ev.composedPath==='function'?ev.composedPath():[ev.target];
@@ -13326,7 +13338,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
    if(!btn||!f185Actions.has(btn.dataset.action)||!btn.isConnected||btn.disabled)return;
    const app=document.getElementById('app');
    if(!app?.contains(btn))return;
-   const cyclesVisible=typeof page==='string'&&page==='cycles';
+   const cyclesVisible=!!btn.closest('.lsb184-year,.lsb184-years')||btn.dataset.action==='lsbf1659new';
    if(!cyclesVisible)return;
    ev.preventDefault();ev.stopImmediatePropagation();
    try{f185HandleAction(btn.dataset.action,btn.dataset.arg||'');}
@@ -13464,4 +13476,65 @@ const style=document.createElement('style');style.id='lsb-f186-shadow-style';
 style.textContent=':host{max-width:100%;min-width:0}.workspace{min-width:0;max-width:1760px;width:100%}.content-view,#detail-view,#detail-content{min-width:0;max-width:100%;box-sizing:border-box}@media(min-width:1150px){.workspace{padding-left:clamp(23px,3vw,48px);padding-right:clamp(23px,3vw,48px)}}@media(max-width:950px){.workspace{max-width:100%;min-width:0;padding-left:clamp(10px,2.5vw,20px)!important;padding-right:clamp(10px,2.5vw,20px)!important}}';
 root.appendChild(style);
 })();</script>
+<style id="lsb-f187-pagos-asistencia">
+/* F187.0: diseño propio de los listados de pagos y asistencia, sin alterar datos ni permisos. */
+body.lsb-f23-director:not(.loginmode) #app .tablewrap.lsb187-admin-cards{max-width:100%;width:100%;box-sizing:border-box;border-radius:14px}
+body.lsb-f23-director:not(.loginmode) #app .tablewrap.lsb187-admin-cards table{border-collapse:separate;border-spacing:0;width:100%}
+body.lsb-f23-director:not(.loginmode) #app .tablewrap.lsb187-admin-cards thead th{font-size:12px;font-weight:800;color:#56627d;background:#f4f6fc;padding:15px}
+body.lsb-f23-director:not(.loginmode) #app .tablewrap.lsb187-admin-cards tbody td{padding:12px 15px;overflow-wrap:anywhere;vertical-align:middle}
+@media screen and (max-width:950px){
+ html body.lsb-f23-director:not(.loginmode) #app .lsb186-scroll-guide:has(+.tablewrap.lsb187-admin-cards){display:none!important}
+ html body.lsb-f23-director:not(.loginmode) #app .tablewrap.lsb187-admin-cards.lsb187-admin-cards{display:block!important;width:100%!important;max-width:100%!important;min-width:0!important;overflow:visible!important;padding:0!important;border:0!important;background:transparent!important}
+ html body.lsb-f23-director:not(.loginmode) #app .tablewrap.lsb187-admin-cards.lsb187-admin-cards>table{display:block!important;width:100%!important;max-width:100%!important;min-width:0!important;table-layout:auto!important;overflow:visible!important;background:transparent!important}
+ html body.lsb-f23-director:not(.loginmode) #app .tablewrap.lsb187-admin-cards.lsb187-admin-cards thead{display:none!important}
+ html body.lsb-f23-director:not(.loginmode) #app .tablewrap.lsb187-admin-cards.lsb187-admin-cards tbody{display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:13px!important;width:100%!important;max-width:100%!important;min-width:0!important;padding:4px 0 8px!important;background:transparent!important}
+ html body.lsb-f23-director:not(.loginmode) #app .tablewrap.lsb187-admin-cards.lsb187-admin-cards tbody>tr{display:flex!important;flex-direction:column!important;align-items:stretch!important;justify-content:flex-start!important;gap:0!important;box-sizing:border-box!important;width:100%!important;min-width:0!important;max-width:100%!important;margin:0!important;padding:15px 16px 14px!important;border:1px solid #dfe6f2!important;border-radius:18px!important;background:var(--surface,#fff)!important;box-shadow:0 7px 19px rgba(25,45,94,.055)!important;position:static!important;transform:none!important}
+ html body.lsb-f23-director:not(.loginmode) #app .tablewrap.lsb187-admin-cards.lsb187-admin-cards tbody>tr>td{display:block!important;box-sizing:border-box!important;position:static!important;left:auto!important;right:auto!important;min-width:0!important;max-width:100%!important;width:100%!important;height:auto!important;min-height:0!important;margin:0!important;padding:9px 0!important;grid-template-columns:none!important;grid-column:auto!important;border:0!important;border-bottom:1px solid #edf0f6!important;background:transparent!important;box-shadow:none!important;overflow:visible!important;text-align:left!important;white-space:normal!important;font-size:14px!important;line-height:1.48!important;overflow-wrap:anywhere!important;word-break:normal!important}
+ html body.lsb-f23-director:not(.loginmode) #app .tablewrap.lsb187-admin-cards.lsb187-admin-cards tbody>tr>td:last-child{border:0!important;padding-bottom:0!important;padding-top:12px!important}
+ html body.lsb-f23-director:not(.loginmode) #app .tablewrap.lsb187-admin-cards.lsb187-admin-cards tbody>tr>td::before{content:none!important;display:none!important;position:static!important}
+ html body.lsb-f23-director:not(.loginmode) #app .tablewrap.lsb187-admin-cards.lsb187-admin-cards tbody>tr>td:nth-child(3)::before{content:attr(data-lsb187-label)!important;display:block!important;margin:0 0 6px!important;color:#78849f!important;font-size:10px!important;font-weight:850!important;letter-spacing:.07em!important;text-transform:uppercase!important}
+ html body.lsb-f23-director:not(.loginmode) #app .tablewrap.lsb187-admin-cards.lsb187-admin-cards tbody>tr>td :is(.badge,.lsb-badge){display:inline-flex!important;max-width:100%!important;width:auto!important;padding:7px 10px!important;border-radius:11px!important;white-space:normal!important}
+ html body.lsb-f23-director:not(.loginmode) #app .tablewrap.lsb187-admin-cards.lsb187-admin-cards tbody>tr>td :is(button,.button){max-width:100%!important;min-width:0!important;white-space:normal!important;overflow-wrap:anywhere!important;border-radius:12px!important;min-height:39px!important}
+ html body.lsb-f23-director:not(.loginmode) #app .tablewrap.lsb187-payments.lsb187-admin-cards tbody>tr>td:nth-child(1){order:1!important;font-size:17px!important;line-height:1.35!important;font-weight:800!important;color:#253252!important;padding:1px 0 4px!important;border:0!important}
+ html body.lsb-f23-director:not(.loginmode) #app .tablewrap.lsb187-payments.lsb187-admin-cards tbody>tr>td:nth-child(2){order:2!important;color:#7b86a0!important;font-size:12px!important;padding:0 0 12px!important}
+ html body.lsb-f23-director:not(.loginmode) #app .tablewrap.lsb187-payments.lsb187-admin-cards tbody>tr>td:nth-child(3){order:3!important;border-top:1px solid #edf0f6!important;padding:13px 0!important}
+ html body.lsb-f23-director:not(.loginmode) #app .tablewrap.lsb187-payments.lsb187-admin-cards tbody>tr>td:nth-child(4){order:4!important}
+ html body.lsb-f23-director:not(.loginmode) #app .tablewrap.lsb187-payments.lsb187-admin-cards tbody>tr>td:nth-child(4) :is(button,.button){width:100%!important;display:flex!important;justify-content:center!important;align-items:center!important;background:#f0f2ff!important;border:1px solid #dfe3f9!important;color:#3b4193!important;font-weight:800!important;padding:12px 14px!important}
+ html body.lsb-f23-director:not(.loginmode) #app .tablewrap.lsb187-attendance.lsb187-admin-cards tbody>tr>td:nth-child(1){order:2!important;font-size:12px!important;color:#7d89a1!important;padding:0 0 12px!important;border:0!important}
+ html body.lsb-f23-director:not(.loginmode) #app .tablewrap.lsb187-attendance.lsb187-admin-cards tbody>tr>td:nth-child(2){order:1!important;font-size:17px!important;font-weight:800!important;line-height:1.35!important;color:#253252!important;padding:0 0 6px!important;border:0!important}
+ html body.lsb-f23-director:not(.loginmode) #app .tablewrap.lsb187-attendance.lsb187-admin-cards tbody>tr>td:nth-child(2) small{font-size:12px!important;font-weight:600!important;margin-top:6px!important}
+ html body.lsb-f23-director:not(.loginmode) #app .tablewrap.lsb187-attendance.lsb187-admin-cards tbody>tr>td:nth-child(3){order:3!important;border-top:1px solid #edf0f6!important;padding:13px 0!important}
+ html body.lsb-f23-director:not(.loginmode) #app .tablewrap.lsb187-attendance.lsb187-admin-cards tbody>tr>td:nth-child(4){order:4!important;padding-top:10px!important;font-size:13px!important;color:#69758d!important}
+ html body.lsb-f23-director:not(.loginmode) #app .tablewrap.lsb187-attendance.lsb187-admin-cards tbody>tr>td:nth-child(4)::before{content:"Observaciones"!important;display:block!important;margin-bottom:6px!important;font-size:10px!important;color:#78849f!important;text-transform:uppercase!important;font-weight:850!important;letter-spacing:.07em!important}
+ html body.lsb-f23-director:not(.loginmode) #app .tablewrap.lsb187-attendance.lsb187-admin-cards .att-states9{display:flex!important;flex-wrap:wrap!important;gap:6px!important;max-width:100%!important}
+ html body.lsb-f23-director:not(.loginmode) #app .tablewrap.lsb187-attendance.lsb187-admin-cards .att-states9 button{flex:1 1 auto!important;min-height:38px!important;font-size:12px!important;padding:8px 10px!important}
+}
+</style>
+<script id="lsb-f187-pagos-asistencia">
+(function(){
+ 'use strict';
+ const app=document.getElementById('app'); if(!app)return;
+ let queued=false;
+ function mark(){
+  queued=false;
+  if(!document.body.classList.contains('lsb-f23-director')||document.body.classList.contains('loginmode'))return;
+  for(const wrap of app.querySelectorAll('.tablewrap')){
+   const t=wrap.querySelector(':scope > table');if(!t)continue;
+   if(wrap.closest('.boleta,.exact-boleta7,.f174-shell,.f182-origin-table')||wrap.classList.contains('f182-origin-table'))continue;
+   const hs=Array.from(t.querySelectorAll('thead tr:first-child th'),el=>(el.textContent||'').trim());
+   const joined=hs.join(' ').toLocaleLowerCase('es');
+   const pay=hs.length===4&&joined.includes('estado de pagos')&&joined.includes('código')&&joined.includes('acciones');
+   const attend=hs.length===4&&joined.includes('apellidos y nombres')&&joined.includes('asistencia')&&joined.includes('observaciones');
+   if(!pay&&!attend)continue;
+   wrap.classList.add('lsb187-admin-cards',pay?'lsb187-payments':'lsb187-attendance');
+   for(const row of t.querySelectorAll('tbody tr'))[...row.children].forEach((td,i)=>{if(td.tagName==='TD')td.dataset.lsb187Label=hs[i]||'';});
+   if(window.innerWidth<=950)wrap.scrollLeft=0;
+  }
+ }
+ function schedule(){if(queued)return;queued=true;requestAnimationFrame(mark);}
+ new MutationObserver(schedule).observe(app,{childList:true,subtree:true});
+ window.addEventListener('resize',schedule,{passive:true});
+ schedule();
+})();
+</script>
 </body></html>
