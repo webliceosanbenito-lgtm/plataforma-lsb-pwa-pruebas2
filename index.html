@@ -12802,4 +12802,489 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
  window.addEventListener('orientationchange',schedule,{passive:true});
 })();
 </script>
+
+<style id="lsb-f183-boletas-styles">
+.lsb183-wrap{width:100%;min-width:0;max-width:100%;display:grid;gap:16px;margin-bottom:22px;color:var(--ink,#263154)}
+.lsb183-hero,.lsb183-panel{padding:clamp(14px,3.5vw,24px);border:1px solid var(--line,#dfe3ed);border-radius:20px;background:var(--card,#fff);min-width:0}
+.lsb183-hero h2,.lsb183-panel h2{font-size:clamp(17px,3.3vw,23px);margin:0 0 9px;line-height:1.25}
+.lsb183-sub{color:var(--muted,#5e6b81);font-size:14px;line-height:1.5;margin:7px 0 14px}
+.lsb183-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr));gap:11px;min-width:0}
+.lsb183-tile{appearance:none;min-width:0;text-align:left;border:1px solid var(--line,#dce2ee);border-radius:16px;background:var(--card,#fff);color:var(--ink,#253354);padding:17px;cursor:pointer;display:flex;flex-direction:column;gap:9px;line-height:1.4;width:100%;overflow-wrap:anywhere;font:inherit;box-shadow:0 4px 18px #22325b0b}
+.lsb183-tile b{font-size:16px;line-height:1.25}.lsb183-tile small{font-size:12px;color:var(--muted,#627089)}
+.lsb183-tile span:last-child{font-size:13px;font-weight:750;color:var(--brand,#434795)}
+.lsb183-tile:hover,.lsb183-tile:focus-visible{outline:2px solid #9693db55;outline-offset:1px}
+.lsb183-row{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;min-width:0}
+.lsb183-actions{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-top:12px}
+.lsb183-btn{border-radius:12px;border:1px solid var(--line,#dce2ee);background:var(--card,#fff);color:var(--brand,#3d438f);padding:11px 16px;min-height:44px;font:inherit;font-weight:750;cursor:pointer;max-width:100%;overflow-wrap:anywhere}
+.lsb183-btn.primary{background:#444a99;color:#fff;border-color:#444a99}
+.lsb183-btn.danger{border-color:#d8b8b8;color:#9b3232}
+.lsb183-btn:disabled{opacity:.58;cursor:not-allowed}
+.lsb183-label{display:block;font-weight:750;font-size:13px;margin:12px 0 6px}
+.lsb183-select,.lsb183-search{display:block;min-height:44px;border:1px solid var(--line,#c8cedf);border-radius:11px;background:var(--card,#fff);color:var(--ink,#263154);padding:9px 12px;font:inherit;width:100%;max-width:100%}
+.lsb183-state{font-size:12px;display:inline-block;padding:5px 10px;border-radius:999px;background:#eef1fb;color:#44507f;font-weight:750}
+.lsb183-state.todos{background:#e7f6ed;color:#167344}.lsb183-state.ninguno{background:#fceeee;color:#a23d3d}
+.lsb183-states{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin:12px 0}
+.lsb183-status{padding:10px 4px;border-radius:12px;background:var(--surface,#f4f6fc);text-align:center;min-width:0;font-size:12px}
+.lsb183-status strong{display:block;margin:5px 0 0;color:var(--ink,#263154);font-size:11px;overflow-wrap:anywhere}
+.lsb183-person{border:1px solid var(--line,#e0e4ef);border-radius:16px;padding:16px;min-width:0;background:var(--card,#fff);display:grid;gap:8px}
+.lsb183-person strong{font-size:16px;overflow-wrap:anywhere}.lsb183-person small{color:var(--muted,#586783)}
+.lsb183-person .lsb183-actions button{flex:1 1 auto}
+.lsb183-empty{padding:18px;background:var(--surface,#f4f6fc);border-radius:14px;color:var(--muted,#65718a);font-size:14px}
+@media(max-width:600px){.lsb183-states{grid-template-columns:repeat(2,minmax(0,1fr))}.lsb183-hero,.lsb183-panel{padding:15px}.lsb183-btn{width:100%}.lsb183-actions{display:grid;grid-template-columns:1fr}.lsb183-grid{grid-template-columns:1fr}.lsb183-wrap{padding:0;margin-bottom:115px}}
+</style>
+
+<script id="lsb-f183-boletas-por-grado">
+/* F183: Nueva vista de Boletas para Dirección: grado → sección → encargado.
+ * Los permisos globales son exclusivamente de consulta familiar y solo para publicaciones oficiales.
+ * No se cambian permisos automáticamente al cargar esta pantalla. */
+(function(){
+ 'use strict';
+ const previousReport=reportView;
+ const state={grade:null,section:null,year:null,rows:null,busy:false,loading:false,error:'',search:''};
+ const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+ const collator=new Intl.Collator('es',{sensitivity:'base',numeric:true});
+ const validAdmin=()=>typeof LSB18!=='undefined'&&LSB18.authenticated===true&&LSB18.profile?.role==='admin_general'&&LSB18.profile?.active===true;
+ const currentYear=()=>LSB18.schoolYearId;
+ const currentGroups=()=>Array.isArray(db?.groups)?db.groups:[];
+ const splitGroup=g=>{
+  const p=String(g.name||'').split(' · ').map(x=>x.trim());
+  if(p.length>=3)return {name:p.slice(0,-2).join(' · '),section:p[p.length-2],year:p[p.length-1]};
+  return {name:p[0]||'Grado',section:p[1]||'Única',year:String(cycleYear())};
+ };
+ const orderedGroups=()=>currentGroups().slice().sort((a,b)=>collator.compare(splitGroup(a).name,splitGroup(b).name)||collator.compare(splitGroup(a).section,splitGroup(b).section));
+ const guardians=()=>Array.isArray(db?.accounts)?db.accounts.filter(a=>a.type==='family'&&a.enabled!==false):[];
+ const childrenOf=(a,gid)=>db.students.filter(st=>st.group===gid&&Array.isArray(a.children)&&a.children.includes(st.id));
+ const labelFor=mode=>mode==='todos'?'Todos los encargados':mode==='ninguno'?'Oculto para todos':'Solo permisos individuales';
+ function reload(){
+  if(!validAdmin())return;
+  const year=currentYear();if(!year)return;
+  if(state.year!==year){state.year=year;state.rows=null;state.loading=false;state.error='';state.grade=null;state.section=null;}
+  if(state.loading||state.rows)return;
+  state.loading=true;
+  Promise.resolve().then(()=>lsb18Client().rpc('lsb_get_report_card_visibility_secure',{p_school_year_id:year}))
+   .then(({data,error})=>{
+    if(error)throw error;
+    if(currentYear()!==year)return;
+    state.rows=Array.isArray(data)?data:[];
+    state.error='';
+   }).catch(e=>{state.error=String(e.message||e);})
+   .finally(()=>{state.loading=false;if(validAdmin()&&page==='reports'&&!reportChosen)render()});
+ }
+ function globalPanel(){
+  if(!state.rows&&!state.loading)reload();
+  const rows=state.rows||[];
+  const enabled=rows.filter(r=>r.enabled===true);
+  const chosen=enabled.length?Math.max(1,...enabled.map(r=>Number(r.bimester))):1;
+  let status;
+  if(state.error)status='<p class="lsb183-sub" role="alert">No se pudo consultar Supabase: '+esc(state.error)+'</p>';
+  else if(state.loading||!state.rows)status='<p class="lsb183-sub">Consultando los permisos vigentes en Supabase…</p>';
+  else status='<div class="lsb183-states">'+rows.map(r=>'<div class="lsb183-status">Bimestre '+r.bimester+'<strong>'+esc(labelFor(r.mode))+'</strong><small>'+Number(r.published_courses||0)+' publicados</small></div>').join('')+'</div>';
+  return '<section class="lsb183-hero"><div class="lsb183-row"><h2>Consulta de notas para familias</h2><span class="lsb183-state">Dirección General</span></div>'+
+   '<p class="lsb183-sub">Habilita u oculta las calificaciones de todos los encargados. Solo se podrán consultar notas <strong>publicadas oficialmente</strong> y de sus propios estudiantes. Los docentes no reciben acceso a las boletas familiares.</p>'+
+   status+
+   '<label class="lsb183-label" for="lsb183-unit">Bimestre de notas</label>'+
+   '<select class="lsb183-select" id="lsb183-unit" '+(!state.rows?'disabled':'')+'>'+[1,2,3,4].map(n=>{const row=rows.find(x=>Number(x.bimester)===n);return '<option value="'+n+'" '+(n===chosen?'selected':'')+' '+(row&&!row.enabled?'disabled':'')+'>Bimestre '+n+(row&&!row.enabled?' · pendiente de habilitar':'')+'</option>'}).join('')+'</select>'+
+   '<p class="lsb183-sub">Al habilitar hasta un bimestre también quedan visibles los anteriores que estén habilitados. Los períodos posteriores permanecen ocultos. Si no hay notas publicadas en alguno, no se muestra ninguna nota de ese período.</p>'+
+   '<div class="lsb183-actions"><button class="lsb183-btn primary" data-lsb183-global="todos" '+(state.busy||!state.rows?'disabled':'')+'>Habilitar visión de notas para todos</button>'+
+   '<button class="lsb183-btn" data-lsb183-global="individual" '+(state.busy||!state.rows?'disabled':'')+'>Solo permisos individuales</button>'+
+   '<button class="lsb183-btn danger" data-lsb183-global="ninguno" '+(state.busy||!state.rows?'disabled':'')+'>Ocultar notas para todos</button></div>'+
+   '<p class="lsb183-sub">Las autorizaciones personales se conservan al cambiar de modalidad. «Ocultar para todos» impide también el acceso individual hasta que Dirección vuelva a habilitarlo.</p></section>';
+ }
+ function navBack(){return '<div class="lsb183-actions"><button class="lsb183-btn" data-lsb183-back="'+(state.section?'section':'grade')+'">← '+(state.section?'Volver a secciones':'Todos los grados')+'</button></div>'}
+ function gradeCards(){
+  const grouped=new Map();for(const g of orderedGroups()){const name=splitGroup(g).name;const arr=grouped.get(name)||[];arr.push(g);grouped.set(name,arr)}
+  if(!grouped.size)return '<div class="lsb183-empty">No hay grados ni secciones creados en el ciclo seleccionado.</div>';
+  return '<div class="lsb183-grid">'+[...grouped.entries()].map(([name,gs])=>{
+   const studentCount=db.students.filter(s=>gs.some(g=>g.id===s.group)).length;
+   return '<button type="button" class="lsb183-tile" data-lsb183-grade="'+esc(name)+'"><b>'+esc(name)+'</b><small>'+gs.length+' sección(es) · '+studentCount+' estudiante(s)</small><span>Ver secciones ›</span></button>'
+  }).join('')+'</div>';
+ }
+ function sectionCards(){
+  const gs=orderedGroups().filter(g=>splitGroup(g).name===state.grade);
+  if(!gs.length)return '<div class="lsb183-empty">No hay secciones para este grado.</div>';
+  return '<div class="lsb183-grid">'+gs.map(g=>{
+   const students=db.students.filter(s=>s.group===g.id).length;
+   const families=guardians().filter(a=>childrenOf(a,g.id).length>0).length;
+   const unit=splitGroup(g).section;
+   return '<button type="button" class="lsb183-tile" data-lsb183-section="'+esc(g.id)+'"><b>'+(gs.length===1?'Sección '+esc(unit)+' · '+esc(state.grade):'Sección '+esc(unit))+'</b><small>'+students+' estudiantes · '+families+' encargados vinculados</small><span>Ver encargados ›</span></button>'
+  }).join('')+'</div>';
+ }
+ function familyCards(){
+  const section=orderedGroups().find(g=>g.id===state.section);
+  if(!section)return '<div class="lsb183-empty">Sección no encontrada en el ciclo.</div>';
+  const familyList=guardians().filter(a=>childrenOf(a,section.id).length>0).sort((a,b)=>collator.compare(a.name||'',b.name||''));
+  return '<label class="lsb183-label" for="lsb183-find">Buscar encargado o estudiante</label><input class="lsb183-search" type="search" id="lsb183-find" placeholder="Nombre, apellido, usuario o código" value="'+esc(state.search)+'">'+
+   '<div class="lsb183-grid" id="lsb183-families" style="margin-top:12px">'+(familyList.length?familyList.map(a=>{
+     const sons=childrenOf(a,section.id).sort((x,y)=>collator.compare(x.lastNames||'',y.lastNames||'')||collator.compare(x.firstNames||'',y.firstNames||''));
+     const signature=[a.name,a.user,...sons.flatMap(s=>[s.name,s.code])].join(' ').toLocaleLowerCase('es');
+     return '<article class="lsb183-person" data-lsb183-filter="'+esc(signature)+'"><strong>'+esc(a.name)+'</strong><small>Usuario: '+esc(a.user)+'</small>'+sons.map(st=>'<div><small>Estudiante: '+esc([st.lastNames,st.firstNames].filter(Boolean).join(', ')||st.name)+'</small></div>').join('')+
+       '<div class="lsb183-actions">'+sons.map(st=>'<button class="lsb183-btn primary" data-lsb183-consult="'+esc(st.id)+'" type="button">Consultar boleta'+(sons.length>1?' · '+esc(st.firstNames||st.name):'')+'</button>').join('')+
+       '<button class="lsb183-btn" type="button" data-lsb183-permission="'+esc(a.id)+'">Permisos de notas</button></div></article>'
+    }).join(''):'<p class="lsb183-empty">Esta sección aún no tiene encargados vinculados.</p>')+'</div>';
+ }
+ reportView=function(){
+   if(!validAdmin()||typeof LSB18==='undefined'||LSB18.authenticated!==true)return previousReport();
+   if(reportChosen)return previousReport();
+   if(state.year!==currentYear()){state.year=currentYear();state.rows=null;state.loading=false;state.grade=null;state.section=null;state.error='';}
+   const groups=orderedGroups();if(state.section&&!groups.some(g=>g.id===state.section))state.section=null;
+   if(state.grade&&!groups.some(g=>splitGroup(g).name===state.grade))state.grade=null;
+   const title=state.section?'Encargados de '+state.grade:state.grade?'Secciones de '+state.grade:'Boletas por grado';
+   const desc='Selecciona el grado, luego la sección y finalmente el encargado para consultar la boleta. Las descargas oficiales siguen disponibles en Archivos → Cuadros y reportes.';
+   return heading(title,desc)+'<div class="lsb183-wrap">'+globalPanel()+'<section class="lsb183-panel">'+(state.grade?navBack():'')+
+    '<h2>'+(state.section?'Encargados vinculados':state.grade?'Selecciona la sección':'Selecciona el grado')+'</h2>'+
+    (state.section?familyCards():state.grade?sectionCards():gradeCards())+'</section></div>';
+ };
+ async function changeGlobal(mode){
+   if(!validAdmin()||state.busy||!state.rows)return;
+   const n=Number(document.getElementById('lsb183-unit')?.value||1);
+   if(mode==='todos'&&(!Number.isInteger(n)||n<1||n>4||!state.rows.find(x=>Number(x.bimester)===n)?.enabled)){
+     toast('Ese bimestre todavía no está habilitado por Dirección.');return;
+   }
+   const msg=mode==='todos'?'¿Habilitar la consulta de notas publicadas para todos los encargados hasta el bimestre '+n+'?':
+    mode==='ninguno'?'¿Ocultar las notas publicadas a todos los encargados del ciclo? Las autorizaciones individuales quedarán guardadas, pero sin efecto mientras estén ocultas.':
+    '¿Volver a la autorización individual de notas por encargado y bimestre?';
+   if(!await window.lsbPwaConfirm(msg,{title:'Acceso a boletas familiares'}))return;
+   state.busy=true;render();
+   try{
+    if(!validAdmin()||currentYear()!==state.year)throw Error('Cambió la sesión o el ciclo.');
+    const {data,error}=await lsb18Client().rpc('lsb_set_report_card_visibility_range_secure',{
+      p_school_year_id:state.year,p_through_bimester:mode==='todos'?n:0,p_mode:mode
+    });
+    if(error)throw error;
+    if(Number(data)!==4)throw Error('Supabase no confirmó las cuatro configuraciones; no repitas sin verificar.');
+    state.rows=null;state.error='';toast('Visibilidad de boletas actualizada en Supabase.');
+   }catch(e){toast('No se confirmó el cambio: '+String(e.message||e));state.error=String(e.message||e);state.rows=null;}
+   finally{state.busy=false;render();}
+ }
+ document.addEventListener('click',ev=>{
+   const el=ev.target.closest('[data-lsb183-grade],[data-lsb183-section],[data-lsb183-back],[data-lsb183-consult],[data-lsb183-permission],[data-lsb183-global]');
+   if(!el||!validAdmin()||page!=='reports')return;
+   ev.preventDefault();ev.stopPropagation();
+   if(el.dataset.lsb183Grade!==undefined){state.grade=el.dataset.lsb183Grade;state.section=null;state.search='';render();return}
+   if(el.dataset.lsb183Section!==undefined){state.section=el.dataset.lsb183Section;state.search='';render();return}
+   if(el.dataset.lsb183Back){if(el.dataset.lsb183Back==='section'){state.section=null;state.search='';}else{state.grade=null;state.search='';}render();return}
+   if(el.dataset.lsb183Consult){action('reportpick',el.dataset.lsb183Consult);return}
+   if(el.dataset.lsb183Permission){
+     const id=el.dataset.lsb183Permission;
+     permissions7();
+     const checkbox=document.querySelector('#dialog input[name="guardians"][value="'+CSS.escape(id)+'"]');
+     if(checkbox)checkbox.checked=true;
+     const legend=[...document.querySelectorAll('#dialog legend')].find(e=>e.textContent.includes('Bimestres a modificar'));
+     if(legend)legend.textContent='Bimestre de notas';
+     const check=document.querySelector('#dialog input[name="bimesters"][value="'+(db.active||1)+'"]');if(check)check.checked=true;
+     return;
+   }
+   if(el.dataset.lsb183Global)void changeGlobal(el.dataset.lsb183Global);
+ });
+ document.addEventListener('input',ev=>{
+   if(ev.target?.id!=='lsb183-find')return;
+   state.search=ev.target.value;
+   const value=state.search.toLocaleLowerCase('es');
+   document.querySelectorAll('[data-lsb183-filter]').forEach(x=>x.hidden=!x.dataset.lsb183Filter.includes(value));
+ });
+ // Conservar los permisos de cada encargado cuando se abre la boleta de un estudiante.
+ const oldAction=action;
+ action=function(n,arg){
+   if(n==='reportreturn'&&validAdmin()){reportChosen=false;page='reports';render();return}
+   return oldAction(n,arg);
+ };
+})();
+</script>
+
+<style id="lsb-f184-cycles-style">
+.lsb184-years{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,285px),1fr));gap:14px;margin:14px 0 22px}
+.lsb184-year{border:1px solid var(--line,#dde3ee);border-radius:19px;background:var(--surface,#fff);padding:19px;box-shadow:0 10px 28px rgba(24,38,74,.045);min-width:0}
+.lsb184-year h3{font-size:21px;margin:0 0 6px;color:var(--ink,#202940)}
+.lsb184-year p{margin:5px 0 12px;color:var(--muted,#69748c);font-size:13px}
+.lsb184-meta{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0}
+.lsb184-meta span{background:var(--bg,#eef2fa);color:var(--ink,#293854);padding:6px 10px;border-radius:999px;font-weight:700;font-size:12px}
+.lsb184-actions{display:flex;flex-wrap:wrap;gap:9px;margin-top:14px}
+.lsb184-btn{border:1px solid var(--line,#dce2ed);background:var(--surface,#fff);color:var(--ink,#26355d);border-radius:11px;padding:11px 13px;font:inherit;font-size:13px;font-weight:750;cursor:pointer;min-height:43px}
+.lsb184-btn.primary{background:#3b4193;border-color:#3b4193;color:white}
+.lsb184-btn.danger{color:#a03939;border-color:#e6c3c3}
+.lsb184-btn:disabled{opacity:.55;cursor:wait}
+.lsb184-note{padding:14px 16px;border:1px solid #dde5f3;background:#f3f6fd;border-radius:15px;line-height:1.6;color:#41526e;font-size:13px;margin:12px 0}
+.lsb184-sub{color:var(--muted,#6a7689);font-size:13px;line-height:1.55}
+.lsb184-panel{background:var(--surface,#fff);border:1px solid var(--line,#dfe5f0);padding:19px;border-radius:19px;margin:12px 0}
+.lsb184-panel h3{font-size:17px;margin:0 0 12px}
+.lsb184-stage{display:flex;flex-wrap:wrap;gap:9px;margin:14px 0}
+.lsb184-stage span{border:1px solid #dce2f0;padding:8px 10px;border-radius:10px;font-size:12px;color:var(--ink,#24345c)}
+.lsb184-stage span.active{background:#3b4193;color:white;border-color:#3b4193}
+.lsb184-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.lsb184-person{border:1px solid #dde5ee;border-radius:13px;padding:12px;background:var(--surface,#fff);min-width:0;margin:7px 0}
+.lsb184-person b,.lsb184-person small{display:block;overflow-wrap:anywhere}
+.lsb184-person small{color:var(--muted,#707b90);margin-top:3px}
+.lsb184-field{display:block;font-size:13px;font-weight:700;margin:12px 0;color:var(--ink,#283456)}
+.lsb184-field select,.lsb184-field input{width:100%;border:1px solid #cdd8ea;background:#fff;color:#18284b;border-radius:12px;padding:12px;font:inherit;margin-top:5px;min-width:0}
+.lsb184-moves{max-height:44vh;overflow:auto;border:1px solid #e3e7f0;border-radius:12px;padding:12px}
+.lsb184-badge{font-size:12px;border-radius:999px;padding:5px 9px;background:#e9f7f2;color:#176852;font-weight:800;white-space:nowrap}
+.lsb184-badge.pending{background:#f7f0de;color:#84602a}
+.lsb184-warn{border:1px solid #e8c6c6;background:#fff5f5;padding:13px;border-radius:12px;color:#922e3c;font-size:13px;line-height:1.6;margin-top:12px}
+@media(max-width:650px){.lsb184-years,.lsb184-grid{grid-template-columns:1fr}.lsb184-year{padding:16px}.lsb184-actions>.lsb184-btn{flex:1 1 140px}.lsb184-panel{padding:14px}.lsb184-actions{gap:8px}}
+</style>
+
+<script id="lsb-f184-cycle-transition">
+/* F184 — Administración de ciclos, integrada con Boletas F183.
+   Todas las mutaciones se validan en RPC de Supabase; no se eliminan datos al renderizar. */
+(function(){
+ 'use strict';
+ const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+ const permitted=()=>typeof LSB18!=='undefined'&&LSB18.authenticated===true&&LSB18.profile?.role==='admin_general';
+ const data=()=>LSB18?.rows||{};
+ const years=()=>[...(data().lsb_school_years||[])].sort((a,b)=>Number(a.year)-Number(b.year));
+ const byId=(table,id)=>table.find(x=>String(x.id)===String(id));
+ const gForSec=s=>{const r=data(),og=byId(r.lsb_offering_grades||[],s?.offering_grade_id);return byId(r.lsb_grades||[],og?.grade_id)};
+ const sectionLabel=s=>{if(!s)return 'Sección';const grade=gForSec(s);const siblings=(data().lsb_sections||[]).filter(v=>v.school_year_id===s.school_year_id&&gForSec(v)?.id===grade?.id);return (grade?.name||'Grado')+(siblings.length===1?'':' · '+s.name);};
+ const activeYear=()=>years().find(x=>x.active===true);
+ let recoveryLoaded=false,recoveryLoading=false,recoveryIds=new Set();
+ function markRecovered(){document.querySelectorAll('[data-lsb184-cycle]').forEach(el=>{const id=el.getAttribute('data-lsb184-cycle');if(recoveryIds.has(id))el.textContent='Ciclo recuperado · '+el.dataset.year;});}
+ function loadRecoveryLabels(){
+  if(recoveryLoaded||recoveryLoading||!permitted())return;
+  recoveryLoading=true;
+  queueMicrotask(async()=>{try{const list=await rpc('lsb_f184_recovered_years',{});recoveryIds=new Set(list||[]);markRecovered();}catch(e){console.warn('Marcadores de recuperación no disponibles:',e?.message||e)}finally{recoveryLoading=false;recoveryLoaded=true;}});
+ }
+
+ const fmtTeacher=t=>t?.full_name||t?.name||t?.username||'Docente';
+ const teachers=()=>[...(data().lsb_profiles||[]),...(db?.accounts||[]).map(a=>({id:a.id,full_name:a.name,role:a.type==='teacher'?'profesor':a.type,active:a.enabled}))].filter((x,i,a)=>x.role==='profesor'&&(x.active!==false)&&a.findIndex(y=>y.id===x.id)===i);
+ const oldCycles=cyclesView;
+ cyclesView=function(){
+  if(!permitted())return oldCycles();
+  const all=years();const sections=data().lsb_sections||[];const assignments=data().lsb_teaching_assignments||[];queueMicrotask(loadRecoveryLabels);
+  return heading('Ciclos escolares','Prepara el siguiente año, traslada matrículas seleccionadas y conserva el historial.')+
+   '<div class="lsb184-actions"><button class="lsb184-btn primary" type="button" data-action="lsbf1659new">+ Crear ciclo en preparación</button></div>'+
+   '<div class="lsb184-years">'+all.slice().reverse().map(y=>{
+    const ss=sections.filter(s=>s.school_year_id===y.id);const aa=assignments.filter(a=>ss.some(s=>s.id===a.section_id));
+    const en=(data().lsb_enrollments||[]).filter(e=>ss.some(s=>s.id===e.section_id));
+    return '<article class="lsb184-year"><div style="display:flex;align-items:center;justify-content:space-between;gap:10px"><h3 data-lsb184-cycle="'+esc(y.id)+'" data-year="'+esc(y.year)+'">Ciclo '+esc(y.year)+'</h3><span class="lsb184-badge '+(!y.active?'pending':'')+'">'+(y.active?'Activo':'En preparación')+'</span></div>'+
+    '<p>'+(y.active?'Operaciones académicas vigentes.':'Puedes preparar secciones y estudiantes sin activar este año.')+'</p>'+
+    '<div class="lsb184-meta"><span>'+ss.length+' secciones</span><span>'+en.length+' matrículas</span><span>'+aa.length+' asignaciones</span></div>'+
+    '<div class="lsb184-actions"><button type="button" class="lsb184-btn" data-action="lsbf1659configure" data-arg="'+esc(y.year)+'">Configurar ciclo</button>'+
+    (!y.active?'<button type="button" class="lsb184-btn primary" data-action="lsb184-prepare" data-arg="'+esc(y.id)+'">Preparar siguiente año</button>':'')+
+    '<button type="button" class="lsb184-btn" data-action="lsb184-preview" data-arg="'+esc(y.id)+'">Ver contenido</button>'+
+    (y.active?'<button type="button" class="lsb184-btn" data-action="lsb184-cleanup" data-arg="'+esc(y.id)+'">Revisar cuentas</button><button type="button" class="lsb184-btn" data-action="lsb184-withdraw" data-arg="'+esc(y.id)+'">Retiro de estudiantes</button>':'')+
+    '<button type="button" class="lsb184-btn danger" data-action="lsb184-delete" data-arg="'+esc(y.id)+'">Eliminar ciclo</button></div></article>';
+   }).join('')+'</div>'+
+   '<section class="lsb184-panel"><h3>Reglas de seguridad</h3><p class="lsb184-sub">Los ciclos existentes conservan matrículas, calificaciones, cuentas y boletas. Al crear otro ciclo, las materias y los grados se reutilizan sin duplicarse. La preparación solo crea nuevas secciones, asignaciones autorizadas y matrículas seleccionadas.</p>'+
+   '<div class="lsb184-note">Para cambiar el estado de un ciclo, utiliza <b>Configurar ciclo</b>. Supabase no permite desactivar un año con bimestres abiertos o notas pendientes de publicación. La eliminación completa de ciclos con historial está bloqueada hasta contar con una recuperación externa verificada.</div></section>';
+ };
+ function dialog(html){const d=document.getElementById('dialog');d.innerHTML=html;if(!d.open)d.showModal();d.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>d.close());return d;}
+ function fieldStatus(msg,isErr){const el=document.getElementById('lsb184-feedback');if(el){el.textContent=msg;el.style.color=isErr?'#b13d3d':'#27715f';}}
+ const rpc=async(name,args)=>{if(!permitted())throw Error('La sesión de Dirección ya no es válida.');const {data:r,error}=await lsb18Client().rpc(name,args);if(error)throw Error(error.message||'Error de Supabase');return r;};
+ async function refresh(){await lsb18Load();render();}
+ async function overview(id){const res=await rpc('lsb_f184_cycle_overview',{p_year_id:id});return res;}
+ function statsView(p){const map=[['Estudiantes','students'],['Encargados vinculados','guardians'],['Secciones','sections'],['Asignaciones','assignments'],['Matrículas','enrollments'],['Actividades','assessments'],['Calificaciones','scores'],['Publicaciones','publications'],['Asistencias','attendance'],['Pagos','payments'],['Bimestres','bimesters']];return '<div class="lsb184-grid">'+map.map(([n,k])=>'<div class="lsb184-person"><small>'+n+'</small><b>'+Number(p[k]||0)+'</b></div>').join('')+'</div>';}
+ async function openPreview(id){
+   const y=years().find(x=>x.id===id);if(!y)return;
+   dialog('<h2>Contenido del ciclo '+esc(y.year)+'</h2><p id="lsb184-feedback">Consultando Supabase…</p>');
+   try{const p=await overview(id);dialog('<h2>Contenido del ciclo '+esc(y.year)+'</h2>'+statsView(p)+'<p class="lsb184-sub">Estos datos siguen vinculados al historial. No se borran al preparar un ciclo nuevo.</p><div class="lsb184-actions"><button class="lsb184-btn" data-close>Cerrar</button></div>');}
+   catch(e){fieldStatus(String(e.message||e),true)}
+ }
+ async function reauth(){
+   const input=document.getElementById('lsb184-password');const password=input?.value||'';if(input)input.value='';
+   if(!password)throw Error('Introduce tu contraseña de Dirección General.');
+   const client=lsb18Client();const {data:session,error:getErr}=await client.auth.getUser();if(getErr||!session?.user?.email)throw Error('No se pudo identificar el correo del administrador.');
+   const id=session.user.id;
+   const {data:verified,error}=await client.auth.signInWithPassword({email:session.user.email,password});
+   if(error||verified?.user?.id!==id||verified?.user?.id!==LSB18.profile?.id)throw Error('La contraseña no corresponde a la cuenta de Dirección General.');
+ }
+ async function openDelete(id){
+   const y=years().find(x=>x.id===id);if(!y)return;
+   dialog('<h2>Eliminar ciclo '+esc(y.year)+'</h2><p id="lsb184-feedback">Comprobando contenido y riesgos…</p>');
+   try{
+    const info=await overview(id);const totallyEmpty=!info.enrollments&&!info.assessments&&!info.scores&&!info.publications&&!info.attendance&&!info.payments&&!info.guardians;
+    dialog('<h2>¿Eliminar el ciclo '+esc(y.year)+'?</h2><p class="lsb184-sub">Primera confirmación: revisa los registros que contiene este año.</p>'+statsView(info)+
+     (totallyEmpty?'<div class="lsb184-note">El ciclo está vacío. Se solicitará nuevamente la contraseña de Dirección antes de eliminarlo.</div>':
+     '<div class="lsb184-warn"><b>Eliminación bloqueada.</b> Este ciclo contiene registros o estructura académica. Para proteger notas, matrículas, pagos y auditorías no se permite borrarlo definitivamente desde esta operación. Puedes conservarlo en preparación o archivarlo después del cierre correspondiente.</div>')+
+     '<div class="lsb184-actions"><button class="lsb184-btn" data-close>Cerrar</button>'+ (totallyEmpty?'<button class="lsb184-btn danger" id="lsb184-delete-next">Continuar con verificación</button>':'')+'</div>');
+    document.getElementById('lsb184-delete-next')?.addEventListener('click',()=>{
+      dialog('<h2>Verificación final · Ciclo '+esc(y.year)+'</h2><p class="lsb184-sub">Introduce la contraseña actual de Dirección General y escribe el año exacto para confirmar. No se eliminarán cuentas familiares ni de docentes.</p>'+
+       '<label class="lsb184-field">Contraseña de Dirección<input id="lsb184-password" type="password" autocomplete="current-password"/></label>'+
+       '<label class="lsb184-field">Escribe '+esc(y.year)+'<input id="lsb184-year-confirm" type="text" inputmode="numeric" autocomplete="off"/></label>'+
+       '<p class="lsb184-sub" id="lsb184-feedback"></p><div class="lsb184-actions"><button class="lsb184-btn" data-close>Cancelar</button><button class="lsb184-btn danger" id="lsb184-confirm-delete">Eliminar ciclo vacío</button></div>');
+      const btn=document.getElementById('lsb184-confirm-delete');btn.onclick=async()=>{
+       if(document.getElementById('lsb184-year-confirm')?.value.trim()!==String(y.year))return fieldStatus('Debes escribir el año exacto.',true);
+       if(!await window.lsbPwaConfirm('Confirmación definitiva: ¿eliminar el ciclo vacío '+y.year+'?'))return;
+       btn.disabled=true;fieldStatus('Verificando identidad y eliminando…');
+       try{await reauth();const result=await rpc('lsb_f184_delete_empty_year',{p_year_id:y.id});recoveryLoaded=false;document.getElementById('dialog')?.close();await refresh();toast('Ciclo '+result.eliminado+' eliminado.'+(result.ciclo_recuperado?' Se creó el ciclo recuperado '+result.ciclo_recuperado+'.':''));}
+       catch(e){btn.disabled=false;fieldStatus('No se eliminó: '+String(e.message||e),true)}
+      };
+    });
+   }catch(e){fieldStatus('No se obtuvo el resumen: '+String(e.message||e),true)}
+ }
+ const wizard={target:null,source:null,step:1};
+ function availableSources(target){return years().filter(y=>Number(y.year)<Number(target.year));}
+ function secOfYear(yearId){return (data().lsb_sections||[]).filter(x=>x.school_year_id===yearId&&x.active!==false);}
+ function assignsForYear(yearId){const ss=secOfYear(yearId);return (data().lsb_teaching_assignments||[]).filter(a=>a.active!==false&&ss.some(s=>s.id===a.section_id));}
+ function srcEnrolled(yearId){const ss=secOfYear(yearId);return (data().lsb_enrollments||[]).filter(e=>e.status==='inscrito'&&ss.some(s=>s.id===e.section_id));}
+ function studentName(student){return [(student?.last_name||''),(student?.first_name||'')].filter(Boolean).join(', ')||'Estudiante';}
+ function studentDetails(e){const st=byId(data().lsb_students||[],e.student_id);const sec=byId(data().lsb_sections||[],e.section_id);return {name:studentName(st),code:st?.student_code||'',origin:sectionLabel(sec)};}
+ function stageTop(){return '<div class="lsb184-stage"><span class="'+(wizard.step===1?'active':'')+'">1. Estructura y profesores</span><span class="'+(wizard.step===2?'active':'')+'">2. Ascender estudiantes</span><span class="'+(wizard.step===3?'active':'')+'">3. Activación</span></div>'}
+ function summary(){
+   const target=years().find(x=>x.id===wizard.target),source=years().find(x=>x.id===wizard.source);
+   return '<h2>Preparar ciclo '+esc(target?.year||'')+'</h2><p class="lsb184-sub">Ciclo de origen: '+esc(source?.year||'Seleccionar')+' · Destino: '+esc(target?.year||'')+' (en preparación)</p>'+stageTop();
+ }
+ function showWizard(step=wizard.step){
+  const target=years().find(x=>x.id===wizard.target);if(!target||target.active)return toast('Elige un ciclo en preparación.');
+  wizard.step=step;
+  const sources=availableSources(target);if(!sources.some(y=>y.id===wizard.source))wizard.source=sources[sources.length-1]?.id||null;
+  const source=years().find(y=>y.id===wizard.source);
+  let html=summary();
+  if(!source){dialog(html+'<div class="lsb184-note">Primero crea o selecciona un ciclo anterior con estructura académica.</div><button class="lsb184-btn" data-close>Cerrar</button>');return;}
+  if(step===1){
+   const assigns=assignsForYear(source.id),byTeacher=new Map();for(const a of assigns)byTeacher.set(a.teacher_id,(byTeacher.get(a.teacher_id)||0)+1);
+   const teacherList=[...byTeacher.entries()].map(([id,n])=>({id,n,teacher:teachers().find(t=>t.id===id)}));
+   html+='<section class="lsb184-panel"><h3>Importar estructura del ciclo anterior</h3><label class="lsb184-field">Ciclo de origen<select id="lsb184-source">'+sources.map(y=>'<option value="'+esc(y.id)+'" '+(y.id===source.id?'selected':'')+'>'+esc(y.year)+'</option>').join('')+'</select></label>'+
+    '<div class="lsb184-note">Se reutilizan las materias y grados ya existentes. Se copian las secciones del año anterior y solo las asignaciones de los docentes seleccionados. Se mantienen intactos los archivos, las notas y las matrículas del origen.</div>'+
+    '<h3>Profesores que continuarán</h3><div class="lsb184-moves">'+(teacherList.length?teacherList.map(t=>'<label class="lsb184-person"><input type="checkbox" class="lsb184-teacher" value="'+esc(t.id)+'" checked> <b style="display:inline">'+esc(fmtTeacher(t.teacher))+'</b><small>'+t.n+' asignaciones en '+esc(source.year)+'</small></label>').join(''):'<p class="lsb184-sub">No hay asignaciones docentes en el ciclo de origen.</p>')+'</div>'+
+    '<div class="lsb184-actions"><button class="lsb184-btn primary" type="button" id="lsb184-import">Importar estructura y docentes</button><button class="lsb184-btn" type="button" id="lsb184-go2">Siguiente: estudiantes</button><button class="lsb184-btn" type="button" data-close>Cerrar</button></div><p id="lsb184-feedback" class="lsb184-sub"></p></section>';
+  }else if(step===2){
+   const en=srcEnrolled(source.id),targetSecs=secOfYear(target.id),existing=srcEnrolled(target.id);
+   const prepIds=new Set(existing.map(e=>e.student_id));
+   const eligible=en.filter(e=>!prepIds.has(e.student_id));
+   const gradeRank=name=>{const first=String(name||'').split(/\s+/)[0].toLocaleLowerCase('es');return ['primero','segundo','tercero','cuarto','quinto','sexto','septimo','séptimo'].indexOf(first)+1;};
+   const row=e=>{
+    const info=studentDetails(e),origin=byId(data().lsb_sections||[],e.section_id),originGrade=gForSec(origin);
+    const nextRank=gradeRank(originGrade?.name)+1;
+    const options=targetSecs.filter(x=>gradeRank(gForSec(x)?.name)===nextRank);
+    const suggested=options.find(x=>x.name===origin.name)||options[0];
+    return '<label class="lsb184-person lsb184-studentrow" data-lookup="'+esc([info.name,info.code,info.origin].join(' ').toLocaleLowerCase('es'))+'"><input type="checkbox" class="lsb184-student-check" data-student="'+esc(e.student_id)+'" '+(suggested?'checked':'disabled')+'> <b style="display:inline">'+esc(info.name)+'</b><small>'+esc(info.code)+' · '+esc(info.origin)+'</small>'+ (options.length?'<select class="lsb184-dest" aria-label="Destino para '+esc(info.name)+'">'+options.map(x=>'<option value="'+esc(x.id)+'" '+(x.id===suggested?.id?'selected':'')+'>'+esc(sectionLabel(x))+'</option>').join('')+'</select>':'<small>Sin sección de grado superior: egresado o requiere configuración de destino.</small>')+'</label>';
+   };
+   html+='<section class="lsb184-panel"><h3>Ascender estudiantes</h3><p class="lsb184-sub">'+en.length+' matriculados en el ciclo de origen · '+existing.length+' ya preparados en el destino. Se conserva la cuenta y contraseña de cada encargado vinculado.</p>'+
+    '<label class="lsb184-field">Buscar estudiante<input type="search" id="lsb184-search" placeholder="Apellidos, nombres o código"/></label>'+
+    '<div class="lsb184-actions"><button class="lsb184-btn" id="lsb184-all">Seleccionar elegibles</button><button class="lsb184-btn" id="lsb184-none">Ascenso personalizado</button></div>'+
+    '<div class="lsb184-moves" id="lsb184-move-list">'+(eligible.map(row).join('')||'<p class="lsb184-sub">No quedan estudiantes pendientes.</p>')+'</div>'+
+    '<p class="lsb184-sub">Los estudiantes del último grado no se ascienden automáticamente. Los cambios de carrera deben prepararse y revisarse individualmente.</p>'+
+    '<div class="lsb184-actions"><button class="lsb184-btn primary" id="lsb184-promote">Preparar matrículas seleccionadas</button><button class="lsb184-btn" id="lsb184-go3">Siguiente: revisión final</button><button class="lsb184-btn" id="lsb184-back1">Anterior</button></div>'+
+    '<p class="lsb184-sub" id="lsb184-feedback"></p></section>'+
+    (existing.length?'<section class="lsb184-panel"><h3>Estudiantes ya preparados ('+existing.length+')</h3><p class="lsb184-sub">Puedes retirar una matrícula creada por error mientras el ciclo permanezca en preparación. No se elimina al estudiante ni su cuenta familiar.</p><div class="lsb184-moves">'+existing.map(e=>'<div class="lsb184-person"><b>'+esc(studentDetails(e).name)+'</b><small>'+esc(studentDetails(e).code)+' · '+esc(studentDetails(e).origin)+'</small><button class="lsb184-btn danger" type="button" data-lsb184-drop="'+esc(e.student_id)+'">Retirar del ciclo en preparación</button></div>').join('')+'</div></section>':'');
+  }else{
+   const sections=secOfYear(target.id),assignments=assignsForYear(target.id),enrolled=srcEnrolled(target.id);
+   html+='<section class="lsb184-panel"><h3>Revisión de la preparación</h3>'+statsView({sections:sections.length,assignments:assignments.length,enrollments:enrolled.length,students:enrolled.length,guardians:'—'})+
+    '<div class="lsb184-note">El ciclo '+esc(target.year)+' continúa en preparación. Las cuentas familiares conservan sus credenciales originales y los registros de '+esc(source.year)+' permanecen históricos.</div>'+
+    '<p class="lsb184-sub">Para activar este ciclo, Dirección debe cerrar los bimestres y resolver las notas pendientes del año anterior. Supabase rechazará cualquier activación que incumpla esas restricciones.</p>'+
+    '<div class="lsb184-actions"><button class="lsb184-btn primary" id="lsb184-activate">Verificar y activar ciclo</button><button class="lsb184-btn" id="lsb184-back2">Anterior</button></div><p id="lsb184-feedback"></p></section>';
+  }
+  dialog(html);bindWizard(step);
+ }
+ async function activate(){
+  const target=years().find(x=>x.id===wizard.target);const src=activeYear();
+  if(!target||target.active)return toast('El ciclo ya está activo.');
+  if(src){fieldStatus('El ciclo '+src.year+' sigue activo. Debe cerrarse desde Configurar ciclo, después de cumplir sus protecciones. No se desactivará automáticamente.',true);return;}
+  dialog('<h2>Activar ciclo '+esc(target.year)+'</h2><p class="lsb184-sub">Esta operación habilita el nuevo ciclo para la comunidad educativa. Confirma tu identidad con la contraseña de Dirección General.</p>'+ 
+   '<label class="lsb184-field">Contraseña de Dirección<input type="password" id="lsb184-password" autocomplete="current-password"></label><p id="lsb184-feedback" class="lsb184-sub"></p><div class="lsb184-actions"><button type="button" class="lsb184-btn" data-close>Cancelar</button><button class="lsb184-btn primary" id="lsb184-activate-final">Activar ciclo '+esc(target.year)+'</button></div>');
+  document.getElementById('lsb184-activate-final').onclick=async e=>{
+   const btn=e.currentTarget;btn.disabled=true;fieldStatus('Verificando contraseña y controles académicos…');
+   try{await reauth();const changed=await rpc('lsb_set_school_year_active_secure',{p_school_year_id:target.id,p_active:true});if(changed!==true)throw Error('El servidor no confirmó la activación.');document.getElementById('dialog')?.close();await refresh();toast('Ciclo '+target.year+' activado.');}
+   catch(ex){fieldStatus('No se activó: '+String(ex.message||ex),true);btn.disabled=false;}
+  };
+ }
+ function bindWizard(step){
+  const $=id=>document.getElementById(id);
+  if(step===1){
+   $('lsb184-source')?.addEventListener('change',e=>{wizard.source=e.target.value;showWizard(1)});
+   $('lsb184-import')?.addEventListener('click',async e=>{
+    const btn=e.currentTarget;const teacher_ids=[...document.querySelectorAll('.lsb184-teacher:checked')].map(x=>x.value);
+    if(!await window.lsbPwaConfirm('¿Importar secciones del año anterior y asignaciones únicamente de '+teacher_ids.length+' docentes? No se copiarán notas ni pagos.'))return;
+    btn.disabled=true;fieldStatus('Preparando secciones y docentes…');
+    try{const out=await rpc('lsb_f184_copy_structure',{p_source_year_id:wizard.source,p_target_year_id:wizard.target,p_teacher_ids:teacher_ids});fieldStatus('Secciones nuevas: '+out.secciones_creadas+' · Asignaciones nuevas: '+out.asignaciones_creadas);await refresh();showWizard(2);}
+    catch(ex){fieldStatus('No se importó: '+String(ex.message||ex),true);btn.disabled=false;}
+   });
+   $('lsb184-go2')?.addEventListener('click',()=>showWizard(2));
+  }else if(step===2){
+   $('lsb184-search')?.addEventListener('input',e=>{const term=e.target.value.trim().toLocaleLowerCase('es');document.querySelectorAll('.lsb184-studentrow').forEach(el=>el.hidden=!el.dataset.lookup.includes(term))});
+   $('lsb184-all')?.addEventListener('click',()=>{document.querySelectorAll('.lsb184-student-check:not(:disabled)').forEach(x=>x.checked=true)});
+   $('lsb184-none')?.addEventListener('click',()=>{document.querySelectorAll('.lsb184-student-check').forEach(x=>x.checked=false)});
+   $('lsb184-promote')?.addEventListener('click',async e=>{
+    const btn=e.currentTarget;const chosen=[...document.querySelectorAll('.lsb184-student-check:checked')];const moves=chosen.map(x=>({student_id:x.dataset.student,destination_section_id:x.closest('.lsb184-studentrow').querySelector('.lsb184-dest')?.value})).filter(x=>x.destination_section_id);
+    if(!moves.length)return fieldStatus('Selecciona los estudiantes y sus secciones de destino.',true);
+    if(!await window.lsbPwaConfirm('¿Preparar '+moves.length+' matrículas para el siguiente ciclo? Mantendremos las matrículas y cuentas familiares anteriores.'))return;
+    btn.disabled=true;fieldStatus('Registrando '+moves.length+' matrículas…');
+    try{const out=await rpc('lsb_f184_promote_students',{p_source_year_id:wizard.source,p_target_year_id:wizard.target,p_moves:moves});fieldStatus('Se prepararon '+out.matriculas_preparadas+' matrículas.');await refresh();showWizard(2);}
+    catch(ex){fieldStatus('No se preparó: '+String(ex.message||ex),true);btn.disabled=false;}
+   });
+   $('lsb184-back1')?.addEventListener('click',()=>showWizard(1));$('lsb184-go3')?.addEventListener('click',()=>showWizard(3));
+   document.querySelectorAll('[data-lsb184-drop]').forEach(btn=>btn.addEventListener('click',async e=>{
+    const sid=e.currentTarget.dataset.lsb184Drop;
+    if(!await window.lsbPwaConfirm('¿Retirar esta matrícula únicamente del ciclo en preparación? Se conservarán estudiante, cuenta familiar e historial.'))return;
+    btn.disabled=true;
+    try{await rpc('lsb_f184_remove_prepared_student',{p_student_id:sid,p_year_id:wizard.target});await refresh();showWizard(2);}
+    catch(ex){toast('No se retiró: '+String(ex.message||ex));btn.disabled=false;}
+   }));
+  }else{
+   $('lsb184-back2')?.addEventListener('click',()=>showWizard(2));$('lsb184-activate')?.addEventListener('click',activate);
+  }
+ }
+
+ async function openCleanup(yearId){
+   const y=years().find(x=>x.id===yearId);if(!y||!y.active)return toast('La depuración está disponible únicamente en el ciclo activo.');
+   dialog('<h2>Revisar accesos · '+esc(y.year)+'</h2><p id="lsb184-feedback">Consultando continuidad de cuentas…</p>');
+   try{
+    const info=await rpc('lsb_f184_preview_access_cleanup',{p_year_id:yearId});
+    dialog('<h2>Continuidad de cuentas · '+esc(y.year)+'</h2><p class="lsb184-sub">Se desactivan, sin borrar cuentas ni contraseñas, únicamente perfiles que no participarán en el año activo.</p>'+ 
+     '<div class="lsb184-grid"><div class="lsb184-person"><small>Profesores sin cursos nuevos</small><b>'+Number(info.teachers_without_new_assignments)+'</b></div><div class="lsb184-person"><small>Encargados sin estudiantes nuevos</small><b>'+Number(info.guardians_without_new_students)+'</b></div><div class="lsb184-person"><small>Matrículas nuevas</small><b>'+Number(info.target_enrollments)+'</b></div><div class="lsb184-person"><small>Asignaciones nuevas</small><b>'+Number(info.target_assignments)+'</b></div></div>'+
+     '<div class="lsb184-warn">Esta acción afecta accesos reales. Solo debe ejecutarse después de confirmar la lista de estudiantes y profesores que continuarán. Las cuentas históricas no se eliminan.</div>'+
+     '<div class="lsb184-actions"><button class="lsb184-btn" data-close>Cerrar</button><button class="lsb184-btn danger" id="lsb184-cleanup-start">Desactivar accesos sin continuidad</button></div>');
+    document.getElementById('lsb184-cleanup-start').onclick=()=>{
+     dialog('<h2>Confirmación de accesos · '+esc(y.year)+'</h2><label class="lsb184-field">Contraseña de Dirección General<input type="password" id="lsb184-password" autocomplete="current-password"/></label><p id="lsb184-feedback"></p>'+
+       '<div class="lsb184-actions"><button class="lsb184-btn" data-close>Cancelar</button><button class="lsb184-btn danger" id="lsb184-cleanup-final">Confirmar desactivación</button></div>');
+     document.getElementById('lsb184-cleanup-final').onclick=async e=>{
+      const btn=e.currentTarget;if(!await window.lsbPwaConfirm('¿Desactivar los accesos sin continuidad del ciclo '+y.year+'? Esto no elimina datos históricos.'))return;
+      btn.disabled=true;try{await reauth();const out=await rpc('lsb_f184_suspend_unused_accounts',{p_year_id:y.id});fieldStatus('Profesores desactivados: '+out.profesores_suspendidos+' · encargados desactivados: '+out.encargados_suspendidos);await refresh();}
+      catch(ex){fieldStatus('No se modificó: '+String(ex.message||ex),true);btn.disabled=false;}
+     };
+    };
+   }catch(e){fieldStatus('No se pudo consultar: '+String(e.message||e),true)}
+ }
+ async function openWithdraw(yearId){
+  const y=years().find(x=>x.id===yearId);if(!y||!y.active)return toast('Selecciona el ciclo activo.');
+  const enrolled=srcEnrolled(yearId);
+  dialog('<h2>Retirar estudiantes · '+esc(y.year)+'</h2><p class="lsb184-sub">El retiro conserva notas, asistencias y expedientes históricos. No borra estudiantes ni encargados.</p>'+
+   '<label class="lsb184-field">Buscar por apellido, nombre o código<input type="search" id="lsb184-search" placeholder="Buscar estudiante" /></label>'+
+   '<div class="lsb184-moves" id="lsb184-withdraw-list">'+enrolled.map(e=>{
+      const info=studentDetails(e);return '<div class="lsb184-person lsb184-withdrawrow" data-lookup="'+esc([info.name,info.code].join(' ').toLocaleLowerCase('es'))+'"><b>'+esc(info.name)+'</b><small>'+esc(info.code)+' · '+esc(info.origin)+'</small><button class="lsb184-btn danger" type="button" data-withdraw-student="'+esc(e.student_id)+'">Retirar matrícula</button></div>';
+   }).join('')+'</div><p class="lsb184-sub" id="lsb184-feedback"></p><button type="button" class="lsb184-btn" data-close>Cerrar</button>');
+  document.getElementById('lsb184-search')?.addEventListener('input',e=>{const term=e.target.value.toLocaleLowerCase('es');document.querySelectorAll('.lsb184-withdrawrow').forEach(x=>x.hidden=!x.dataset.lookup.includes(term))});
+  document.querySelectorAll('[data-withdraw-student]').forEach(btn=>btn.onclick=e=>{
+   const sid=e.currentTarget.dataset.withdrawStudent;const info=studentDetails(enrolled.find(x=>x.student_id===sid));
+   dialog('<h2>Retirar matrícula</h2><p class="lsb184-sub">'+esc(info.name)+' · '+esc(info.origin)+'</p>'+
+    '<label class="lsb184-field">Motivo del retiro<input type="text" id="lsb184-reason" maxlength="300" placeholder="Ej. Traslado fuera del centro educativo" /></label>'+
+    '<label class="lsb184-field">Contraseña de Dirección<input type="password" id="lsb184-password" autocomplete="current-password" /></label>'+
+    '<p id="lsb184-feedback"></p><div class="lsb184-actions"><button class="lsb184-btn" data-close>Cancelar</button><button class="lsb184-btn danger" id="lsb184-withdraw-final">Confirmar retiro</button></div>');
+   document.getElementById('lsb184-withdraw-final').onclick=async ev=>{
+    const btn=ev.currentTarget,reason=document.getElementById('lsb184-reason')?.value.trim()||'';
+    if(reason.length<8)return fieldStatus('Indica el motivo del retiro (mínimo 8 caracteres).',true);
+    if(!await window.lsbPwaConfirm('¿Marcar la matrícula de '+info.name+' como retirada? Su historial quedará conservado.'))return;
+    btn.disabled=true;try{await reauth();await rpc('lsb_f184_withdraw_student',{p_student_id:sid,p_year_id:y.id,p_reason:reason});document.getElementById('dialog')?.close();await refresh();toast('Matrícula retirada. Se conservó el historial.');}
+    catch(ex){fieldStatus('No se retiró: '+String(ex.message||ex),true);btn.disabled=false;}
+   };
+  });
+ }
+ // Exigir verificación de contraseña para activar o poner en preparación un ciclo.
+ setSchoolYearState19=function(y,button){
+   if(!permitted())return toast('Requiere Dirección General.');
+   const desired=!y.active;
+   dialog('<h2>'+(desired?'Activar':'Poner en preparación')+' ciclo '+esc(y.year)+'</h2>'+ 
+    '<p class="lsb184-sub">Dirección debe verificar su contraseña. El servidor no permitirá desactivar un ciclo con bimestres abiertos o calificaciones pendientes.</p>'+ 
+    '<label class="lsb184-field">Contraseña de Dirección<input type="password" id="lsb184-password" autocomplete="current-password" /></label>'+
+    '<p id="lsb184-feedback" class="lsb184-sub"></p><div class="lsb184-actions"><button class="lsb184-btn" data-close>Cancelar</button><button class="lsb184-btn primary" id="lsb184-switch-final">Confirmar cambio de estado</button></div>');
+   document.getElementById('lsb184-switch-final').onclick=async e=>{
+    const btn=e.currentTarget;
+    if(!await window.lsbPwaConfirm('¿Confirmar '+(desired?'activación':'preparación')+' del ciclo '+y.year+'?'))return;
+    btn.disabled=true;fieldStatus('Verificando identidad…');
+    try{await reauth();const changed=await rpc('lsb_set_school_year_active_secure',{p_school_year_id:y.id,p_active:desired});if(changed!==desired)throw Error('El servidor no confirmó el estado.');document.getElementById('dialog')?.close();await refresh();toast('Estado actualizado en Supabase.');}
+    catch(ex){fieldStatus('No se cambió el ciclo: '+String(ex.message||ex),true);btn.disabled=false;}
+   };
+ };
+
+ const oldAction=action;
+ action=function(name,arg){
+  if(name==='lsb184-prepare'&&permitted()){wizard.target=String(arg);wizard.step=1;wizard.source=null;showWizard(1);return}
+  if(name==='lsb184-preview'&&permitted()){void openPreview(String(arg));return}
+  if(name==='lsb184-delete'&&permitted()){void openDelete(String(arg));return}
+  if(name==='lsb184-cleanup'&&permitted()){void openCleanup(String(arg));return}
+  if(name==='lsb184-withdraw'&&permitted()){void openWithdraw(String(arg));return}
+  return oldAction(name,arg);
+ };
+})();
+</script>
 </body></html>
