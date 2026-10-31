@@ -12671,4 +12671,135 @@ function ensureShadow(root){if(root.getElementById('lsb-f180-shadow-styles'))ret
 function boot(){schedule();const app=document.getElementById('app');if(app)new MutationObserver(schedule).observe(app,{childList:true,subtree:true});const host=document.getElementById('lsb-f23-shell');if(host)new MutationObserver(schedule).observe(host,{childList:true,subtree:true});window.addEventListener('resize',schedule,{passive:true});}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
-</script></body></html>
+</script><style id="lsb-f182-admin-live-cards">
+/* F182: exclusivamente ADMINISTRACIÓN/DIRECCIÓN en móvil, no el portal Profesor. */
+@media screen and (max-width:950px){
+  body.lsb-f23-director:not(.loginmode) #app .f182-admin-list{display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:10px!important;width:100%!important;max-width:100%!important;min-width:0!important;padding:9px 0!important;box-sizing:border-box!important}
+  body.lsb-f23-director:not(.loginmode) #app .f182-admin-item{width:100%!important;max-width:100%!important;min-width:0!important;display:flex!important;flex-direction:column!important;gap:10px!important;background:#fff!important;border:1px solid #e1e6f2!important;border-radius:17px!important;padding:14px!important;box-sizing:border-box!important;box-shadow:0 4px 12px #27375e0c!important;overflow:hidden!important}
+  body.lsb-f23-director:not(.loginmode) #app .f182-admin-item-head{display:flex!important;gap:10px!important;align-items:flex-start!important;justify-content:space-between!important;flex-wrap:wrap!important;min-width:0!important}
+  body.lsb-f23-director:not(.loginmode) #app .f182-admin-item-head>div{flex:1 1 160px!important;min-width:0!important;max-width:100%!important}
+  body.lsb-f23-director:not(.loginmode) #app .f182-admin-item h3{margin:0 0 4px!important;color:#273556!important;font:800 15px/1.38 'Plus Jakarta Sans',system-ui,sans-serif!important;white-space:normal!important;overflow-wrap:anywhere!important}
+  body.lsb-f23-director:not(.loginmode) #app .f182-admin-item-sub{font:500 12px/1.5 system-ui,sans-serif!important;color:#67748e!important;overflow-wrap:anywhere!important;white-space:normal!important;margin:0!important}
+  body.lsb-f23-director:not(.loginmode) #app .f182-admin-item-info{display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:5px!important;color:#4b5875!important;font-size:12px!important;line-height:1.5!important;overflow-wrap:anywhere!important;min-width:0!important}
+  body.lsb-f23-director:not(.loginmode) #app .f182-admin-item-label{color:#7a869e!important;font-size:10px!important;letter-spacing:.055em!important;text-transform:uppercase!important;font-weight:800!important}
+  body.lsb-f23-director:not(.loginmode) #app .f182-admin-item-actions{display:flex!important;gap:9px!important;flex-wrap:wrap!important;min-width:0!important}
+  body.lsb-f23-director:not(.loginmode) #app .f182-admin-item-actions>:is(button,.button,a){display:flex!important;align-items:center!important;justify-content:center!important;flex:1 1 auto!important;min-width:0!important;max-width:100%!important;min-height:41px!important;width:100%!important;padding:9px 11px!important;white-space:normal!important;overflow-wrap:anywhere!important}
+  body.lsb-f23-director:not(.loginmode) #app .f182-admin-item .badge{flex:0 0 auto!important;max-width:100%!important;white-space:normal!important;font-size:11px!important}
+  body.lsb-f23-director:not(.loginmode) #app .f182-course-groups{display:block!important;width:100%!important;max-width:100%!important;min-width:0!important;box-sizing:border-box!important}
+  body.lsb-f23-director:not(.loginmode) #app .f182-course-groups>summary{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:10px!important;min-height:44px!important;padding:11px 13px!important;list-style:none!important;cursor:pointer!important;border-radius:12px!important;color:#3b4792!important;background:#f2f4ff!important;font-size:13px!important;font-weight:800!important;box-sizing:border-box!important}
+  body.lsb-f23-director:not(.loginmode) #app .f182-course-groups>summary::-webkit-details-marker,body.lsb-f23-director:not(.loginmode) #app .f182-course-subject>summary::-webkit-details-marker{display:none!important}
+  body.lsb-f23-director:not(.loginmode) #app .f182-course-groups summary small{color:#6b7797!important;font-size:11px!important;white-space:normal!important}
+  body.lsb-f23-director:not(.loginmode) #app .f182-course-subject{margin-top:8px!important;border:1px solid #e2e7f1!important;border-radius:11px!important;max-width:100%!important;min-width:0!important;overflow:hidden!important}
+  body.lsb-f23-director:not(.loginmode) #app .f182-course-subject summary{display:flex!important;justify-content:space-between!important;align-items:center!important;gap:8px!important;min-height:40px!important;padding:10px 12px!important;cursor:pointer!important;list-style:none!important;font-size:12px!important;font-weight:750!important;overflow-wrap:anywhere!important}
+  body.lsb-f23-director:not(.loginmode) #app .f182-course-subject ul{list-style:none!important;margin:0!important;padding:0 12px 10px!important;color:#53617b!important;font-size:12px!important;line-height:1.4!important}
+  body.lsb-f23-director:not(.loginmode) #app .f182-course-subject li{border-top:1px solid #eff1f7!important;padding:9px 0!important;overflow-wrap:anywhere!important}
+  body.lsb-f23-director:not(.loginmode) #app .f182-origin-table{display:none!important}
+  body.lsb-f23-director:not(.loginmode) #app .f182-admin-list :is(.button,button){white-space:normal!important;overflow-wrap:anywhere!important}
+  body.lsb-f23-director:not(.loginmode) #app .f181-person-list,body.lsb-f23-director:not(.loginmode) #app .f181-entry-list{min-width:0!important;max-width:100%!important;width:100%!important;overflow:hidden!important;box-sizing:border-box!important}
+  body.lsb-f23-director:not(.loginmode) #app .f181-person-card,body.lsb-f23-director:not(.loginmode) #app .f181-entry{min-width:0!important;width:100%!important;max-width:100%!important;box-sizing:border-box!important}
+  /* Formulario de cuenta en Dirección: las asignaciones largas no extienden el cuadro. */
+  body.lsb-f23-director:not(.loginmode) #dialog,body.lsb-f23-director:not(.loginmode) #dialog :is(form,fieldset,.toolbar,.formrow){min-width:0!important;max-width:100%!important;box-sizing:border-box!important}
+  body.lsb-f23-director:not(.loginmode) #dialog fieldset{overflow-x:hidden!important;max-height:min(50vh,380px)!important;overflow-y:auto!important}
+  body.lsb-f23-director:not(.loginmode) #dialog .check{white-space:normal!important;overflow-wrap:anywhere!important;min-width:0!important}
+  body.lsb-f23-director:not(.loginmode) #app :is(.panel,.panelbody,.panelhead,.filters){max-width:100%!important;min-width:0!important;box-sizing:border-box!important}
+  body.lsb-f23-director:not(.loginmode) #app .f182-admin-list .f182-admin-item *{max-width:100%!important;box-sizing:border-box!important}
+}
+</style>
+<script id="lsb-f182-administracion-tablas-reales">
+/* F182: convierte las tablas reales de Dirección a fichas nativas en móvil.
+   Mantiene botones existentes y sus eventos: no duplica datos ni toca Supabase.
+   No afecta a Profesor, Familias, calificaciones editables ni PC. */
+(function(){
+ 'use strict';
+ const isSmall=()=>window.innerWidth<=950||window.matchMedia('(any-pointer:coarse) and (max-width:1120px)').matches;
+ function director(){return document.body.classList.contains('lsb-f23-director') && !document.body.classList.contains('loginmode') && document.body.dataset.area!=='teacher' && document.body.dataset.area!=='family';}
+ const escapeText=(t)=>String(t??'');
+ function txt(node){return String(node?.textContent||'').trim().replace(/\s+/g,' ');}
+ function el(tag,cls,value){const n=document.createElement(tag);if(cls)n.className=cls;if(value!==undefined)n.textContent=escapeText(value);return n;}
+ function addInfo(card,label,value){if(value===null||value===undefined||String(value).trim()==='')return;const info=el('div','f182-admin-item-info');info.append(el('span','f182-admin-item-label',label),el('span','',value));card.append(info);}
+ function groupedAssignments(account,raw){
+   const groups=new Map();
+   if(account && typeof db!=='undefined' && Array.isArray(db.assignments)){
+     for(const a of db.assignments.filter(x=>String(x.teacher)===String(account.id))){
+       const name=(typeof courseName==='function'?courseName(a.course):'Materia')||'Materia';
+       const section=(typeof groupName==='function'?groupName(a.group):'Sección')||'Sección';
+       if(!groups.has(name))groups.set(name,[]);
+       groups.get(name).push(section);
+     }
+   }
+   if(!groups.size && raw){
+     for(const line of raw.split(/\n|<br\s*\/?\s*>/i).map(x=>x.replace(/<[^>]+>/g,'').trim()).filter(Boolean)){
+       const items=line.split(/\s*[·•\-–]\s*/);const name=items[0]||'Materia';
+       if(!groups.has(name))groups.set(name,[]);
+       groups.get(name).push(items.slice(1).join(' · ')||'Sección');
+     }
+   }
+   const all=[...groups.entries()].sort((a,b)=>a[0].localeCompare(b[0],'es',{sensitivity:'base'}));
+   const details=el('details','f182-course-groups');const sum=el('summary','');sum.append(el('span','', 'Ver asignaciones'),el('small','', all.length+' materias'));details.append(sum);
+   for(const [name,sections] of all){const sub=el('details','f182-course-subject');const h=el('summary','');h.append(el('span','',name),el('small','',sections.length+' secciones'));sub.append(h);const ul=el('ul');sections.sort((a,b)=>a.localeCompare(b,'es',{sensitivity:'base'}));for(const sec of sections)ul.append(el('li','',sec));sub.append(ul);details.append(sub);}
+   if(!all.length)details.append(el('p','f182-admin-item-sub','Sin asignaciones registradas.'));
+   return details;
+ }
+ function buildCards(table,kind){
+   const rows=[...table.querySelectorAll('tbody > tr')].filter(tr=>tr.querySelectorAll(':scope > td').length>=3);
+   if(!rows.length)return;
+   const wrap=table.closest('.tablewrap');if(!wrap||wrap.dataset.f182Processed)return;
+   wrap.dataset.f182Processed='1';
+   const list=el('section','f182-admin-list');list.setAttribute('aria-label',kind==='student'?'Estudiantes matriculados':'Cuentas administrativas');
+   for(const tr of rows){
+     const cells=[...tr.querySelectorAll(':scope > td')];const card=el('article','f182-admin-item');
+     const head=el('div','f182-admin-item-head');const headText=el('div');
+     let name=txt(cells[0].querySelector('b')||cells[0].firstChild||cells[0]);
+     let user=cells[0].querySelector('small')?txt(cells[0].querySelector('small')):'';
+     const actionCell=cells[cells.length-1];const action=actionCell?.querySelector('[data-action]');
+     let account=null;
+     try{if(kind==='account'&&action?.dataset.arg&&typeof db!=='undefined')account=db.accounts.find(a=>String(a.id)===String(action.dataset.arg));}catch(_){}
+     if(account){name=String(account.name||name);user=String(account.user||user);}
+     if(kind==='student'){
+       const code=txt(cells[1]);
+       try{const st=typeof db!=='undefined'&&db.students?.find(s=>String(s.code)===code);if(st){name=String(st.lastNames&&st.firstNames?st.lastNames+', '+st.firstNames:(typeof window.lsbF174StudentName==='function'?window.lsbF174StudentName(st):name))||name;}}catch(_){}
+       user=code;
+     }
+     headText.append(el('h3','',name),el('p','f182-admin-item-sub',user));head.append(headText);
+     const badge=(kind==='account'?cells[cells.length-2]:null)?.querySelector('.badge');if(badge)head.append(badge.cloneNode(true));
+     card.append(head);
+     if(kind==='student')addInfo(card,'Grado y sección',txt(cells[2]));
+     else{
+       addInfo(card,'Rol',txt(cells[1]));
+       if(account?.type==='teacher'||/docente/i.test(txt(cells[1])))card.append(groupedAssignments(account,cells[2]?.innerHTML||''));
+       else if(account?.type==='family'){
+         const students=(account.children||[]).map(id=>db.students?.find(s=>String(s.id)===String(id))).filter(Boolean);
+         if(students.length){addInfo(card,'Estudiantes vinculados',students.map(s=>s.lastNames&&s.firstNames?s.lastNames+', '+s.firstNames:s.name).join(' · '));}
+         else addInfo(card,'Estudiantes vinculados',txt(cells[2]));
+       }else addInfo(card,'Asignaciones',txt(cells[2]));
+     }
+     const actions=el('div','f182-admin-item-actions');if(action){actions.append(action);}else{
+       const buttons=actionCell?[...actionCell.querySelectorAll('button')]:[];for(const b of buttons)actions.append(b);
+     }
+     if(actions.childElementCount)card.append(actions);
+     list.append(card);
+   }
+   wrap.insertAdjacentElement('afterend',list);
+   wrap.classList.add('f182-origin-table');wrap.style.setProperty('display','none','important');
+ }
+ function apply(){
+   if(!isSmall()||!director())return;
+   const app=document.getElementById('app');if(!app)return;
+   for(const table of app.querySelectorAll('.tablewrap table')){
+     if(table.closest('.f182-origin-table'))continue;
+     const headers=[...table.querySelectorAll('thead th')].map(txt);
+     const combined=headers.join(' ').toLowerCase();
+     const isStudent=combined.includes('código personal')&&combined.includes('grado y sección');
+     const isAccount=combined.includes('asignaciones')&&combined.includes('estado')&&(combined.includes('usuario')||combined.includes('rol'));
+     if(isStudent||isAccount)buildCards(table,isStudent?'student':'account');
+   }
+ }
+ let scheduled=false;
+ function schedule(){if(scheduled)return;scheduled=true;requestAnimationFrame(()=>{scheduled=false;try{apply()}catch(e){console.warn('F182 Administración:',e)}});}
+ function boot(){const app=document.getElementById('app');if(app){new MutationObserver(schedule).observe(app,{subtree:true,childList:true});}schedule();}
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
+ const media=window.matchMedia('(max-width:950px)');media.addEventListener?.('change',()=>{if(typeof render==='function')render();else schedule()});
+ window.addEventListener('orientationchange',schedule,{passive:true});
+})();
+</script>
+</body></html>
