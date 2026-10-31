@@ -13300,7 +13300,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
       const year = years().find(y=>String(y.year)===String(arg));
       if(!year)throw Error('No se encontró el ciclo seleccionado. Actualiza la lista.');
       // F186: la función está encapsulada en el módulo anterior; ejecutar su acción pública.
-      try{oldAction('switchcycle',String(year.year));}catch(ex){f185Error(ex);}
+      try{toast('Abriendo configuración del ciclo '+year.year+'…'); const result=oldAction('switchcycle',String(year.year)); if(result&&typeof result.catch==='function')result.catch(f185Error);}catch(ex){f185Error(ex);}
       return;
     }
     case 'lsb184-prepare': {
@@ -13324,7 +13324,8 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   const btn=path.find(el=>el?.nodeType===1&&el.matches?.('button[data-action]'));
   if(!btn||!f185Actions.has(btn.dataset.action)||btn.disabled||!btn.isConnected)return;
   const app=document.getElementById('app');
-  if(!app?.contains(btn)||!app.querySelector('.lsb184-years'))return;
+  const shell=document.getElementById('lsb-f23-shell')?.shadowRoot;
+  if(!btn.closest('.lsb184-years')&&!((app?.contains(btn)||shell?.contains(btn))&&btn.dataset.action==='lsbf1659new'))return;
   if(!btn.closest('.lsb184-years')&&btn.dataset.action!=='lsbf1659new')return;
   if(ev.defaultPrevented)return;
   ev.preventDefault();ev.stopPropagation();ev.stopImmediatePropagation();
@@ -13337,7 +13338,8 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
    const btn=path.find(n=>n?.nodeType===1&&n.matches?.('button[data-action]'));
    if(!btn||!f185Actions.has(btn.dataset.action)||!btn.isConnected||btn.disabled)return;
    const app=document.getElementById('app');
-   if(!app?.contains(btn))return;
+   const shell=document.getElementById('lsb-f23-shell')?.shadowRoot;
+   if(!(app?.contains(btn)||shell?.contains(btn)))return;
    const cyclesVisible=!!btn.closest('.lsb184-year,.lsb184-years')||btn.dataset.action==='lsbf1659new';
    if(!cyclesVisible)return;
    ev.preventDefault();ev.stopImmediatePropagation();
@@ -13453,6 +13455,7 @@ function update(){scheduled=false;
  const small=window.innerWidth<=950;
  for(const wrap of app.querySelectorAll('.tablewrap')){
   if(wrap.closest('.boleta,.exact-boleta7,.lsb-f9-zoomscroll,.f174-shell,.lsb1913-board,.lsb19114-publish')||wrap.classList.contains('f182-origin-table'))continue;
+  if(wrap.classList.contains('f180-card-table')){wrap.classList.remove('lsb186-wide-table');const guide=wrap.previousElementSibling;if(guide?.classList.contains('lsb186-scroll-guide'))guide.remove();continue;}
   const table=wrap.querySelector(':scope > table');if(!table)continue;
   const columns=table.querySelectorAll('thead tr:first-child th').length;
   if(!(wide||(columns>=6&&route!=='grade'&&route!=='reports')))continue;
@@ -13535,6 +13538,77 @@ body.lsb-f23-director:not(.loginmode) #app .tablewrap.lsb187-admin-cards tbody t
  new MutationObserver(schedule).observe(app,{childList:true,subtree:true});
  window.addEventListener('resize',schedule,{passive:true});
  schedule();
+})();
+</script>
+
+<style id="lsb-f187-mobile-history">
+/* F187: fichas verticales para estudiantes, asistencia, pagos e historiales. No modifica registros. */
+@media screen and (max-width:700px){
+ body.lsb-f23-director:not(.loginmode) #app .tablewrap.f180-card-table{display:block!important;width:100%!important;min-width:0!important;max-width:100%!important;overflow:visible!important;padding:8px!important;border:0!important;background:transparent!important;box-sizing:border-box!important}
+ body.lsb-f23-director:not(.loginmode) #app .tablewrap.f180-card-table table{display:block!important;width:100%!important;min-width:0!important;max-width:100%!important;table-layout:auto!important;border-collapse:separate!important;white-space:normal!important}
+ body.lsb-f23-director:not(.loginmode) #app .tablewrap.f180-card-table thead{display:none!important}
+ body.lsb-f23-director:not(.loginmode) #app .tablewrap.f180-card-table tbody{display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:12px!important;width:100%!important;min-width:0!important}
+ body.lsb-f23-director:not(.loginmode) #app .tablewrap.f180-card-table tbody>tr{display:flex!important;flex-direction:column!important;width:100%!important;min-width:0!important;max-width:100%!important;margin:0!important;padding:14px 15px!important;box-sizing:border-box!important;background:#fff!important;border:1px solid #e2e7f2!important;border-radius:18px!important;box-shadow:0 5px 18px #283b6810!important}
+ body.lsb-f23-director:not(.loginmode) #app .tablewrap.f180-card-table tbody>tr>td{display:block!important;position:static!important;left:auto!important;z-index:auto!important;float:none!important;width:100%!important;min-width:0!important;max-width:100%!important;box-sizing:border-box!important;padding:11px 0!important;border:0!important;border-bottom:1px solid #edf0f6!important;background:transparent!important;box-shadow:none!important;white-space:normal!important;overflow-wrap:anywhere!important;font-size:13px!important;line-height:1.55!important;text-align:left!important}
+ body.lsb-f23-director:not(.loginmode) #app .tablewrap.f180-card-table tbody>tr>td:last-child{border-bottom:0!important;padding-bottom:2px!important}
+ body.lsb-f23-director:not(.loginmode) #app .tablewrap.f180-card-table tbody>tr>td::before{display:block!important;content:attr(data-f132-label)!important;position:static!important;margin-bottom:5px!important;font-size:10px!important;letter-spacing:.07em!important;text-transform:uppercase!important;font-weight:850!important;color:#79859f!important}
+ body.lsb-f23-director:not(.loginmode) #app .tablewrap.f180-card-table tbody>tr>td:first-child{font-size:15px!important;font-weight:760!important;color:#263655!important}
+ body.lsb-f23-director:not(.loginmode) #app .tablewrap.f180-card-table tbody>tr>td :is(button,.button){display:inline-flex!important;justify-content:center!important;align-items:center!important;width:100%!important;max-width:100%!important;min-width:0!important;min-height:43px!important;border-radius:12px!important;white-space:normal!important;overflow-wrap:anywhere!important}
+ body.lsb-f23-director:not(.loginmode) #app .tablewrap.f180-card-table :is(b,strong,small,.badge){max-width:100%!important;white-space:normal!important;overflow-wrap:anywhere!important}
+ body.lsb-f23-director:not(.loginmode) #app .lsb186-scroll-guide:has(+ .f180-card-table){display:none!important}
+}
+</style>
+<script id="lsb-f187-history-controller">
+(function(){
+ 'use strict';
+ const rules=`
+ @media(max-width:700px){
+  #detail-content .tablewrap.f180-card-table{display:block!important;width:100%!important;min-width:0!important;max-width:100%!important;overflow:visible!important;padding:7px!important;box-sizing:border-box!important}
+  #detail-content .tablewrap.f180-card-table table{display:block!important;width:100%!important;min-width:0!important;max-width:100%!important;white-space:normal!important}
+  #detail-content .tablewrap.f180-card-table thead{display:none!important}
+  #detail-content .tablewrap.f180-card-table tbody{display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:12px!important}
+  #detail-content .tablewrap.f180-card-table tbody>tr{display:flex!important;flex-direction:column!important;width:100%!important;min-width:0!important;max-width:100%!important;margin:0!important;padding:14px!important;border:1px solid #e2e7f2!important;border-radius:16px!important;background:#fff!important;box-shadow:0 5px 16px #25345c12!important;box-sizing:border-box!important}
+  #detail-content .tablewrap.f180-card-table tbody>tr>td{display:block!important;position:static!important;left:auto!important;z-index:auto!important;width:100%!important;min-width:0!important;max-width:100%!important;padding:10px 0!important;border:0!important;border-bottom:1px solid #edf1f7!important;box-shadow:none!important;background:transparent!important;box-sizing:border-box!important;white-space:normal!important;overflow-wrap:anywhere!important;text-align:left!important}
+  #detail-content .tablewrap.f180-card-table tbody>tr>td:last-child{border-bottom:0!important}
+  #detail-content .tablewrap.f180-card-table tbody>tr>td::before{display:block!important;content:attr(data-f132-label)!important;margin-bottom:6px!important;text-transform:uppercase!important;letter-spacing:.06em!important;color:#79859e!important;font-size:10px!important;font-weight:800!important}
+  #detail-content .tablewrap.f180-card-table :is(button,.button){max-width:100%!important;min-width:0!important;white-space:normal!important;overflow-wrap:anywhere!important}
+ }
+ `;
+ let pending=false;
+ const mobile=()=>window.matchMedia('(max-width:700px)').matches;
+ function repair(scope,selectors){
+  if(!scope||!mobile())return;
+  for(const table of scope.querySelectorAll(selectors)){
+   const wrap=table.closest('.tablewrap');if(!wrap||wrap.classList.contains('f182-origin-table'))continue;
+   const headings=[...table.querySelectorAll('thead tr:first-child th')].map(x=>x.textContent.trim());
+   if(!headings.length||!wrap.classList.contains('f180-card-table'))continue;
+   wrap.classList.remove('lsb186-wide-table');
+   if(wrap.previousElementSibling?.classList.contains('lsb186-scroll-guide'))wrap.previousElementSibling.remove();
+   for(const tr of table.querySelectorAll('tbody tr')){
+    [...tr.children].filter(el=>el.tagName==='TD').forEach((td,i)=>{if(!td.dataset.f132Label)td.dataset.f132Label=headings[i]||'Información';});
+   }
+  }
+ }
+ function update(){
+  pending=false;
+  if(!mobile()||!document.body.classList.contains('lsb-f23-director')||document.body.classList.contains('loginmode'))return;
+  try{
+   repair(document,'#app .tablewrap table');
+   const shell=document.getElementById('lsb-f23-shell')?.shadowRoot;
+   if(shell){
+    if(!shell.getElementById('lsb-f187-shadow')){const style=document.createElement('style');style.id='lsb-f187-shadow';style.textContent=rules;shell.appendChild(style);}
+    repair(shell,'#detail-content .tablewrap table');
+   }
+  }catch(error){console.warn('F187 historial móvil:',error)}
+ }
+ function schedule(){if(pending)return;pending=true;requestAnimationFrame(update)}
+ function boot(){
+  const app=document.getElementById('app');if(app)new MutationObserver(schedule).observe(app,{childList:true,subtree:true});
+  const content=document.getElementById('lsb-f23-shell')?.shadowRoot?.getElementById('detail-content');
+  if(content)new MutationObserver(schedule).observe(content,{childList:true,subtree:true});
+  window.addEventListener('resize',schedule,{passive:true});schedule();
+ }
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
 </script>
 </body></html>
