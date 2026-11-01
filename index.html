@@ -2472,6 +2472,7 @@ const st=document.createElement('style');st.textContent=css;document.head.append
 const monthnames=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 const RP={receipts:[],monthRows:[],reports:[],ready:false,planBySection:{}};
 window.lsb199ReceiptData=()=>({receipts:RP.receipts.slice(),months:RP.monthRows.slice(),ready:RP.ready});
+window.lsb200PaymentDiagnostic=()=>({ready:RP.ready,paidMonths:RP.monthRows.length,visibleReceipts:RP.receipts.length});
 const en=(id)=>db.students.find(x=>x.id===id);
 const receiptNo188=(s)=>String(s??'').trim(); // No agregar ceros automáticamente: conservar la numeración institucional.
 const fmtQ=(n)=>'Q '+Number(n||0).toLocaleString('es-GT',{minimumFractionDigits:2,maximumFractionDigits:2});
@@ -2490,7 +2491,12 @@ function showReceipt(id){const rec=RP.receipts.find(r=>r.id===id);if(!rec){toast
 window.lsb1918ShowReceipt=showReceipt;
 function enrollFor(sid){return LSB18.enrollByStudent[sid]?.id || null;}
 async function fetchPayments(){
- const [r,m]=await Promise.all([lsb18Fetch('lsb_payment_receipts'),lsb18Fetch('lsb_payment_months')]);// F16.2: comprobar de forma explícita ciclo y sección de cada matrícula antes de incluir pagos.
+ // F200: los meses pagados se consultan independientemente de la visibilidad del comprobante.
+ const m=await lsb18Fetch('lsb_payment_months');
+ let r=[];
+ try{r=await lsb18Fetch('lsb_payment_receipts');}
+ catch(error){if(role!=='family')throw error;console.warn('Comprobantes familiares restringidos; se conservan los estados de pago.',error.message);}
+ if(!Array.isArray(m)||!Array.isArray(r))throw Error('Respuesta de pagos inválida.');// F16.2: comprobar de forma explícita ciclo y sección de cada matrícula antes de incluir pagos.
   const expectedYear=LSB18.schoolYearId;
   if(!expectedYear)throw Error('No se pudo determinar el ciclo escolar para consultar pagos.');
   const currentSectionIds=new Set((LSB18.rows?.lsb_sections||[]).filter(sec=>sec.school_year_id===expectedYear).map(sec=>sec.id));
@@ -2504,11 +2510,15 @@ async function fetchPayments(){
  RP.ready=true;
  db.payments={};for(const x of RP.monthRows){const e=LSB18.enrollById[x.enrollment_id];if(!e)continue;const rec=receiptMap.get(x.receipt_id);if(!rec&&role!=='family')continue;db.payments[e.student_id]??={};db.payments[e.student_id][Number(x.month_number)]={date:dateText(rec?.payment_date||x.created_at),by:'Dirección',receipt:rec?.receipt_number||'',receiptId:rec?.id||null};}
 }
+window.lsb200RefreshPaidMonths=async()=>{
+  try { await fetchPayments(); if(page==='payments')render(); return {ok:true,count:RP.monthRows.length}; }
+  catch(err){ RP.ready=false; console.warn('F200: consulta de mensualidades no completada',err); return {ok:false,error:err.message||String(err)}; }
+};
 const oldLoad=lsb18Load;
 lsb18Load=async function(){const result=await oldLoad();try{const [o,plans]=await Promise.all([lsb18Fetch('lsb_academic_offerings'),lsb18Fetch('lsb_study_plans')]);RP.planBySection={};for(const section of LSB18.rows.lsb_sections||[]){const link=(LSB18.rows.lsb_offering_grades||[]).find(x=>x.id===section.offering_grade_id);const offering=o.find(x=>x.id===link?.offering_id);const plan=plans.find(x=>x.id===offering?.plan_id);RP.planBySection[section.id]=plan?.name||offering?.name||'Plan no especificado';}}catch(e){console.warn('Plan académico pendiente:',e.message)}try{await fetchPayments()}catch(e){RP.ready=false;RP.receipts=[];RP.monthRows=[];db.payments={};console.warn('Recibos pendientes de configurar:',e.message);}return result};
 function paymentRows(s,admin){
  if(!RP.ready)return '<p class="sub" role="status">No se pudo consultar el estado de pagos. No se calculará deuda con una consulta incompleta.</p>';
- return `<section class="lsb193-months" aria-label="Mensualidades del estudiante"><div class="lsb193-months-title"><strong>Mensualidades</strong><small>Selecciona «Registrar» en un mes pendiente o usa «Pagar mensualidades» para varios meses.</small></div><div class="lsb193-months-list">${monthnames.map((name,i)=>{
+ return `<section class="lsb193-months" aria-label="Mensualidades del estudiante"><div class="lsb193-months-title"><strong>Mensualidades</strong><small>${admin?'Selecciona «Registrar» en un mes pendiente o usa «Pagar mensualidades» para varios meses.':'Consulta las mensualidades registradas por Dirección. Los comprobantes solo aparecen si su visualización está autorizada.'}</small></div><div class="lsb193-months-list">${monthnames.map((name,i)=>{
    const m=i+1,p=db.payments?.[s.id]?.[m],due=m<=db.payMonth;
    const state=p?'Pagado':due?'Pendiente':'No vencido';
    const display=p?`<small class="lsb193-month-date">${E(p.date||'Pago registrado')}</small>`:'';
@@ -14407,26 +14417,41 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   return '<details class="lsb199-card" id="lsb199-settings" '+(st.opened?'open':'')+'><summary>'+head+'<span class="lsb199-pill">'+esc(modeLabels[st.mode]||'Ocultos')+'</span><span class="lsb199-chevron" aria-hidden="true">⌄</span></summary><div class="lsb199-inside"><p class="lsb199-intro">El registro de pagos no cambia. Esta configuración controla exclusivamente la consulta y descarga de comprobantes en el portal familiar.</p><div class="lsb199-modes">'+modes+'</div><div class="lsb199-actions"><button type="button" class="lsb199-btn" data-lsb199-save>Guardar visibilidad</button></div>'+custom+'</div></details>';
  }
  function familyPanel(){
-  const child=typeof children==='function'?children().find(x=>x.id===student):null;
-  if(!child)return '';
-  const e=LSB18.enrollByStudent?.[child.id];
+  const familyStudents=typeof children==='function'?children():[];
+  const child=familyStudents.find(x=>x.id===student)||familyStudents[0]||null;
+  // Mostrar siempre el apartado a una cuenta familiar, también cuando el encargado aún no tenga recibos autorizados.
+  const e=child?LSB18.enrollByStudent?.[child.id]:null;
   const receipts=details().receipts.filter(r=>r.enrollment_id===e?.id);
+  const retry=!details().ready?'<div class="lsb199-empty">Aún no se pudo consultar el estado de mensualidades. <button type="button" class="lsb199-btn secondary" data-lsb200-refresh>Actualizar pagos</button></div>':'';
   const items=receipts.map(r=>{
    const ms=details().months.filter(m=>m.receipt_id===r.id).map(m=>months[Number(m.month_number)-1]).filter(Boolean);
    const d=new Date(r.payment_date).toLocaleDateString('es-GT');
    return '<div class="lsb199-family-row"><div><strong>Recibo Nº '+esc(r.receipt_number)+'</strong><small>'+esc(ms.join(', '))+' · '+esc(d)+'</small></div><button type="button" class="lsb199-btn" data-lsb199-open="'+esc(r.id)+'">Ver / PDF</button></div>';
   }).join('');
-  return '<section class="lsb199-family"><h3>Mis comprobantes</h3><p>'+ (receipts.length?'Comprobantes autorizados por Dirección para este estudiante.':'No hay comprobantes disponibles para consulta. Tus meses pagados siguen registrados.')+'</p><div class="lsb199-family-receipts">'+items+'</div></section>';
+  return '<section class="lsb199-family" aria-label="Comprobantes de pagos"><h3>Mis comprobantes</h3><p>'+ (receipts.length?'Comprobantes que Dirección autorizó para este estudiante.':'Dirección no ha habilitado comprobantes para este estudiante. Esto no modifica los meses que ya están pagados.')+'</p><div class="lsb199-family-receipts">'+items+retry+'</div></section>';
  }
  const oldPaymentView=paymentView;
  paymentView=function(){
    const html=oldPaymentView();if(role!=='admin'&&role!=='family')return html;
    if(role==='admin'&&LSB18.profile?.role!=='admin_general')return html;
    const div=document.createElement('div');div.innerHTML=html;
-   const h=div.querySelector('.heading');if(!h)return html;
-   h.insertAdjacentHTML('afterend',role==='admin'?adminPanel():familyPanel());
+   const h=div.querySelector('.heading');
+   const panelHtml=role==='admin'?adminPanel():familyPanel();
+   if(h)h.insertAdjacentHTML('afterend',panelHtml);
+   else div.insertAdjacentHTML('afterbegin',panelHtml);
    return div.innerHTML;
  };
+ // F200: si otra capa del portal reemplaza el contenido, conservar 'Mis comprobantes' en Familias.
+ const ensureFamilyPanel=()=>{
+  if(role!=='family'||page!=='payments'||LSB18.profile?.role!=='encargado')return;
+  const area=document.getElementById('app');
+  if(!area||area.querySelector('.lsb199-family')||!area.querySelector('.lsb193-months'))return;
+  const head=area.querySelector('.heading');
+  if(head)head.insertAdjacentHTML('afterend',familyPanel());
+  else area.insertAdjacentHTML('afterbegin',familyPanel());
+ };
+ const appArea=document.getElementById('app');
+ if(appArea){const observer=new MutationObserver(ensureFamilyPanel);observer.observe(appArea,{childList:true,subtree:false});queueMicrotask(ensureFamilyPanel);}
  document.addEventListener('toggle',e=>{if(e.target?.id==='lsb199-settings')st.opened=e.target.open},true);
  document.addEventListener('change',e=>{
   const t=e.target;
@@ -14437,9 +14462,16 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
  });
  document.addEventListener('input',e=>{if(e.target?.id==='lsb199-search'){st.search=e.target.value;const target=document.querySelector('#lsb199-person');if(!target)return;const a=st.guardians.filter(x=>(x.full_name+' '+x.username).toLowerCase().includes(st.search.toLowerCase()));target.innerHTML=a.map(p=>'<option value="'+esc(p.id)+'">'+esc(p.full_name+' · '+p.username)+'</option>').join('');st.person=target.value;}});
  document.addEventListener('click',async e=>{
-  const b=e.target.closest?.('[data-lsb199-save],[data-lsb199-grant],[data-lsb199-remove],[data-lsb199-open],[data-lsb199-reload]');if(!b)return;
+  const b=e.target.closest?.('[data-lsb199-save],[data-lsb199-grant],[data-lsb199-remove],[data-lsb199-open],[data-lsb199-reload],[data-lsb200-refresh]');if(!b)return;
   e.preventDefault();e.stopPropagation();
   if(b.hasAttribute('data-lsb199-reload')){st.error='';load();return;}
+  if(b.hasAttribute('data-lsb200-refresh')){
+    b.disabled=true;
+    const result=await window.lsb200RefreshPaidMonths?.();
+    if(result?.ok)toast('Mensualidades actualizadas correctamente.');
+    else{b.disabled=false;toast('No se pudo consultar: '+(result?.error||'Revisa tu conexión.'));}
+    return;
+  }
   if(b.hasAttribute('data-lsb199-open')){
     if(role!=='family')return;
     const rid=b.dataset.lsb199Open;
