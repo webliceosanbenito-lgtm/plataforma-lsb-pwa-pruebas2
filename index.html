@@ -13864,4 +13864,323 @@ html[data-theme=dark] #dialog .lsb-f189-history-scroll tbody tr:nth-child(even) 
  }
 }
 </style>
+
+<!-- F192 · ajustes de dirección, pagos, asistencia y estudiantes -->
+<style id="lsb-f192-responsive-corrections">
+/* F192 · Accesibilidad y claridad visual. No cambia reglas académicas ni políticas Supabase. */
+body.lsb-f23-director:not(.loginmode) #app .button:not(:disabled),body.lsb-f23-director:not(.loginmode) #app button[data-action]:not(:disabled){transition:filter .15s,box-shadow .15s,transform .15s}
+body.lsb-f23-director:not(.loginmode) #app .button:not(.secondary):not(:disabled){background:#3b4193!important;color:#fff!important;border:1px solid #30377f!important;font-weight:750!important}
+body.lsb-f23-director:not(.loginmode) #app .button:not(:disabled):hover,body.lsb-f23-director:not(.loginmode) #app button[data-action]:not(:disabled):hover{filter:brightness(1.08);box-shadow:0 5px 16px #343e8830!important}
+body.lsb-f23-director:not(.loginmode) #app .button.secondary:not(:disabled){background:#edf1ff!important;color:#303b8e!important;border:1px solid #bbc7e5!important;font-weight:750!important}
+body.lsb-f23-director:not(.loginmode) #app .button.secondary:not(:disabled):hover{background:#dce5ff!important}
+#app .selection:focus-visible,#app button:focus-visible{outline:3px solid #17aaae!important;outline-offset:2px}
+#app .panel .button + p,#app .panel .toolbar + p,#app .panel button + .sub,#app .panel .button + .sub{margin-top:13px!important;line-height:1.6}
+#app :is(.heading,.toolbar,.filters,.panelbody,.panelhead){min-width:0}
+#app .heading h1,#app .panelhead h2{overflow-wrap:anywhere}
+#app .filters input[type=search]{max-width:100%;min-width:0;width:100%;font-size:16px}
+#app .att-month9 button[data-attmonth]{font-size:25px!important;line-height:1!important;min-width:48px!important;min-height:46px!important;padding:6px 12px!important;display:inline-flex;align-items:center;justify-content:center}
+#app .lsb192-att-search{min-width:0;max-width:720px;width:100%;background:var(--surface,#fff);border:1px solid var(--line,#dde4f3);border-radius:16px;padding:15px;margin:0 0 16px;box-shadow:0 4px 14px #28345c09}
+#app .lsb192-att-search label{display:grid;gap:8px;color:var(--ink,#263553);font-size:13px;font-weight:750}
+#app .lsb192-att-search input{width:100%!important;min-width:0!important;font-size:16px!important;min-height:47px!important}
+#app .lsb192-att-note{font-size:12px;line-height:1.5;color:var(--muted,#66758c);margin:8px 0 0}
+#app .lsb192-att-result{display:flex;align-items:center;justify-content:space-between;width:100%;text-align:left;gap:12px;white-space:normal;min-height:48px;background:var(--surface,#fff);color:var(--ink,#253451);border:1px solid var(--line,#dce3f2);border-radius:11px;margin-top:7px;padding:10px 13px;font-size:13px;cursor:pointer}
+#app .lsb192-att-result:hover{border-color:#6877bf;background:var(--soft,#edf0ff)}
+#app .lsb192-att-result small{font-size:11px;color:var(--muted,#67748d)}
+#app .lsb192-att-back{min-height:42px;margin-top:12px}
+#app .filters label:has(select.lsb192-native-select){display:none!important}
+#app select.lsb192-native-select{position:absolute!important;width:1px!important;height:1px!important;opacity:0!important;pointer-events:none!important;clip-path:inset(50%)}
+#app .lsb192-payment-topname{font-size:19px;line-height:1.45;font-weight:850;letter-spacing:-.02em;overflow-wrap:anywhere}
+#app .lsb192-paylist .lsb192-name{font-size:inherit;line-height:inherit;font-weight:850;overflow-wrap:anywhere;display:block}
+#app .lsb192-paylist :is(th,td):first-child{min-width:180px}
+#app .lsb192-paylist tbody tr:nth-child(even) td{background:var(--surface,#fff)}
+#app .lsb192-paylist .button{min-height:43px;white-space:normal}
+#app .lsb192-payhist .button{min-height:39px;white-space:normal}
+#app .lsb192-att-roster{width:100%}
+#dialog .lsb192-modal-x{position:sticky;top:0;float:right;z-index:15;display:flex;align-items:center;justify-content:center;width:37px;height:37px;margin:-7px -8px 8px 8px;background:var(--soft,#edf1ff);color:var(--ink,#203252);border:1px solid var(--line,#d8dfef);border-radius:11px;font-size:23px;font-weight:650;cursor:pointer}
+#dialog .toolbar:has(>[data-close]){justify-content:flex-end!important;margin-top:22px!important;gap:10px}
+#dialog p.sub{margin-top:10px;line-height:1.65}
+.lsb192-inline-info{font-size:12px;color:var(--muted,#67748d);margin:8px 0 15px;line-height:1.5}
+@media(max-width:900px){
+ body.lsb-f23-director:not(.loginmode) #app{width:100%!important;max-width:100%!important;min-width:0!important}
+ body.lsb-f23-director:not(.loginmode) #app .heading{margin:0 0 17px!important}
+ body.lsb-f23-director:not(.loginmode) #app .panel{max-width:100%!important;min-width:0!important;margin-bottom:18px!important}
+ body.lsb-f23-director:not(.loginmode) #app :is(.panelbody,.panelhead){padding:16px!important}
+ body.lsb-f23-director:not(.loginmode) #app .heading .toolbar{gap:8px!important}
+ body.lsb-f23-director:not(.loginmode) #app .att-month9{display:grid;grid-template-columns:48px minmax(0,1fr) 48px;align-items:center;gap:5px}
+ body.lsb-f23-director:not(.loginmode) #app .att-month9 h2{text-align:center;font-size:17px!important;min-width:0}
+ body.lsb-f23-director:not(.loginmode) #app .att-month9 label{grid-column:1/-1;justify-content:center;margin-top:8px}
+ body.lsb-f23-director:not(.loginmode) #app .att-month9 button[data-attmonth]{width:48px!important;font-size:26px!important;padding:5px!important}
+}
+@media(max-width:950px){
+ /* Pagos: tarjetas verticales con nombre en primer plano, código, situación y acción visible. */
+ html body.lsb-f23-director:not(.loginmode) #app .tablewrap.lsb192-paylist{display:block!important;width:100%!important;max-width:100%!important;min-width:0!important;overflow:visible!important;padding:0!important;border:0!important;background:transparent!important}
+ html body.lsb-f23-director:not(.loginmode) #app .tablewrap.lsb192-paylist table{display:block!important;width:100%!important;min-width:0!important;max-width:100%!important;white-space:normal!important;table-layout:auto!important}
+ html body.lsb-f23-director:not(.loginmode) #app .tablewrap.lsb192-paylist thead{display:none!important}
+ html body.lsb-f23-director:not(.loginmode) #app .tablewrap.lsb192-paylist tbody{display:grid!important;grid-template-columns:repeat(auto-fit,minmax(min(100%,330px),1fr))!important;gap:13px!important;padding:3px 0!important;min-width:0!important}
+ html body.lsb-f23-director:not(.loginmode) #app .tablewrap.lsb192-paylist tbody>tr{display:flex!important;flex-direction:column!important;gap:0!important;width:100%!important;min-width:0!important;max-width:100%!important;margin:0!important;padding:17px 16px!important;border:1px solid #dce4f3!important;border-radius:17px!important;background:var(--surface,#fff)!important;box-shadow:0 6px 18px #233c6010!important}
+ html body.lsb-f23-director:not(.loginmode) #app .tablewrap.lsb192-paylist tbody>tr>td{display:block!important;position:static!important;float:none!important;left:auto!important;order:initial!important;width:100%!important;min-width:0!important;max-width:100%!important;box-shadow:none!important;border:0!important;border-bottom:1px solid var(--line,#e5eaf4)!important;padding:10px 0!important;margin:0!important;background:transparent!important;color:var(--ink,#253451)!important;font-size:13px!important;line-height:1.45!important;white-space:normal!important;overflow-wrap:anywhere!important}
+ html body.lsb-f23-director:not(.loginmode) #app .tablewrap.lsb192-paylist tbody>tr>td::before{display:none!important;content:none!important}
+ html body.lsb-f23-director:not(.loginmode) #app .tablewrap.lsb192-paylist tbody>tr>td:first-child{order:0!important;font-size:19px!important;font-weight:850!important;line-height:1.3!important;padding:0 0 7px!important;border:0!important;color:var(--ink,#1e304e)!important}
+ html body.lsb-f23-director:not(.loginmode) #app .tablewrap.lsb192-paylist tbody>tr>td:nth-child(2){order:1!important;padding:0 0 11px!important;font-size:12px!important;color:var(--muted,#67748a)!important}
+ html body.lsb-f23-director:not(.loginmode) #app .tablewrap.lsb192-paylist tbody>tr>td:nth-child(3){order:2!important;padding:13px 0!important}
+ html body.lsb-f23-director:not(.loginmode) #app .tablewrap.lsb192-paylist tbody>tr>td:nth-child(3)::before{content:'ESTADO DE MENSUALIDADES'!important;display:block!important;font-size:10px!important;letter-spacing:.07em;color:var(--muted,#67748a)!important;margin-bottom:7px!important;font-weight:800!important}
+ html body.lsb-f23-director:not(.loginmode) #app .tablewrap.lsb192-paylist tbody>tr>td:last-child{order:3!important;border:0!important;padding:12px 0 0!important}
+ html body.lsb-f23-director:not(.loginmode) #app .tablewrap.lsb192-paylist tbody>tr>td:last-child button{display:flex!important;align-items:center!important;justify-content:center!important;width:100%!important;min-height:46px!important;background:#3b4193!important;color:#fff!important;border:0!important;border-radius:12px!important;font-size:13px!important;font-weight:800!important;box-shadow:none!important}
+ /* Expediente de estudiantes: sin desplazamiento horizontal en móvil; no se duplican acciones. */
+ html body.lsb-f23-director:not(.loginmode) #app #lsb190-roster .tablewrap{width:100%!important;max-width:100%!important;overflow:visible!important;padding:0!important;border:0!important;box-shadow:none!important}
+ html body.lsb-f23-director:not(.loginmode) #app #lsb190-roster .tablewrap>table{display:block!important;width:100%!important;min-width:0!important;max-width:100%!important;white-space:normal!important}
+ html body.lsb-f23-director:not(.loginmode) #app #lsb190-roster .tablewrap thead{display:none!important}
+ html body.lsb-f23-director:not(.loginmode) #app #lsb190-roster .tablewrap tbody{display:grid!important;grid-template-columns:repeat(auto-fit,minmax(min(100%,310px),1fr))!important;gap:12px!important;padding:3px!important}
+ html body.lsb-f23-director:not(.loginmode) #app #lsb190-roster .tablewrap tr{display:flex!important;flex-direction:column!important;width:100%!important;min-width:0!important;max-width:100%!important;margin:0!important;padding:15px!important;background:var(--surface,#fff)!important;border:1px solid var(--line,#e2e7f4)!important;border-radius:16px!important;box-shadow:0 4px 18px #1829520b!important}
+ html body.lsb-f23-director:not(.loginmode) #app #lsb190-roster .tablewrap td{display:block!important;position:static!important;left:auto!important;float:none!important;min-width:0!important;max-width:100%!important;width:100%!important;padding:8px 0!important;margin:0!important;white-space:normal!important;overflow-wrap:anywhere!important;box-shadow:none!important;border:0!important;border-bottom:1px solid var(--line,#e4eaf4)!important;background:transparent!important;color:var(--ink,#23324c)!important;font-size:13px!important}
+ html body.lsb-f23-director:not(.loginmode) #app #lsb190-roster .tablewrap td:first-child{font-size:17px!important;line-height:1.4!important;font-weight:850!important;position:static!important;min-width:0!important;max-width:100%!important;border:0!important;white-space:normal!important}
+ html body.lsb-f23-director:not(.loginmode) #app #lsb190-roster .tablewrap td:nth-child(2)::before{display:block!important;content:'CÓDIGO PERSONAL'!important;font-size:10px!important;color:var(--muted,#7b859b)!important;font-weight:750!important;margin-bottom:5px!important}
+ html body.lsb-f23-director:not(.loginmode) #app #lsb190-roster .tablewrap td:nth-child(3)::before{display:block!important;content:'GRADO Y SECCIÓN'!important;font-size:10px!important;color:var(--muted,#7b859b)!important;font-weight:750!important;margin-bottom:5px!important}
+ html body.lsb-f23-director:not(.loginmode) #app #lsb190-roster .tablewrap td:last-child{border:0!important;padding-bottom:0!important}
+ html body.lsb-f23-director:not(.loginmode) #app #lsb190-roster .tablewrap td:last-child :is(button,.button){width:100%!important;min-height:44px!important;justify-content:center!important;white-space:normal!important}
+ html body.lsb-f23-director:not(.loginmode) #app #lsb190-roster .tablewrap td::before{content:none!important}
+ html body.lsb-f23-director:not(.loginmode) #app .lsb190-swipe-guide{display:none!important}
+ /* Asistencia: conservar nombre, estado, observaciones y controles por alumno en vertical. */
+ html body.lsb-f23-director:not(.loginmode) #app .tablewrap.lsb192-att-roster{display:block!important;width:100%!important;overflow:visible!important;padding:0!important;border:0!important}
+ html body.lsb-f23-director:not(.loginmode) #app .tablewrap.lsb192-att-roster>table{display:block!important;width:100%!important;min-width:0!important;max-width:100%!important}
+ html body.lsb-f23-director:not(.loginmode) #app .tablewrap.lsb192-att-roster thead{display:none!important}
+ html body.lsb-f23-director:not(.loginmode) #app .tablewrap.lsb192-att-roster tbody{display:grid!important;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr))!important;gap:13px!important}
+ html body.lsb-f23-director:not(.loginmode) #app .tablewrap.lsb192-att-roster tbody>tr{display:flex!important;flex-direction:column!important;width:100%!important;min-width:0!important;max-width:100%!important;gap:0!important;border:1px solid #dce5f2!important;border-radius:17px!important;padding:15px!important;margin:0!important;background:var(--surface,#fff)!important;box-shadow:0 5px 15px #26355b0c!important}
+ html body.lsb-f23-director:not(.loginmode) #app .tablewrap.lsb192-att-roster tbody>tr>td{display:block!important;position:static!important;float:none!important;order:initial!important;left:auto!important;width:100%!important;min-width:0!important;max-width:100%!important;margin:0!important;padding:8px 0!important;border:0!important;border-bottom:1px solid var(--line,#e2e8f3)!important;box-shadow:none!important;background:transparent!important;white-space:normal!important;overflow-wrap:anywhere!important;font-size:13px!important;color:var(--ink,#253451)!important}
+ html body.lsb-f23-director:not(.loginmode) #app .tablewrap.lsb192-att-roster tbody>tr>td::before{content:none!important;display:none!important}
+ html body.lsb-f23-director:not(.loginmode) #app .tablewrap.lsb192-att-roster tbody>tr>td:nth-child(2){order:0!important;font-size:18px!important;font-weight:850!important;line-height:1.36!important;padding:0 0 9px!important}
+ html body.lsb-f23-director:not(.loginmode) #app .tablewrap.lsb192-att-roster tbody>tr>td:first-child{order:1!important;font-size:12px!important;color:var(--muted,#71809c)!important;padding:0 0 11px!important}
+ html body.lsb-f23-director:not(.loginmode) #app .tablewrap.lsb192-att-roster tbody>tr>td:nth-child(3){order:2!important;padding:12px 0!important}
+ html body.lsb-f23-director:not(.loginmode) #app .tablewrap.lsb192-att-roster tbody>tr>td:nth-child(3)::before{content:'ASISTENCIA'!important;display:block!important;color:var(--muted,#697892)!important;font-size:10px!important;font-weight:800!important;margin-bottom:8px!important}
+ html body.lsb-f23-director:not(.loginmode) #app .tablewrap.lsb192-att-roster tbody>tr>td:last-child{order:3!important;border:0!important;padding-bottom:0!important}
+ html body.lsb-f23-director:not(.loginmode) #app .tablewrap.lsb192-att-roster tbody>tr>td:last-child::before{content:'OBSERVACIONES'!important;display:block!important;font-size:10px!important;color:var(--muted,#697892)!important;font-weight:800!important;margin-bottom:7px!important}
+ html body.lsb-f23-director:not(.loginmode) #app .tablewrap.lsb192-att-roster .att-states9{display:flex!important;flex-wrap:wrap!important;gap:7px!important}
+ html body.lsb-f23-director:not(.loginmode) #app .tablewrap.lsb192-att-roster .att-states9 button{flex:1 1 85px!important;min-height:44px!important;padding:8px 6px!important;font-size:12px!important;white-space:normal!important}
+ html body.lsb-f23-director:not(.loginmode) #app .tablewrap.lsb192-att-roster .att-states9 button.selected{font-weight:850!important;outline:2px solid #3b4193!important;outline-offset:1px!important}
+ /* Historial mensual de pagos: tarjetas sin desplazamiento lateral. */
+ html body.lsb-f23-director:not(.loginmode) #app .tablewrap.lsb192-payhist{display:block!important;width:100%!important;overflow:visible!important;padding:0!important}
+ html body.lsb-f23-director:not(.loginmode) #app .tablewrap.lsb192-payhist>table{display:block!important;width:100%!important;min-width:0!important;max-width:100%!important}
+ html body.lsb-f23-director:not(.loginmode) #app .tablewrap.lsb192-payhist thead{display:none!important}
+ html body.lsb-f23-director:not(.loginmode) #app .tablewrap.lsb192-payhist tbody{display:grid!important;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr))!important;gap:10px!important;padding:4px 0!important}
+ html body.lsb-f23-director:not(.loginmode) #app .tablewrap.lsb192-payhist tbody>tr{display:flex!important;flex-direction:column!important;gap:5px!important;padding:14px!important;margin:0!important;width:100%!important;min-width:0!important;background:var(--surface,#fff)!important;border:1px solid var(--line,#e2e8f4)!important;border-radius:14px!important}
+ html body.lsb-f23-director:not(.loginmode) #app .tablewrap.lsb192-payhist tbody>tr>td{display:flex!important;flex-direction:column!important;align-items:flex-start!important;position:static!important;float:none!important;width:100%!important;min-width:0!important;max-width:100%!important;gap:5px!important;white-space:normal!important;padding:7px 0!important;margin:0!important;border:0!important;background:transparent!important;color:var(--ink,#253451)!important;font-size:12px!important;overflow-wrap:anywhere!important}
+ html body.lsb-f23-director:not(.loginmode) #app .tablewrap.lsb192-payhist tbody>tr>td::before{content:attr(data-lsb192-label)!important;display:block!important;font-size:10px!important;letter-spacing:.05em!important;color:var(--muted,#748197)!important;font-weight:800!important}
+ html body.lsb-f23-director:not(.loginmode) #app .tablewrap.lsb192-payhist tbody>tr>td:first-child{font-size:17px!important;font-weight:850!important}
+ html body.lsb-f23-director:not(.loginmode) #app .tablewrap.lsb192-payhist tbody>tr>td:first-child::before{display:none!important}
+ html body.lsb-f23-director:not(.loginmode) #app .tablewrap.lsb192-payhist tbody>tr>td button{min-height:39px!important;width:100%!important}
+}
+@media(max-width:640px){
+ body.lsb-f23-director:not(.loginmode) #app .panel{border-radius:17px!important}
+ body.lsb-f23-director:not(.loginmode) #app .filters{grid-template-columns:minmax(0,1fr)!important;width:100%!important}
+ body.lsb-f23-director:not(.loginmode) #app .filters label{min-width:0!important}
+ body.lsb-f23-director:not(.loginmode) #app .toolbar{max-width:100%;gap:9px!important}
+ body.lsb-f23-director:not(.loginmode) #app .heading .toolbar :is(button,.button){width:100%!important;max-width:100%!important}
+ #dialog .lsb192-modal-x{width:40px;height:40px}
+}
+@media print{
+ .lsb192-att-search,.lsb192-modal-x,.lsb192-inline-info{display:none!important}
+ #app .tablewrap.lsb192-paylist>table,#app .tablewrap.lsb192-payhist>table,#app #lsb190-roster .tablewrap>table,#app .tablewrap.lsb192-att-roster>table{display:table!important}
+}
+</style>
+
+<style id="lsb-f192-history-mobile">
+/* F192 - convierte el historial de expedientes en fichas en teléfono. */
+@media screen and (max-width:700px){
+ html body #dialog .lsb-f189-history-scroll{overflow:visible!important;max-height:none!important;border:0!important;padding:0!important}
+ html body #dialog .lsb-f189-history-scroll>table{display:block!important;min-width:0!important;max-width:100%!important;width:100%!important;white-space:normal!important}
+ html body #dialog .lsb-f189-history-scroll thead{display:none!important}
+ html body #dialog .lsb-f189-history-scroll tbody{display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:10px!important}
+ html body #dialog .lsb-f189-history-scroll tbody>tr{display:flex!important;flex-direction:column!important;width:100%!important;min-width:0!important;max-width:100%!important;margin:0!important;padding:12px 14px!important;border:1px solid var(--line,#dfe5f1)!important;border-radius:13px!important;background:var(--surface,#fff)!important;box-shadow:none!important}
+ html body #dialog .lsb-f189-history-scroll tbody>tr>td{display:block!important;position:static!important;float:none!important;left:auto!important;right:auto!important;width:100%!important;min-width:0!important;max-width:100%!important;padding:7px 0!important;margin:0!important;border:0!important;border-bottom:1px solid var(--line,#e5eaf4)!important;box-shadow:none!important;white-space:normal!important;overflow-wrap:anywhere!important;background:transparent!important;color:var(--ink,#263451)!important;font-size:13px!important}
+ html body #dialog .lsb-f189-history-scroll tbody>tr>td:last-child{border:0!important}
+ html body #dialog .lsb-f189-history-scroll tbody>tr>td::before{content:attr(data-lsb192-label)!important;display:block!important;margin:0 0 5px!important;color:var(--muted,#73809a)!important;font-size:10px!important;font-weight:800!important;letter-spacing:.06em!important}
+ html body #dialog .lsb-f189-history-scroll tbody>tr>td:first-child{font-weight:850!important;font-size:15px!important}
+}
+</style>
+
+<script id="lsb-f192-functional-corrections">
+(function(){
+'use strict';
+const app=document.getElementById('app');
+const modalEl=document.getElementById('dialog');
+const norm=value=>String(value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('es').trim();
+let pending=false;
+let searchAtt='';
+const touched=new WeakSet();
+function isDirection(){return document.body.classList.contains('lsb-f23-director')&&!document.body.classList.contains('loginmode')&&typeof role!=='undefined'&&role==='admin';}
+function labelButtons(){
+ for(const b of app.querySelectorAll('button[data-action],button#attback9')){
+  if((b.textContent||'').trim()==='Todos los grados')b.textContent='← Volver a todos los grados';
+ }
+}
+function paymentList(){
+ if(document.body.dataset.page!=='payments')return;
+ const search=app.querySelector('#lsb1914paysearch');
+ if(search){search.type='search';search.autocomplete='off';search.setAttribute('aria-label','Buscar estudiante por nombre, apellidos o código');search.placeholder='Escribe el nombre, apellido o código';}
+ const tables=[...app.querySelectorAll('.tablewrap')].filter(w=>w.querySelector(':scope > table'));
+ for(const wrap of tables){
+  const headers=[...wrap.querySelectorAll('thead th')].map(h=>norm(h.textContent));
+  const hasStudents=headers[0]?.includes('estudiante')&&headers.some(h=>h.includes('codigo'));
+  const months=headers[0]?.includes('mes')&&headers.some(h=>h.includes('estado'));
+  if(hasStudents){
+   wrap.classList.add('lsb192-paylist');wrap.classList.remove('f180-card-table','lsb186-wide-table');
+   if(!touched.has(wrap)){
+    touched.add(wrap);wrap.setAttribute('aria-label','Estudiantes y acceso al registro de pagos');
+    const tbody=wrap.querySelector('tbody');
+    if(tbody){
+      const rows=[...tbody.querySelectorAll(':scope > tr')];
+      for(const tr of rows){
+        const btn=tr.querySelector('button[data-action="lsb1914open"]');
+        const record=btn&&typeof db!=='undefined'&&db.students?.find(s=>String(s.id)===String(btn.dataset.arg));
+        const cell=tr.querySelector('td:first-child');
+        if(record&&cell){
+          const name=(record.lastNames&&record.firstNames)?record.lastNames+', '+record.firstNames:(typeof window.lsbF174StudentName==='function'?window.lsbF174StudentName(record):record.name);
+          cell.textContent=name;
+        }
+        const display=cell?.textContent||'';
+        tr.setAttribute('aria-label','Estudiante: '+display);
+      }
+      // Orden alfabético por los apellidos mostrados, sin reconstruir controles.
+      rows.sort((a,b)=>norm(a.querySelector('td')?.textContent).localeCompare(norm(b.querySelector('td')?.textContent),'es'));
+      tbody.append(...rows);
+    }
+   }
+  }else if(months){
+   wrap.classList.add('lsb192-payhist');wrap.classList.remove('f180-card-table','lsb186-wide-table');
+   const cols=[...wrap.querySelectorAll('thead th')].map(x=>(x.textContent||'').trim());
+   wrap.querySelectorAll('tbody tr').forEach(tr=>[...tr.querySelectorAll('td')].forEach((td,i)=>td.dataset.lsb192Label=cols[i]||'Dato'));
+  }
+ }
+}
+function students(){
+ if(document.body.dataset.page!=='students')return;
+ const roster=app.querySelector('#lsb190-roster');
+ const grouped=Boolean(roster);
+ if(grouped){
+  // Registro único en portada: no duplicar en la carpeta del grado.
+  app.querySelectorAll('.heading button[data-action="newstudent"]').forEach(b=>b.remove());
+  const guide=app.querySelector('.lsb190-swipe-guide');if(guide&&guide.textContent!=='Selecciona «Expediente» para consultar o editar los datos del estudiante.')guide.textContent='Selecciona «Expediente» para consultar o editar los datos del estudiante.';
+ }else{
+  const bar=app.querySelector('.heading .toolbar');
+  if(bar&&!bar.querySelector('#lsb192-import')){
+    const importBtn=document.createElement('button');importBtn.id='lsb192-import';importBtn.type='button';importBtn.className='button secondary';importBtn.textContent='Importar Excel';
+    importBtn.addEventListener('click',()=>{if(typeof go==='function')go('importstudents')});bar.append(importBtn);
+    const exportBtn=document.createElement('button');exportBtn.id='lsb192-export-all';exportBtn.type='button';exportBtn.className='button secondary';exportBtn.textContent='Exportar registro general (Excel)';
+    exportBtn.addEventListener('click',exportAll);bar.append(exportBtn);
+  }
+ }
+}
+async function exportAll(){
+ if(!isDirection())return;
+ const exportBtn=app.querySelector('#lsb192-export-all');if(exportBtn)exportBtn.disabled=true;
+ try{
+  if(typeof workbookSheet!=='function'||typeof buildWorkbook6!=='function'||typeof downloadBlob!=='function')throw new Error('Exportador no disponible');
+  const students=(typeof db!=='undefined'&&Array.isArray(db.students))?db.students:[];
+  if(!students.length){if(typeof toast==='function')toast('No hay estudiantes cargados para exportar.');return;}
+  const records=students.map(s=>[String(s.code||''),String(s.lastNames||''),String(s.firstNames||''),String(s.name||''),String(typeof groupName==='function'?groupName(s.group):s.group||''),String(typeof cycleYear==='function'?cycleYear():'')]);
+  records.sort((a,b)=>norm(a[1]||a[3]).localeCompare(norm(b[1]||b[3]),'es'));
+  const sheet=workbookSheet('ESTUDIANTES',[['Código personal','Apellidos','Nombres','Nombre registrado','Grado y sección','Ciclo escolar'],...records],[1],[],[25,29,29,40,40,20]);
+  const blob=await buildWorkbook6([sheet]);
+  downloadBlob(blob,'LSB_Registro_General_Estudiantes.xlsx');
+  if(students.length>=1000&&typeof toast==='function')toast('Se exportaron los estudiantes cargados. Si hay más registros en Supabase, confirma que se hayan cargado todos.');
+ }catch(e){console.error('LSB F192 exportación:',e);if(typeof toast==='function')toast('No se pudo exportar el Excel: '+(e?.message||e));}
+ finally{if(exportBtn?.isConnected)exportBtn.disabled=false;}
+}
+function attendance(){
+ if(document.body.dataset.page!=='attendance')return;
+ const select=app.querySelector('#attstudent9');
+ if(select&&!app.querySelector('.lsb192-att-search')){
+  const options=[...select.options].map(o=>({id:o.value,text:o.textContent||''}));
+  const wrap=document.createElement('div');wrap.className='lsb192-att-search';
+  const label=document.createElement('label');label.textContent='Buscar asistencia por estudiante o código';
+  const input=document.createElement('input');input.id='lsb192-att-input';input.type='search';input.placeholder='Escribe un nombre, apellido o código';input.autocomplete='off';input.value=searchAtt;input.setAttribute('aria-label','Buscar estudiante para consultar asistencia');
+  label.append(input);wrap.append(label);
+  const note=document.createElement('p');note.className='lsb192-att-note';note.textContent='Escribe para encontrar al estudiante. Usa «Registro del grado» para marcar la asistencia de toda la sección.';wrap.append(note);
+  const results=document.createElement('div');results.id='lsb192-att-results';results.setAttribute('aria-live','polite');wrap.append(results);
+  const reset=document.createElement('button');reset.type='button';reset.className='button secondary lsb192-att-back';reset.textContent='Registro del grado';
+  reset.onclick=()=>{searchAtt='';if(select.querySelector('option[value=""]')){select.value='';select.dispatchEvent(new Event('change',{bubbles:true}));}else{input.value='';show()}};
+  wrap.append(reset);
+  select.classList.add('lsb192-native-select');
+  const selectLabel=select.closest('label');(selectLabel||select).insertAdjacentElement('beforebegin',wrap);
+  function choose(id){if(![...select.options].some(o=>o.value===id))return;select.value=id;searchAtt=options.find(o=>o.id===id)?.text||'';select.dispatchEvent(new Event('change',{bubbles:true}));}
+  function show(){
+   const q=norm(input.value);results.replaceChildren();
+   if(!q){return;}
+   const hits=options.filter(o=>o.id&&norm(o.text).includes(q));
+   const count=document.createElement('p');count.className='lsb192-att-note';count.textContent=hits.length+' coincidencia(s)'+(hits.length>40?' · Se muestran las primeras 40':'');results.append(count);
+   if(!hits.length)return;
+   hits.slice(0,40).forEach(o=>{
+    const b=document.createElement('button');b.className='lsb192-att-result';b.type='button';
+    const name=document.createElement('strong');name.textContent=o.text;b.append(name);
+    b.addEventListener('click',()=>choose(o.id));results.append(b);
+   });
+  }
+  input.addEventListener('input',()=>{searchAtt=input.value;show();});
+  input.addEventListener('keydown',e=>{if(e.key!=='Enter')return;e.preventDefault();const first=results.querySelector('button.lsb192-att-result');if(first)first.click();});
+  if(searchAtt)show();
+ }
+ for(const wrap of app.querySelectorAll('.tablewrap')){
+  const heads=[...wrap.querySelectorAll('thead th')].map(h=>norm(h.textContent));
+  if(heads.length===4&&heads[0]?.includes('codigo')&&heads[1]?.includes('apellidos')&&heads[2]?.includes('asistencia')){
+   wrap.classList.add('lsb192-att-roster');wrap.classList.remove('f180-card-table','lsb186-wide-table');
+  }
+ }
+}
+function closeProfile(){const root=document.querySelector('#lsb-f23-shell')?.shadowRoot;const menu=root?.getElementById('profile-menu');if(menu&&!menu.hidden)menu.hidden=true;}
+function enhanceProfile(){
+ const root=document.querySelector('#lsb-f23-shell')?.shadowRoot;
+ if(!root||root.__lsb192Menu)return;
+ root.__lsb192Menu=true;
+ root.addEventListener('click',e=>{const menu=root.getElementById('profile-menu');if(!menu||menu.hidden)return;const path=e.composedPath();if(path.includes(menu)||path.includes(root.getElementById('profile-top')))return;menu.hidden=true;});
+ document.addEventListener('pointerdown',e=>{if(e.composedPath().includes(document.getElementById('lsb-f23-shell')))return;closeProfile()});
+ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeProfile()});
+}
+function modalDirty(){if(!modalEl)return false;const fields=[...modalEl.querySelectorAll('input:not([type=hidden]),textarea,select')];return fields.some(el=>{const initial=el.dataset.lsb192Initial;return initial!==undefined&&initial!==getState(el)});}
+function getState(el){return (el.type==='checkbox'||el.type==='radio')?String(el.checked):String(el.value);}
+async function safeCloseDialog(){if(!modalEl?.open)return;if(modalDirty()&&typeof window.lsbPwaConfirm==='function'){const ok=await window.lsbPwaConfirm('Hay cambios en el formulario sin guardar. ¿Cerrar y descartarlos?');if(!ok)return;}modalEl.close();}
+function annotateHistory(){
+ if(!modalEl?.open)return;
+ for(const wrap of modalEl.querySelectorAll('.lsb-f189-history-scroll')){
+  const names=[...wrap.querySelectorAll('thead tr:first-child th')].map(x=>x.textContent.trim());
+  wrap.querySelectorAll('tbody tr').forEach(row=>[...row.querySelectorAll(':scope > td')].forEach((td,i)=>td.dataset.lsb192Label=names[i]||'Información'));
+ }
+}
+function decorateDialog(){
+ if(!modalEl?.open||modalEl.querySelector('.lsb192-modal-x'))return;
+ const x=document.createElement('button');x.type='button';x.className='lsb192-modal-x';x.title='Cerrar ventana';x.setAttribute('aria-label','Cerrar ventana');x.textContent='×';
+ x.addEventListener('click',safeCloseDialog);modalEl.prepend(x);
+ modalEl.querySelectorAll('input:not([type=hidden]),textarea,select').forEach(el=>el.dataset.lsb192Initial=getState(el));
+}
+function update(){pending=false;try{if(isDirection()&&app){labelButtons();paymentList();students();attendance();enhanceProfile();}decorateDialog();annotateHistory();}catch(error){console.warn('F192 ajustes visuales:',error)}}
+function schedule(){if(pending)return;pending=true;requestAnimationFrame(update)}
+if(app)new MutationObserver(schedule).observe(app,{childList:true,subtree:true});
+if(modalEl){new MutationObserver(schedule).observe(modalEl,{childList:true,subtree:true});modalEl.addEventListener('click',e=>{if(e.target===modalEl)void safeCloseDialog();});}
+window.addEventListener('resize',schedule,{passive:true});
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',schedule,{once:true});else schedule();
+})();
+</script>
+<script id="lsb-f192-shadow-visual">
+(function(){
+'use strict';
+const root=document.getElementById('lsb-f23-shell')?.shadowRoot;
+if(!root||root.getElementById('lsb-f192-shadow-css'))return;
+const style=document.createElement('style');style.id='lsb-f192-shadow-css';
+style.textContent=`
+#detail-content{min-width:0;max-width:100%}
+#detail-view{min-width:0;max-width:100%}
+.profile-menu{box-shadow:0 12px 35px #15233e25!important}
+.navgroup-head:hover,.navlink:hover{filter:brightness(.97)}
+#detail-content .placeholder-panel{overflow:visible}
+@media(max-width:950px){
+ .content-view,.workspace,#detail-view,#detail-content{width:100%!important;max-width:100%!important;min-width:0!important;box-sizing:border-box!important}
+ #detail-content{padding:0!important}
+ #detail-view{padding:12px 12px 95px!important}
+ #detail-content .tablewrap{max-width:100%!important}
+ .topbar{max-width:100%;min-width:0}
+}
+@media(max-width:600px){#detail-view{padding:12px 10px 95px!important}.content-view{padding-left:8px!important;padding-right:8px!important}}
+`;
+root.append(style);
+})();
+</script>
 </body></html>
