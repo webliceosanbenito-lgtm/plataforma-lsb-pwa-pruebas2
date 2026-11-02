@@ -3723,10 +3723,10 @@ async function openSchoolYear17(year){
  body+='<p class="sub" style="margin-top:12px">El estado del ciclo controla las nuevas matrículas. Cambiarlo no modifica estudiantes, pagos ni calificaciones.</p>';
  const activeOther=(r.lsb_school_years||[]).filter(v=>v.active===true&&v.id!==y.id);
  if(activeOther.length)body+='<p class="sub" style="color:#ad3434">Hay otro ciclo activo ('+esc17(activeOther.map(v=>v.year).join(', '))+'). Primero debe ponerse en preparación desde Dirección.</p>';
- body+='<div class="toolbar"><button type="button" class="button secondary" data-close>Cerrar</button><button type="button" class="button secondary" id="lsb19120-calendar">Calendario académico</button><button type="button" class="button" id="lsb-f16312-open2">Abrir segundo bimestre (prueba)</button><button type="button" class="button" id="lsb19117-add">Crear sección</button><button type="button" class="button secondary" id="lsb19119-state" '+(!y.active&&activeOther.length?'disabled':'')+'>'+(y.active?'Poner en preparación':'Activar ciclo')+'</button></div>';
+ body+='<div class="toolbar"><button type="button" class="button secondary" data-close>Cerrar</button><button type="button" class="button secondary" id="lsb19120-calendar">Calendario académico</button><button type="button" class="button" id="lsb-f16312-open2">Administrar bimestres</button><button type="button" class="button" id="lsb19117-add">Crear sección</button><button type="button" class="button secondary" id="lsb19119-state" '+(!y.active&&activeOther.length?'disabled':'')+'>'+(y.active?'Poner en preparación':'Activar ciclo')+'</button></div>';
  modal(body);
  const calendarBtn=document.getElementById('lsb19120-calendar');if(calendarBtn)calendarBtn.onclick=()=>openBimesterCalendar20(y);
- const testBtn=document.getElementById('lsb-f16312-open2');if(testBtn){testBtn.hidden=Number(y.year)!==2027;testBtn.onclick=()=>lsbF16312OpenSecond(y);}
+ const testBtn=document.getElementById('lsb-f16312-open2');if(testBtn){testBtn.hidden=!y.active;testBtn.onclick=()=>{document.getElementById('dialog')?.close();go('periods');};}
  const btn=document.getElementById('lsb19117-add');if(btn)btn.onclick=()=>createSectionForm17(y);
  const stateBtn=document.getElementById('lsb19119-state');if(stateBtn)stateBtn.onclick=()=>setSchoolYearState19(y,stateBtn);
 }
@@ -14746,4 +14746,143 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
  window.lsb201FamilyPaymentsDiagnostic=()=>({family:family(),page:typeof page==='undefined'?null:page,loaded:state.loaded,busy:state.busy,error:state.error,paidRows:state.monthRows.length,visibleReceipts:state.receipts.length});
 })();
 
-</script></body></html>
+</script><style id="lsb-f207-bimestres-style">
+#lsb207-dashboard{max-width:1150px;margin:12px auto 34px;font-family:inherit;color:var(--ink,#182343)}
+#lsb207-dashboard *{box-sizing:border-box}
+#lsb207-dashboard [hidden]{display:none!important}
+#lsb207-dashboard .f207-head{padding:19px 20px;background:linear-gradient(125deg,#222f69,#454b9a);color:white;border-radius:19px;margin-bottom:14px;display:flex;gap:12px;justify-content:space-between;align-items:center;flex-wrap:wrap}
+#lsb207-dashboard .f207-head strong{font-size:18px;display:block;line-height:1.3}
+#lsb207-dashboard .f207-head p{font-size:12px;color:#e5eaff;margin:7px 0 0;line-height:1.5}
+#lsb207-dashboard .f207-tag{display:inline-flex;border-radius:30px;padding:7px 11px;font-size:11px;font-weight:750;background:rgba(255,255,255,.17);white-space:nowrap}
+#lsb207-dashboard .f207-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+#lsb207-dashboard .f207-card{min-width:0;border:1px solid #dde3ef;background:#fff;border-radius:15px;padding:14px;box-shadow:0 2px 10px #192a5807}
+#lsb207-dashboard .f207-card.is-current{border-color:#606bbb;box-shadow:0 0 0 2px #676dc024;background:#f8f9ff}
+#lsb207-dashboard .f207-card-top{display:flex;align-items:center;gap:8px;justify-content:space-between;flex-wrap:wrap}
+#lsb207-dashboard .f207-card b{font-size:13px}
+#lsb207-dashboard .f207-state{border-radius:30px;background:#eff2f8;color:#627087;padding:4px 9px;font-size:10px;font-weight:750}
+#lsb207-dashboard .f207-state.open{background:#e4f6ed;color:#176a50}
+#lsb207-dashboard .f207-state.closed{background:#eef0fc;color:#3c4a9d}
+#lsb207-dashboard .f207-card small{display:block;margin-top:11px;color:#69748d;font-size:11px;line-height:1.55}
+#lsb207-dashboard .f207-card .f207-stat{display:block;font-size:21px;font-weight:800;color:#263566;margin-top:11px;font-variant-numeric:tabular-nums}
+#lsb207-dashboard .f207-section{margin-top:15px;border:1px solid #e0e4ee;background:#fff;border-radius:18px;padding:19px;min-width:0}
+#lsb207-dashboard .f207-section h3{font-size:16px;line-height:1.4;margin:0 0 8px}
+#lsb207-dashboard .f207-section p{font-size:13px;line-height:1.6;color:#69758c;margin:8px 0}
+#lsb207-dashboard .f207-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:14px 0}
+#lsb207-dashboard .f207-metric{border:1px solid #e8eaf3;border-radius:12px;padding:11px;background:#f8f9fd;min-width:0}
+#lsb207-dashboard .f207-metric strong{font-size:23px;display:block;color:#263b83;font-variant-numeric:tabular-nums}
+#lsb207-dashboard .f207-metric span{font-size:11px;color:#56627b;line-height:1.4}
+#lsb207-dashboard .f207-alert{padding:12px 14px;border-radius:12px;background:#f8f2e6;color:#806032;font-size:12px;line-height:1.55;overflow-wrap:anywhere}
+#lsb207-dashboard .f207-alert.good{background:#e9f6ef;color:#176847}
+#lsb207-dashboard .f207-actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:14px}
+#lsb207-dashboard button{font:inherit;cursor:pointer;min-width:0;max-width:100%;border:0;border-radius:12px;background:#414b9c;color:white;padding:11px 15px;font-size:12px;font-weight:750;line-height:1.4;white-space:normal;text-align:center}
+#lsb207-dashboard button.secondary{background:#edf0fa;color:#27376a}
+#lsb207-dashboard button:disabled{background:#edf0f5!important;color:#7b869e!important;cursor:not-allowed}
+#lsb207-dashboard button:focus-visible{outline:3px solid #7f86d9;outline-offset:2px}
+#lsb207-dashboard .f207-pending-list{margin:11px 0 0;display:grid;gap:6px;max-height:270px;overflow:auto;padding:2px}
+#lsb207-dashboard .f207-pending-row{border:1px solid #e6eaf3;border-radius:10px;padding:9px 11px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;font-size:12px}
+#lsb207-dashboard .f207-pending-row em{font-size:11px;font-style:normal;color:#8a5262}
+#lsb207-dashboard .f207-fine{font-size:11px!important;color:#818ba0!important}
+#lsb207-dashboard .f207-error{color:#ad3440;font-size:13px}
+#lsb207-finish-modal{display:grid;gap:12px}#lsb207-finish-modal textarea{display:block;min-height:100px;width:100%;margin-top:7px;padding:12px;border:1px solid #ccd4e6;border-radius:11px;font:inherit;resize:vertical}
+#lsb207-finish-modal .f207-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+#lsb207-finish-modal .f207-actions button{white-space:normal}
+@media(max-width:860px){#lsb207-dashboard .f207-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:550px){#lsb207-dashboard{margin:8px 0 25px}#lsb207-dashboard .f207-head{padding:16px;border-radius:14px}#lsb207-dashboard .f207-card{padding:12px;border-radius:12px}#lsb207-dashboard .f207-card .f207-stat{font-size:20px}#lsb207-dashboard .f207-section{padding:14px;border-radius:14px}#lsb207-dashboard .f207-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}#lsb207-dashboard .f207-actions{display:grid;grid-template-columns:1fr}#lsb207-dashboard .f207-actions button{width:100%}#lsb207-dashboard .f207-pending-row{display:grid;gap:4px}}
+</style>
+<script id="lsb-f207-bimestres">
+/* F207 · Dirección: panel de bimestres basado en datos reales y RPC protegidas.
+   Los calendarios y estados no cambian al cargar la página. */
+(function(){
+'use strict';
+const safe=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt=v=>v?String(v).split('-').reverse().join('/'): 'Sin configurar';
+const stateLabel={open:'Abierto',closed:'Cerrado',pending:'Pendiente'};
+const detailLabel={sin_enviar:'Sin enviar',pendiente_revision:'Por revisar',revisado_sin_publicar:'Revisado, falta publicar',pendiente:'Pendiente'};
+const rawPeriod=periodView;
+periodView=function(){
+ if(!LSB18?.authenticated||LSB18.profile?.role!=='admin_general')return rawPeriod.apply(this,arguments);
+ return heading('Administrar bimestres','Control del cierre académico y habilitación del siguiente período desde Dirección.')+
+  '<div id="lsb207-dashboard" aria-live="polite"><section class="f207-section"><h3>Consultando datos académicos…</h3><p>Obteniendo fechas, cuadros y publicaciones de Supabase.</p></section></div>';
+};
+let serial=0,cache=null;
+function year(){const rows=LSB18?.rows?.lsb_school_years||[];return rows.find(y=>y.active===true)||null;}
+function panel(){return document.getElementById('lsb207-dashboard');}
+function statusText(p){return stateLabel[p.state]||'Pendiente'}
+function renderDashboard(data,y){
+ const el=panel();if(!el)return;
+ const ps=(data.periods||[]).slice().sort((a,b)=>a.bimester-b.bimester);
+ const current=ps.find(p=>p.state==='open')||ps.find(p=>p.state==='closed'&&ps.some(q=>q.bimester===p.bimester+1&&q.state==='pending'))||ps[0];
+ if(!current){el.innerHTML='<p>No existen períodos configurados.</p>';return;}
+ const next=ps.find(p=>p.bimester===current.bimester+1);
+ const currentDate=String(data.today_guatemala||'');
+ const allPublished=Number(current.published)===Number(current.total)&&Number(current.total)>0;
+ const periodEnded=!!current.end_date&&currentDate>=current.end_date;
+ const closeOk=current.state==='open'&&allPublished&&periodEnded;
+ const openOk=current.state==='closed'&&next?.state==='pending'&&next.configured&&!!next.start_date&&currentDate>=next.start_date&&ps.every(p=>p.state!=='open');
+ const remaining=Math.max(0,Number(current.total)-Number(current.published));
+ const cards=ps.map(p=>`<article class="f207-card ${p.bimester===current.bimester?'is-current':''}"><div class="f207-card-top"><b>Bimestre ${p.bimester}</b><span class="f207-state ${p.state}">${safe(statusText(p))}</span></div><small>${safe(fmt(p.start_date))} – ${safe(fmt(p.end_date))}</small><strong class="f207-stat">${Number(p.published)} / ${Number(p.total)}</strong><small>Cuadros publicados</small></article>`).join('');
+ const blockers=[];
+ if(current.state==='open'){
+  if(!periodEnded)blockers.push('La fecha de cierre del bimestre todavía no ha llegado.');
+  if(!allPublished)blockers.push('Faltan '+remaining+' cuadros por publicar de '+Number(current.total)+' asignaciones activas.');
+ }else if(current.state==='closed'&&next){
+  if(!next.configured)blockers.push('Primero configura las fechas del bimestre '+next.bimester+'.');
+  else if(!next.start_date||currentDate<next.start_date)blockers.push('El siguiente bimestre comienza el '+fmt(next.start_date)+'.');
+ }else if(current.state==='pending')blockers.push('El bimestre todavía no ha sido habilitado por Dirección.');
+ const alerts=blockers.length?`<div class="f207-alert">${blockers.map(x=>'• '+safe(x)).join('<br>')}</div>`:`<div class="f207-alert good">Se cumplen los requisitos para continuar con la operación autorizada.</div>`;
+ el.innerHTML=`<div class="f207-head"><div><strong>Gestión de bimestres · ${safe(data.year)}</strong><p>Ciclo ${data.active?'activo':'en preparación'} · Consulta verificada en Supabase · ${fmt(currentDate)}</p></div><span class="f207-tag">Dirección general</span></div>
+ <div class="f207-grid">${cards}</div>
+ <section class="f207-section"><h3>Resumen · Bimestre ${current.bimester}</h3><p>La publicación es por materia y sección. El cierre bloquea nuevas modificaciones del período, pero conserva las notas oficiales.</p>
+ <div class="f207-metrics"><div class="f207-metric"><strong>${Number(current.total)}</strong><span>Asignaciones</span></div><div class="f207-metric"><strong>${Number(current.submitted)}</strong><span>Cuadros enviados</span></div><div class="f207-metric"><strong>${Number(current.reviewed)}</strong><span>Cuadros revisados</span></div><div class="f207-metric"><strong>${Number(current.published)}</strong><span>Publicados</span></div></div>${alerts}
+ <div class="f207-actions"><button class="secondary" type="button" data-lsb207="calendar">Configurar fechas académicas</button>${current.state==='open'?`<button type="button" data-lsb207="close" ${closeOk?'':'disabled'}>Finalizar bimestre ${current.bimester}</button>`:''}${current.state==='closed'&&next?`<button type="button" data-lsb207="open" ${openOk?'':'disabled'}>Habilitar bimestre ${next.bimester}</button>`:''}<button class="secondary" type="button" data-lsb207="refresh">Actualizar resumen</button></div>
+ ${remaining>0&&current.state==='open'?`<button class="secondary" type="button" data-lsb207="pending" aria-expanded="false" style="margin-top:10px">Ver ${remaining} cuadros pendientes</button><div id="lsb207-pending" hidden class="f207-pending-list">${(current.pending_courses||[]).map(o=>`<div class="f207-pending-row"><strong>${safe(o.course)} · ${o.grade?safe(o.grade)+' · ':''}Sección ${safe(o.section)}</strong><em>${safe(detailLabel[o.status]||'Pendiente')}</em></div>`).join('')}</div>`:''}
+ <p class="f207-fine">La apertura del siguiente período es independiente del cierre. No se abrirán dos bimestres simultáneamente desde este control.</p></section>`;
+ el.querySelector('[data-lsb207="calendar"]')?.addEventListener('click',()=>{if(typeof openBimesterCalendar20!=='function')return toast('No está disponible la configuración de fechas.');openBimesterCalendar20(y);});
+ el.querySelector('[data-lsb207="refresh"]')?.addEventListener('click',()=>loadDashboard());
+ el.querySelector('[data-lsb207="pending"]')?.addEventListener('click',ev=>{const list=el.querySelector('#lsb207-pending');if(!list)return;list.hidden=!list.hidden;ev.currentTarget.setAttribute('aria-expanded',String(!list.hidden));});
+ el.querySelector('[data-lsb207="close"]')?.addEventListener('click',()=>confirmOperation('close',current.bimester,y));
+ el.querySelector('[data-lsb207="open"]')?.addEventListener('click',()=>confirmOperation('open',next.bimester,y));
+ cache={data,y};
+}
+async function loadDashboard(){
+ const el=panel();if(!el||!LSB18?.authenticated||LSB18.profile?.role!=='admin_general')return;
+ const token=++serial,yy=year();
+ if(!yy){el.innerHTML='<section class="f207-section"><p>No se identificó un ciclo activo. Sincroniza Dirección y vuelve a entrar.</p></section>';return;}
+ el.innerHTML='<section class="f207-section"><h3>Consultando el ciclo '+safe(yy.year)+'…</h3><p>Verificando los cuadros con Supabase.</p></section>';
+ try{
+  const client=lsb18Client();const {data,error}=await client.rpc('lsb_f207_bimester_dashboard',{p_school_year_id:yy.id});
+  if(error)throw error;
+  if(token!==serial||!el.isConnected)return;
+  if(!data||!Array.isArray(data.periods))throw Error('Supabase no devolvió el resumen de bimestres.');
+  renderDashboard(data,yy);
+ }catch(err){if(token!==serial||!el.isConnected)return;el.innerHTML='<section class="f207-section"><h3>No se pudo actualizar el resumen</h3><p class="f207-error">'+safe(err.message||err)+'</p><button type="button" id="lsb207-retry">Volver a consultar</button></section>';el.querySelector('#lsb207-retry')?.addEventListener('click',loadDashboard);}
+}
+function confirmOperation(kind,bim,yy){
+ if(!LSB18?.authenticated||LSB18.profile?.role!=='admin_general')return;
+ const label=kind==='close'?'Cerrar':'Habilitar';
+ const dlg=document.getElementById('dialog');if(!dlg)return;
+ dlg.innerHTML=`<div id="lsb207-finish-modal"><h2>${label} bimestre ${bim} · ${safe(yy.year)}</h2><p class="sub">${kind==='close'?'Se bloqueará la edición de actividades y notas del período. Todas las publicaciones oficiales permanecerán guardadas.':'El bimestre anterior deberá estar cerrado y las fechas del nuevo período ya deberán haber comenzado.'}</p><label class="field">Justificación administrativa (mínimo 15 caracteres)<textarea id="lsb207-reason" maxlength="1500" placeholder="Explica la razón de esta operación"></textarea></label><p id="lsb207-feedback" class="sub" role="alert"></p><div class="f207-actions"><button class="button secondary" type="button" id="lsb207-cancel">Cancelar</button><button class="button" type="button" id="lsb207-confirm">Confirmar ${label.toLowerCase()}</button></div></div>`;
+ if(!dlg.open)dlg.showModal();
+ dlg.querySelector('#lsb207-cancel').onclick=()=>dlg.close();
+ dlg.querySelector('#lsb207-confirm').onclick=async()=>{
+  const msg=dlg.querySelector('#lsb207-feedback'),reason=dlg.querySelector('#lsb207-reason').value.trim();
+  if(reason.length<15){msg.textContent='Escribe al menos 15 caracteres.';return;}
+  const btn=dlg.querySelector('#lsb207-confirm');btn.disabled=true;msg.textContent='Verificando autorización y registros…';
+  try{
+   const fn=kind==='close'?'lsb_f207_close_bimester':'lsb_f207_open_next_bimester';
+   const {error}=await lsb18Client().rpc(fn,{p_school_year_id:yy.id,p_bimester:bim,p_reason:reason});if(error)throw error;
+   dlg.close();toast('Bimestre '+bim+(kind==='close'?' cerrado':' habilitado')+' correctamente.');loadDashboard();
+  }catch(err){msg.textContent=String(err.message||err);btn.disabled=false;}
+ };
+}
+const prevRender=render;
+render=function(){const result=prevRender.apply(this,arguments);if(page==='periods'&&LSB18?.profile?.role==='admin_general')setTimeout(loadDashboard,0);return result;};
+// El calendario se dedica exclusivamente a las fechas: el estado se gestiona en este panel.
+if(typeof lsbPeriodState12==='function')lsbPeriodState12=async function(y,holder){for(let n=1;n<=4;n++){const el=holder?.querySelector('#lsb-period-control12-'+n);if(el)el.innerHTML='<p class="sub">La apertura y el cierre se administran en <strong>Administrar bimestres</strong>.</p>';}};
+// El antiguo control del calendario no debe saltarse el asistente protegido.
+if(typeof lsbPeriodConfirm12==='function')lsbPeriodConfirm12=function(){document.getElementById('dialog')?.close();go('periods');toast('Administra los estados desde Bimestres.');};
+// El botón experimental se retira también en las navegaciones antiguas.
+if(typeof lsbF16312OpenSecond==='function')lsbF16312OpenSecond=function(){document.getElementById('dialog')?.close();go('periods');};
+})();
+</script>
+</body></html>
