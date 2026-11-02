@@ -11297,7 +11297,7 @@ body.loginmode #login.access10 #lsb157-action:hover{text-decoration:underline!im
 body.loginmode.familywelcome10 #login.access10 #lsb157-action{display:none!important}
 html[data-theme=dark] body.loginmode #login.access10 #lsb157-action{color:#bac8f0!important}
 </style><script id="lsb-f157-invitaciones">
-/* F157: safe onboarding for teacher invitations and password recovery. */
+/* F210: safe onboarding for teacher invitations and password recovery. */
 (()=>{
 'use strict';
 const appRoot='https://webliceosanbenito-lgtm.github.io/plataforma-lsb-pwa-pruebas2/';
@@ -11353,7 +11353,7 @@ function show(which){
     const email=overlay.querySelector('#lsb157-email').value.trim().toLowerCase();
     if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))throw Error('Indica un correo electrónico válido.');
     const {error}=await auth.resetPasswordForEmail(email,{redirectTo:appRoot});if(error)throw error;
-    status('Si ese correo tiene una cuenta habilitada, recibirás un enlace. Revisa Recibidos y Spam. Ábrelo desde este dispositivo.',true);
+    status('Supabase aceptó la solicitud, pero esto no confirma la entrega del correo. Revisa Recibidos y Spam. Si no llega, Dirección debe revisar la configuración de envío SMTP. Abre únicamente el enlace más reciente y úsalo una sola vez.',true);
    }
   }catch(err){
     const raw=String(err?.message||'No se pudo procesar la solicitud. Inténtalo más tarde.');
@@ -11371,6 +11371,22 @@ function addEntry(){
  button.style.cssText='order:7!important;align-self:center!important;display:block;max-width:100%;min-height:36px;margin:1px auto 0;padding:5px 9px;border:0;border-radius:8px;box-shadow:none;background:transparent;color:#52659d;font-size:12px;line-height:1.45;font-weight:650;text-align:center;white-space:normal;cursor:pointer';
  button.addEventListener('click',()=>show('request'));forgot.insertAdjacentElement('afterend',button);
 }
+// F210: Conectar el botón principal «Olvidé mi contraseña» al flujo real de Supabase.
+// Se usa captura porque otras capas antiguas asignan un onclick que solo muestra un aviso.
+document.addEventListener('click',function(event){
+ const button=event.target?.closest?.('#login #forgot');
+ if(!button||!document.body.classList.contains('loginmode'))return;
+ event.preventDefault();event.stopImmediatePropagation();
+ if(typeof loginPortal6!=='undefined'&&loginPortal6==='family'){
+  if(typeof toast==='function')toast('Familias utiliza un usuario institucional. Solicita a Dirección la recuperación de tu cuenta familiar.');
+  return;
+ }
+ const loginEmail=String(document.querySelector('#loginform [name=username]')?.value||'').trim().toLowerCase();
+ show('request');
+ if(/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(loginEmail)){
+  const input=overlay?.querySelector('#lsb157-email');if(input)input.value=loginEmail;
+ }
+},true);
 const install=()=>{
  addEntry();let node=document.getElementById('login');if(node)new MutationObserver(()=>{if(!document.getElementById('lsb157-action'))queueMicrotask(addEntry)}).observe(node,{childList:true,subtree:true});
 };
