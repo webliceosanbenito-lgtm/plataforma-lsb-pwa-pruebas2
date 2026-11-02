@@ -2489,6 +2489,30 @@ function printReceipt(v){const w=window.open('','_blank');if(!w){toast('Autoriza
 function showReceipt(id){const rec=RP.receipts.find(r=>r.id===id);if(!rec){toast('No se pudo abrir el recibo. Intenta actualizar la página.');return;}const info=getReceiptInfo(rec);modal('<h2>Recibo institucional</h2>'+receiptMarkup(info)+'<div class="toolbar"><button class="button secondary" id="lsb187-print">Imprimir / guardar PDF</button><button class="button" data-close>Cerrar</button></div>');document.getElementById('lsb187-print').onclick=()=>printReceipt(info);}
 // Puente seguro para abrir recibos desde el historial por grado.
 window.lsb1918ShowReceipt=showReceipt;
+// F203: reutilizar el mismo comprobante institucional desde Familias.
+// Los datos deben haber sido consultados por la cuenta familiar con RLS y
+// verificados nuevamente por el controlador familiar antes de llamar a este puente.
+window.lsb1918FamilyShowReceipt=function(receipt, receiptMonths, linkedStudent){
+  if(!receipt || !receipt.id || !linkedStudent ||
+     LSB18.enrollByStudent?.[linkedStudent.id]?.id!==receipt.enrollment_id){
+    throw Error('Este recibo no corresponde a tu estudiante vinculado.');
+  }
+  const months=(receiptMonths||[])
+    .filter(m=>m.receipt_id===receipt.id && m.enrollment_id===receipt.enrollment_id)
+    .map(m=>Number(m.month_number))
+    .filter(m=>Number.isInteger(m) && m>=1 && m<=12)
+    .sort((a,b)=>a-b);
+  if(!months.length)throw Error('El recibo no contiene mensualidades registradas.');
+  const section=LSB18.enrollByStudent[linkedStudent.id]?.section_id ||
+                LSB18.enrollById?.[receipt.enrollment_id]?.section_id || '';
+  const info={record:receipt, months,student:{...linkedStudent,group:section}};
+  modal('<h2 class="lsb203-dialog-title">Comprobante de pago</h2>'+receiptMarkup(info)+
+        '<div class="toolbar lsb203-receipt-actions">'+
+        '<button class="button secondary" type="button" id="lsb203-print">Imprimir / guardar PDF</button>'+
+        '<button class="button" type="button" data-close>Cerrar</button></div>');
+  const printBtn=document.getElementById('lsb203-print');
+  if(printBtn)printBtn.onclick=()=>printReceipt(info);
+};
 function enrollFor(sid){return LSB18.enrollByStudent[sid]?.id || null;}
 async function fetchPayments(){
  // F200: los meses pagados se consultan independientemente de la visibilidad del comprobante.
@@ -14516,7 +14540,17 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   finally{b.disabled=false;}
  });
 })();
-</script><style id="lsb201-family-payment-css">
+</script><style id="lsb203-family-receipt-mobile">
+/* F203: las acciones del visor familiar deben caber sobre el menú inferior. */
+#dialog:has(.lsb203-receipt-actions){max-width:min(94vw,900px)!important;width:min(94vw,900px)!important;max-height:calc(100dvh - 28px)!important;overflow-y:auto!important;overflow-x:hidden!important;box-sizing:border-box!important;padding:clamp(12px,3vw,22px)!important}
+#dialog .lsb203-dialog-title{margin:0 0 14px!important;color:#263759;font-size:clamp(18px,3.8vw,23px)!important}
+#dialog .lsb203-receipt-actions{display:flex!important;flex-wrap:wrap!important;gap:9px!important;margin:14px 0 0!important;padding:12px 0 0!important;justify-content:flex-end!important;border-top:1px solid #d9deec}
+#dialog .lsb203-receipt-actions .button{min-height:42px!important;font-size:12px!important;white-space:normal!important}
+#dialog:has(.lsb203-receipt-actions) .lsb187-receipt{padding:clamp(11px,2.5vw,20px)!important;max-width:100%!important;box-sizing:border-box!important;overflow:hidden!important}
+@media(max-width:520px){#dialog .lsb203-receipt-actions .button{flex:1 1 145px!important}#dialog:has(.lsb203-receipt-actions) .lsb187-identity{min-width:0!important}#dialog:has(.lsb203-receipt-actions) .lsb187-bottom{gap:8px!important;flex-wrap:wrap!important}#dialog:has(.lsb203-receipt-actions) .lsb187-bottom>div{min-width:0!important;flex:1 1 160px!important}#dialog:has(.lsb203-receipt-actions) .lsb187-ident-title{font-size:15px!important}#dialog:has(.lsb203-receipt-actions) .lsb187-ident-sub{font-size:10px!important}#dialog:has(.lsb203-receipt-actions) .lsb187-row{font-size:12px!important}}
+@media print {#dialog .lsb203-receipt-actions,.lsb203-dialog-title{display:none!important}}
+</style>
+<style id="lsb201-family-payment-css">
 /* F201 — Familias: un solo módulo claro y responsivo, sin controles administrativos. */
 #app .lsb201-family{width:100%;min-width:0;max-width:100%;box-sizing:border-box;color:var(--ink,#223351);padding:0 0 90px}
 #app .lsb201-family *{box-sizing:border-box}
@@ -14645,11 +14679,10 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
    const {data:receiptMonths,error:monthError}=await client.from('lsb_payment_months').select('*').eq('receipt_id',id);
    if(monthError)throw monthError;
    if(!visibleKids().some(x=>LSB18.enrollByStudent[x.id]?.id===data.enrollment_id))throw Error('El comprobante no pertenece a tus estudiantes vinculados.');
-   if(typeof RP==='undefined'||typeof window.lsb1918ShowReceipt!=='function')throw Error('El visor de recibos no está disponible.');
-   RP.receipts=state.receipts.slice();
-   RP.monthRows=state.monthRows.filter(m=>m.receipt_id!==id).concat(receiptMonths||[]);
-   const idx=RP.receipts.findIndex(r=>r.id===id);if(idx!==-1)RP.receipts[idx]=data;
-   window.lsb1918ShowReceipt(id);
+   const linkedStudent=visibleKids().find(x=>LSB18.enrollByStudent[x.id]?.id===data.enrollment_id);
+   if(!linkedStudent)throw Error('El comprobante no pertenece a tus estudiantes vinculados.');
+   if(typeof window.lsb1918FamilyShowReceipt!=='function')throw Error('No se pudo iniciar el comprobante institucional.');
+   window.lsb1918FamilyShowReceipt(data,receiptMonths||[],linkedStudent);
   }catch(error){if(typeof toast==='function')toast('No se pudo abrir: '+String(error?.message||error));}
   finally{b.disabled=false;}
  },true);
