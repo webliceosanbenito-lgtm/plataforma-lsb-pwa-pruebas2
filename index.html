@@ -14511,4 +14511,144 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   finally{b.disabled=false;}
  });
 })();
+</script><style id="lsb201-family-payment-css">
+/* F201 — Familias: un solo módulo claro y responsivo, sin controles administrativos. */
+#app .lsb201-family{width:100%;min-width:0;max-width:100%;box-sizing:border-box;color:var(--ink,#223351);padding:0 0 90px}
+#app .lsb201-family *{box-sizing:border-box}
+#app .lsb201-hero{background:linear-gradient(120deg,#eef5ff,#f2f0ff);border:1px solid #dfe6f4;border-radius:20px;padding:20px 18px;margin-bottom:14px}
+#app .lsb201-eyebrow{font-size:10px;letter-spacing:1.6px;font-weight:800;color:#6b64aa}
+#app .lsb201-hero h1{font-size:clamp(22px,6vw,29px);margin:7px 0!important;color:#25375e}
+#app .lsb201-hero p{font-size:13px;line-height:1.55;color:#5e6f87;margin:0}
+#app .lsb201-person,#app .lsb201-selector{display:grid;gap:4px;border:1px solid #e3e7f2;border-radius:15px;padding:13px 16px;background:var(--surface,#fff);margin-bottom:13px}
+#app .lsb201-person span{font-size:10px;letter-spacing:1px;color:#7886a4;font-weight:800}
+#app .lsb201-person strong{font-size:15px}
+#app .lsb201-selector{font-weight:700;font-size:13px}
+#app .lsb201-selector select{width:100%;max-width:100%;border:1px solid #dce4f1;border-radius:10px;padding:9px;background:var(--surface,#fff);color:inherit}
+#app .lsb201-section{padding:15px;border:1px solid #e2e7f2;background:var(--surface,#fff);border-radius:18px;margin:13px 0;min-width:0}
+#app .lsb201-section-title{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+#app .lsb201-section-title h2{font-size:17px!important;margin:0!important;color:inherit!important}
+#app .lsb201-counter,#app .lsb201-lock{font-size:11px;font-weight:750;color:#586ea2;background:#edf2ff;border-radius:999px;padding:6px 9px}
+#app .lsb201-months{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+#app .lsb201-month{border:1px solid #e6eaf3;border-radius:12px;min-width:0;padding:11px 10px;display:flex;flex-direction:column;justify-content:space-between;gap:7px;background:var(--surface,#fff)}
+#app .lsb201-month strong{display:block;font-size:13px;white-space:nowrap;word-break:normal!important;overflow-wrap:normal!important}
+#app .lsb201-month small{display:block;font-size:10px;color:#7888a2;margin-top:4px;line-height:1.4}
+#app .lsb201-state{display:inline-flex;align-self:flex-start;font-size:10px;font-weight:800;padding:5px 9px;border-radius:999px;white-space:nowrap}
+#app .lsb201-state.paid{background:#e4f6ed;color:#11784b}
+#app .lsb201-state.unknown{background:#eef1f7;color:#64748b}
+#app .lsb201-help{font-size:12px;color:#687b95;line-height:1.65;margin:2px 0 10px}
+#app .lsb201-receipts{display:grid;gap:9px}
+#app .lsb201-receipt{border:1px solid #e0e6f3;border-radius:13px;padding:12px;display:flex;justify-content:space-between;align-items:center;gap:10px;min-width:0}
+#app .lsb201-receipt>div{min-width:0}
+#app .lsb201-receipt strong{display:block;font-size:13px}
+#app .lsb201-receipt small{display:block;font-size:11px;color:#65778f;line-height:1.5;margin-top:4px;overflow-wrap:anywhere}
+#app .lsb201-receipt button,#app .lsb201-refresh{border:1px solid #b8c8e5;background:#eef1ff;color:#324c92;border-radius:10px;padding:10px 13px;font-size:12px;font-weight:750;cursor:pointer;white-space:nowrap}
+#app .lsb201-refresh{width:100%;margin-top:3px;padding:13px}
+#app .lsb201-message{border:1px solid #d6e4f8;background:#f0f6ff;color:#4c5d80;border-radius:12px;padding:12px;font-size:12px;line-height:1.5;margin-bottom:10px}
+#app .lsb201-message.error{background:#fff2f1;border-color:#f0cccb;color:#904c42}
+@media(min-width:760px){#app .lsb201-months{grid-template-columns:repeat(3,minmax(0,1fr))}#app .lsb201-section{padding:20px}#app .lsb201-family{padding-bottom:30px}}
+@media(max-width:340px){#app .lsb201-months{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}#app .lsb201-month{padding:9px 7px}#app .lsb201-receipt{flex-wrap:wrap}}
+
+</style>
+<script id="lsb201-family-payments">
+/* F201 — Consulta familiar independiente de mensualidades y comprobantes.
+   Ninguna operación de escritura; todos los accesos dependen de RLS. */
+(function(){
+ 'use strict';
+ if(typeof paymentView!=='function'||typeof lsb18Client!=='function'||typeof LSB18==='undefined')return;
+ const names=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+ const state={key:'',loaded:false,busy:false,error:'',monthRows:[],receipts:[]};
+ const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+ const family=()=>typeof role!=='undefined'&&role==='family'&&LSB18.profile?.role==='encargado';
+ const kids=()=>typeof children==='function'?children():[];
+ const identity=()=>[LSB18.profile?.id||'',LSB18.schoolYearId||''].join(':');
+ function resetIfChanged(){const key=identity();if(state.key!==key){state.key=key;state.loaded=false;state.busy=false;state.error='';state.monthRows=[];state.receipts=[];}}
+ const formatDate=v=>{if(!v)return 'Fecha no disponible';const d=new Date(v);return Number.isNaN(d.getTime())?'Fecha no disponible':d.toLocaleDateString('es-GT',{timeZone:'America/Guatemala'});};
+ const visibleKids=()=>kids().filter(x=>LSB18.enrollByStudent?.[x.id]?.id);
+ function view(){
+  resetIfChanged();
+  const list=visibleKids();
+  const child=list.find(x=>x.id===student)||list[0];
+  if(child)student=child.id;
+  const pick=list.length>1?'<label class="lsb201-selector">Estudiante<select data-lsb201-student>'+list.map(x=>'<option value="'+esc(x.id)+'" '+(x.id===student?'selected':'')+'>'+esc(x.name)+'</option>').join('')+'</select></label>':(child?'<div class="lsb201-person"><span>ESTUDIANTE</span><strong>'+esc(child.name)+'</strong></div>':'');
+  const eid=child?LSB18.enrollByStudent?.[child.id]?.id:null;
+  const months=state.monthRows.filter(r=>r.enrollment_id===eid);
+  const receipts=state.receipts.filter(r=>r.enrollment_id===eid);
+  const dates=new Map(months.map(r=>[Number(r.month_number),r.created_at]));
+  const verified=state.loaded&&!state.error;
+  const monthly=names.map((name,i)=>{
+   const date=dates.get(i+1);const paid=verified&&!!date;
+   return '<div class="lsb201-month"><div><strong>'+name+'</strong>'+(paid?'<small>Registrado: '+esc(formatDate(date))+'</small>':'')+'</div><span class="lsb201-state '+(paid?'paid':'unknown')+'">'+(!verified?'Sin verificar':paid?'Pagado':'Sin registro')+'</span></div>';
+  }).join('');
+  const receiptCards=receipts.map(r=>{
+   const covered=months.filter(m=>m.receipt_id===r.id).map(m=>names[Number(m.month_number)-1]).filter(Boolean);
+   return '<article class="lsb201-receipt"><div><strong>Recibo Nº '+esc(r.receipt_number)+'</strong><small>'+esc(covered.join(', ')||'Mensualidades registradas')+' · '+esc(formatDate(r.payment_date))+'</small></div><button type="button" data-lsb201-open="'+esc(r.id)+'">Ver / PDF</button></article>';
+  }).join('');
+  const banner=state.error?'<div class="lsb201-message error">No se pudo verificar los pagos: '+esc(state.error)+'</div>':!state.loaded?'<div class="lsb201-message">Consultando mensualidades en Supabase…</div>':'';
+  const paidCount=verified?months.length:0;
+  const status=verified?'<span class="lsb201-counter">'+paidCount+' de 12 meses registrados</span>':'<span class="lsb201-counter">Consulta pendiente</span>';
+  return '<section class="lsb201-family" data-lsb201-family><div class="lsb201-hero"><div class="lsb201-eyebrow">PORTAL DE FAMILIAS</div><h1>Mis pagos</h1><p>Consulta las mensualidades registradas por Dirección y los comprobantes que estén autorizados.</p></div>'+pick+banner+'<div class="lsb201-section"><div class="lsb201-section-title"><h2>Mensualidades</h2>'+status+'</div><div class="lsb201-months">'+(child?monthly:'<p>Solicita a Dirección vincular a tu estudiante.</p>')+'</div></div><div class="lsb201-section"><div class="lsb201-section-title"><h2>Mis comprobantes</h2><span class="lsb201-lock">Acceso autorizado</span></div>'+(receipts.length?'<p class="lsb201-help">Comprobantes habilitados por Dirección exclusivamente para este estudiante.</p><div class="lsb201-receipts">'+receiptCards+'</div>':'<p class="lsb201-help">'+(verified?'Dirección no ha habilitado comprobantes para este estudiante. Los meses pagados siguen registrados.':'Los comprobantes se mostrarán cuando termine la consulta y Dirección autorice su acceso.')+'</p>')+'</div><button type="button" class="lsb201-refresh" data-lsb201-refresh>Actualizar mis pagos</button></section>';
+ }
+ const previous=paymentView;
+ paymentView=function(...args){return family()?view():previous.apply(this,args);};
+ async function fetchCurrent(){
+  if(!family()||state.busy||state.loaded)return;
+  resetIfChanged();const started=identity();state.busy=true;state.error='';
+  try{
+   const enrollments=visibleKids().map(x=>LSB18.enrollByStudent[x.id].id);
+   if(!enrollments.length){state.monthRows=[];state.receipts=[];state.loaded=true;return;}
+   const client=lsb18Client();
+   const [m,r]=await Promise.all([
+    client.from('lsb_payment_months').select('id,enrollment_id,receipt_id,month_number,created_at').in('enrollment_id',enrollments),
+    client.from('lsb_payment_receipts').select('id,enrollment_id,receipt_number,payment_date,monthly_amount,total_amount,notes,plan_label').in('enrollment_id',enrollments)
+   ]);
+   if(m.error)throw m.error;if(r.error)throw r.error;
+   if(started!==identity()||!family())return;
+   const valid=new Set(enrollments);
+   const allMonths=(m.data||[]).filter(x=>valid.has(x.enrollment_id)&&Number(x.month_number)>=1&&Number(x.month_number)<=12);
+   const byKey=new Set();for(const row of allMonths){const key=row.enrollment_id+':'+row.month_number;if(byKey.has(key))throw Error('Se detectaron mensualidades duplicadas.');byKey.add(key);}
+   state.monthRows=allMonths;
+   state.receipts=(r.data||[]).filter(x=>valid.has(x.enrollment_id));
+   state.loaded=true;
+  }catch(error){if(started===identity()){state.loaded=false;state.error=String(error?.message||error||'Error de conexión');}}
+  finally{
+   state.busy=false;
+   if(started===identity()&&family()&&page==='payments'&&document.getElementById('app')?.querySelector('[data-lsb201-family]'))render();
+  }
+ }
+ function watch(){
+  if(!family()||page!=='payments')return;
+  const app=document.getElementById('app');if(!app?.querySelector('[data-lsb201-family]'))return;
+  resetIfChanged();if(!state.loaded&&!state.busy&&!state.error)void fetchCurrent();
+ }
+ const app=document.getElementById('app');
+ if(app){const observer=new MutationObserver(watch);observer.observe(app,{childList:true,subtree:false});queueMicrotask(watch);}
+ document.addEventListener('change',e=>{const t=e.target;if(!t?.matches?.('[data-lsb201-student]')||!family())return;student=t.value;render();});
+ document.addEventListener('click',async e=>{
+  const b=e.target.closest?.('[data-lsb201-refresh],[data-lsb201-open]');if(!b||!family())return;
+  e.preventDefault();e.stopImmediatePropagation();
+  if(b.hasAttribute('data-lsb201-refresh')){
+   if(state.busy)return;state.loaded=false;state.error='';render();void fetchCurrent();return;
+  }
+  const id=b.getAttribute('data-lsb201-open');
+  if(b.disabled)return;
+  b.disabled=true;
+  try{
+   const client=lsb18Client();
+   const {data,error}=await client.from('lsb_payment_receipts').select('*').eq('id',id).maybeSingle();
+   if(error)throw error;
+   if(!data||!state.receipts.some(x=>x.id===id))throw Error('Dirección no ha autorizado este comprobante.');
+   const {data:receiptMonths,error:monthError}=await client.from('lsb_payment_months').select('*').eq('receipt_id',id);
+   if(monthError)throw monthError;
+   if(!visibleKids().some(x=>LSB18.enrollByStudent[x.id]?.id===data.enrollment_id))throw Error('El comprobante no pertenece a tus estudiantes vinculados.');
+   if(typeof RP==='undefined'||typeof window.lsb1918ShowReceipt!=='function')throw Error('El visor de recibos no está disponible.');
+   RP.receipts=state.receipts.slice();
+   RP.monthRows=state.monthRows.filter(m=>m.receipt_id!==id).concat(receiptMonths||[]);
+   const idx=RP.receipts.findIndex(r=>r.id===id);if(idx!==-1)RP.receipts[idx]=data;
+   window.lsb1918ShowReceipt(id);
+  }catch(error){if(typeof toast==='function')toast('No se pudo abrir: '+String(error?.message||error));}
+  finally{b.disabled=false;}
+ },true);
+ window.lsb201FamilyPaymentsDiagnostic=()=>({family:family(),page:typeof page==='undefined'?null:page,loaded:state.loaded,busy:state.busy,error:state.error,paidRows:state.monthRows.length,visibleReceipts:state.receipts.length});
+})();
+
 </script></body></html>
