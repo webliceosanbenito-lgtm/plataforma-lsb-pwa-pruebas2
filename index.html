@@ -14837,7 +14837,7 @@ function renderDashboard(data,y){
  <div class="f207-actions"><button class="secondary" type="button" data-lsb207="calendar">Configurar fechas académicas</button>${current.state==='open'?`<button type="button" data-lsb207="close" ${closeOk?'':'disabled'}>Finalizar bimestre ${current.bimester}</button>`:''}${current.state==='closed'&&next?`<button type="button" data-lsb207="open" ${openOk?'':'disabled'}>Habilitar bimestre ${next.bimester}</button>`:''}<button class="secondary" type="button" data-lsb207="refresh">Actualizar resumen</button></div>
  ${remaining>0&&current.state==='open'?`<button class="secondary" type="button" data-lsb207="pending" aria-expanded="false" style="margin-top:10px">Ver ${remaining} cuadros pendientes</button><div id="lsb207-pending" hidden class="f207-pending-list">${(current.pending_courses||[]).map(o=>`<div class="f207-pending-row"><strong>${safe(o.course)} · ${o.grade?safe(o.grade)+' · ':''}Sección ${safe(o.section)}</strong><em>${safe(detailLabel[o.status]||'Pendiente')}</em></div>`).join('')}</div>`:''}
  <p class="f207-fine">La apertura del siguiente período es independiente del cierre. No se abrirán dos bimestres simultáneamente desde este control.</p></section>`;
- el.querySelector('[data-lsb207="calendar"]')?.addEventListener('click',()=>{if(typeof openBimesterCalendar20!=='function')return toast('No está disponible la configuración de fechas.');openBimesterCalendar20(y);});
+ el.querySelector('[data-lsb207="calendar"]')?.addEventListener('click',()=>openCalendarDialog(y));
  el.querySelector('[data-lsb207="refresh"]')?.addEventListener('click',()=>loadDashboard());
  el.querySelector('[data-lsb207="pending"]')?.addEventListener('click',ev=>{const list=el.querySelector('#lsb207-pending');if(!list)return;list.hidden=!list.hidden;ev.currentTarget.setAttribute('aria-expanded',String(!list.hidden));});
  el.querySelector('[data-lsb207="close"]')?.addEventListener('click',()=>confirmOperation('close',current.bimester,y));
@@ -14856,6 +14856,84 @@ async function loadDashboard(){
   if(!data||!Array.isArray(data.periods))throw Error('Supabase no devolvió el resumen de bimestres.');
   renderDashboard(data,yy);
  }catch(err){if(token!==serial||!el.isConnected)return;el.innerHTML='<section class="f207-section"><h3>No se pudo actualizar el resumen</h3><p class="f207-error">'+safe(err.message||err)+'</p><button type="button" id="lsb207-retry">Volver a consultar</button></section>';el.querySelector('#lsb207-retry')?.addEventListener('click',loadDashboard);}
+}
+/* F208: calendario académico 2-4, sin modificar estados de apertura. */
+function plusOneDate(date){
+ if(!date)return '';
+ const d=new Date(date+'T12:00:00Z');
+ if(Number.isNaN(d.getTime()))return '';
+ d.setUTCDate(d.getUTCDate()+1);
+ return d.toISOString().slice(0,10);
+}
+function openCalendarDialog(yy){
+ if(!LSB18?.authenticated||LSB18.profile?.role!=='admin_general')return;
+ const periods=cache?.data?.periods||[];
+ const dlg=document.getElementById('dialog');
+ if(!dlg||!Array.isArray(periods)||!periods.length){toast('Actualiza el resumen antes de configurar fechas.');return;}
+ if(dlg.open)dlg.close();
+ dlg.innerHTML=`<div id="lsb208-calendar-modal">
+   <header class="f208-header"><div><span class="f208-caption">CICLO ${safe(yy.year)}</span><h2>Configurar fechas académicas</h2><p>Prepara el calendario del siguiente bimestre. Guardar fechas <strong>no habilita</strong> el período.</p></div></header>
+   <div class="f208-current"><strong>Bimestre 1</strong><span>${safe(fmt(periods[0]?.start_date))} al ${safe(fmt(periods[0]?.end_date))}</span><small>Fechas del primer bimestre (solo consulta).</small></div>
+   <label class="f208-field">Bimestre que deseas preparar
+    <select id="lsb208-period" aria-label="Bimestre a configurar"><option value="2">Bimestre 2</option><option value="3">Bimestre 3</option><option value="4">Bimestre 4</option></select>
+   </label>
+   <div class="f208-dates">
+    <label class="f208-field">Fecha de inicio<input id="lsb208-start" type="date" required /></label>
+    <label class="f208-field">Fecha de finalización<input id="lsb208-end" type="date" required /></label>
+   </div>
+   <div class="f208-info" id="lsb208-info"></div>
+   <p class="f208-feedback" id="lsb208-feedback" role="status" aria-live="polite"></p>
+   <div class="f208-actions"><button type="button" class="secondary" id="lsb208-cancel">Cancelar</button><button type="button" id="lsb208-save">Guardar fechas</button></div>
+  </div>`;
+ dlg.showModal();
+ const select=dlg.querySelector('#lsb208-period'),start=dlg.querySelector('#lsb208-start'),end=dlg.querySelector('#lsb208-end'),info=dlg.querySelector('#lsb208-info'),msg=dlg.querySelector('#lsb208-feedback'),save=dlg.querySelector('#lsb208-save');
+ dlg.querySelector('#lsb208-cancel').onclick=()=>dlg.close();
+ let selected=null,minimum='';
+ function updateForm(){
+  const n=Number(select.value);
+  const current=periods.find(p=>Number(p.bimester)===n);
+  const prev=periods.find(p=>Number(p.bimester)===n-1);
+  selected=current;
+  minimum=plusOneDate(prev?.end_date);
+  start.min=minimum||`${yy.year}-01-01`;
+  start.max=`${yy.year}-12-31`;
+  end.min=minimum||`${yy.year}-01-01`;
+  end.max=`${yy.year}-12-31`;
+  start.value=current?.start_date||'';
+  end.value=current?.end_date||'';
+  msg.textContent='';
+  let reason='';
+  if(!prev?.end_date)reason=`Primero configura el calendario del bimestre ${n-1}.`;
+  else if(current?.state!=='pending')reason=`El bimestre ${n} ya fue habilitado o cerrado. Sus fechas no se pueden modificar desde preparación.`;
+  const allowed=!reason;
+  save.disabled=!allowed;
+  start.disabled=!allowed;end.disabled=!allowed;
+  info.innerHTML=reason?`<strong>Configuración no disponible</strong><span>${safe(reason)}</span>`:`<strong>Período ${n} · En preparación</strong><span>Debe comenzar a partir del ${safe(fmt(minimum))} y finalizar dentro del ${safe(yy.year)}.</span><small>${current?.configured?'Puedes ajustar las fechas antes de habilitar este período.':'Todavía no tiene fechas guardadas.'}</small>`;
+ }
+ select.onchange=updateForm;
+ start.oninput=()=>{msg.textContent='';if(start.value)end.min=start.value;};
+ end.oninput=()=>{msg.textContent='';};
+ save.onclick=async()=>{
+  const n=Number(select.value),from=start.value,to=end.value;
+  msg.textContent='';
+  if(!from||!to){msg.textContent='Selecciona las dos fechas.';return;}
+  if(!minimum||from<minimum){msg.textContent='El inicio debe ser posterior al final del bimestre anterior.';return;}
+  if(to<from){msg.textContent='La finalización no puede ser anterior al inicio.';return;}
+  if(!from.startsWith(String(yy.year)+'-')||!to.startsWith(String(yy.year)+'-')){msg.textContent='Las fechas deben pertenecer al ciclo escolar '+yy.year+'.';return;}
+  save.disabled=true;select.disabled=true;start.disabled=true;end.disabled=true;
+  msg.textContent='Guardando las fechas de forma segura en Supabase…';
+  try{
+   const {error}=await lsb18Client().rpc('lsb_f208_save_future_bimester_calendar',{
+    p_school_year_id:yy.id,p_bimester:n,p_start_date:from,p_end_date:to
+   });
+   if(error)throw error;
+   msg.textContent='Fechas guardadas correctamente. El bimestre continúa pendiente.';
+   dlg.close();
+   toast('Calendario del bimestre '+n+' guardado. No se ha habilitado.');
+   await loadDashboard();
+  }catch(err){msg.textContent='No se guardaron las fechas: '+String(err?.message||err);save.disabled=false;select.disabled=false;updateForm();msg.textContent='No se guardaron las fechas: '+String(err?.message||err);}
+ };
+ updateForm();
 }
 function confirmOperation(kind,bim,yy){
  if(!LSB18?.authenticated||LSB18.profile?.role!=='admin_general')return;
@@ -14885,4 +14963,30 @@ if(typeof lsbPeriodConfirm12==='function')lsbPeriodConfirm12=function(){document
 if(typeof lsbF16312OpenSecond==='function')lsbF16312OpenSecond=function(){document.getElementById('dialog')?.close();go('periods');};
 })();
 </script>
+<style id="lsb-f208-calendario-style">
+#dialog:has(#lsb208-calendar-modal){width:min(94vw,590px);max-height:min(88vh,800px);overflow:auto;border-radius:20px;padding:0;border:1px solid #d9deec;box-shadow:0 20px 60px #15204e42;background:#fff;color:#222d51}
+#dialog:has(#lsb208-calendar-modal)::backdrop{background:rgba(20,30,61,.58)}
+#lsb208-calendar-modal{padding:21px;box-sizing:border-box;font-family:inherit;color:#202b4e}
+#lsb208-calendar-modal *{box-sizing:border-box}
+#lsb208-calendar-modal h2{margin:4px 0 7px;font-size:21px;line-height:1.2;font-weight:800;color:#1a2856}
+#lsb208-calendar-modal p{font-size:12px;line-height:1.55;margin:6px 0;color:#60708b}
+#lsb208-calendar-modal .f208-caption{letter-spacing:.08em;font-size:10px;font-weight:750;color:#626c9d}
+#lsb208-calendar-modal .f208-current{margin:16px 0;background:#f2f4fc;border:1px solid #e0e4f1;border-radius:14px;padding:13px;display:grid;gap:5px}
+#lsb208-calendar-modal .f208-current strong{font-size:13px}
+#lsb208-calendar-modal .f208-current span{font-size:14px;font-weight:700;color:#354483}
+#lsb208-calendar-modal .f208-current small{font-size:11px;color:#69758f}
+#lsb208-calendar-modal .f208-field{display:grid;gap:7px;font-size:12px;font-weight:750;color:#354260;min-width:0}
+#lsb208-calendar-modal :is(select,input){width:100%;min-width:0;max-width:100%;height:45px;border:1px solid #cbd3e6;border-radius:11px;background:#fff;color:#22315b;padding:9px 12px;font-size:15px;font-weight:500;font-family:inherit}
+#lsb208-calendar-modal .f208-dates{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:16px 0}
+#lsb208-calendar-modal .f208-info{padding:12px;background:#f7f8fc;border:1px solid #e8e9f1;border-radius:12px;display:grid;gap:5px;font-size:12px;line-height:1.55;color:#63718b}
+#lsb208-calendar-modal .f208-info strong{color:#344270}
+#lsb208-calendar-modal .f208-info span{overflow-wrap:anywhere}
+#lsb208-calendar-modal .f208-info small{font-size:11px}
+#lsb208-calendar-modal .f208-feedback{min-height:19px;color:#a44838;overflow-wrap:anywhere}
+#lsb208-calendar-modal .f208-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:11px}
+#lsb208-calendar-modal button{width:100%;min-width:0;border:0;border-radius:12px;background:#404994;color:#fff;font-family:inherit;font-size:13px;font-weight:750;line-height:1.35;padding:12px 10px;cursor:pointer}
+#lsb208-calendar-modal button.secondary{background:#eef1fa;color:#34406c}
+#lsb208-calendar-modal button:disabled{opacity:.48;cursor:not-allowed}
+@media(max-width:470px){#dialog:has(#lsb208-calendar-modal){width:calc(100vw - 20px)}#lsb208-calendar-modal{padding:16px}#lsb208-calendar-modal .f208-dates{grid-template-columns:1fr}#lsb208-calendar-modal h2{font-size:19px}}
+</style>
 </body></html>
