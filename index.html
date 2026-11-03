@@ -5371,7 +5371,7 @@ document.addEventListener('click',ev=>{
        panel.innerHTML=`<h3>${eligible?'Sin referencias detectadas':'Eliminación no autorizada'}</h3>
        <p>${eligible?'La revisión preliminar no encontró dependencias. Esto NO autoriza eliminar la cuenta.':'La cuenta no reúne las condiciones para plantear su eliminación directa.'}</p>
        <p><strong>Referencias detectadas:</strong> ${esc(count)}</p>${safeRows?`<ul>${safeRows}</ul>`:''}
-       <p class="sub">La verificación es informativa. Eliminar usuarios está deshabilitado en F14.</p>`;
+       <p class="sub">La comprobación es informativa: no elimina cuentas. Para recuperar el acceso docente utiliza «Restablecer acceso»; la eliminación permanente permanece bloqueada por seguridad.</p>`;
        dialog.insertBefore(panel,toolbar);
      }catch(e){status.textContent='No se pudo completar la verificación: '+(e?.message||'Error desconocido');}
      finally{btn.disabled=false;btn.textContent='Verificar eliminación';}
@@ -9723,6 +9723,79 @@ html[data-theme="dark"] #login.access10 #familywelcome10 .f116-activation-help{c
     if(!cards.length)return toast('No hay códigos nuevos disponibles para descargar.');
     const style=document.getElementById('lsb-f118-credentials-style').textContent;
     const doc=`<!doctype html><html lang="es"><head><meta charset="utf-8"><title>Credenciales · San Benito</title><style>${style}\nbody{font-family:Arial,sans-serif;background:#fff;margin:18px}.lsb118-credentials{grid-template-columns:repeat(2,minmax(0,1fr))}@media print{.lsb118-credentials{grid-template-columns:repeat(2,minmax(0,1fr))}}</style></head><body><h2>Credenciales familiares · San Benito</h2><p>Imprime esta hoja y recorta cada credencial. Entrega estas fichas de manera privada. Solo las cuentas pendientes incluyen códigos.</p><div class="lsb118-credentials">${cards.map(card).join('')}</div>
+<script id="lsb-f2112-recovery-in-account">
+/* F211.2: recuperar el acceso de profesores desde Dirección sin eliminar su cuenta ni sus datos. */
+(function(){
+'use strict';
+if(typeof accountDetail!=='function')return;
+const oldAccountDetail=accountDetail;
+const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let inFlight=false;
+accountDetail=function(aid){
+  oldAccountDetail.apply(this,arguments);
+  const p=typeof LSB18!=='undefined'?LSB18.profile:null;
+  const authorized=p&&p.active!==false&&(p.role==='admin_general'||p.role==='admin_secundario'&&p.can_edit_accounts===true);
+  if(!authorized||!LSB18.authenticated||typeof role==='undefined'||role!=='admin'||!db?.accounts)return;
+  const acct=db.accounts.find(x=>String(x.id)===String(aid));
+  const dialog=document.getElementById('dialog');
+  const toolbar=dialog?.querySelector('.toolbar');
+  if(!acct||!toolbar)return;
+  const legacy=dialog.querySelector('#lsb-f14-check');
+  if(legacy){legacy.textContent='Consultar referencias';legacy.title='Solo consulta; no elimina usuarios';}
+  if(acct.type!=='teacher'||!acct.enabled||!String(acct.user||'').includes('@'))return;
+  if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(acct.id)))return;
+  if(dialog.querySelector('#lsb211-reset'))return;
+  const start=document.createElement('button');
+  start.type='button';start.className='button';start.id='lsb211-reset';start.textContent='Restablecer acceso';
+  const edit=dialog.querySelector('#editaccount');
+  if(edit&&edit.nextSibling)toolbar.insertBefore(start,edit.nextSibling);else toolbar.appendChild(start);
+  start.onclick=()=>{
+    if(inFlight)return;
+    if(dialog.open)dialog.close();
+    modal('<section class="lsb211-panel"><h2>Recuperar acceso docente</h2><p>Profesor: <strong>'+esc(acct.name)+'</strong></p><p>Correo de acceso: <strong>'+esc(acct.user)+'</strong></p><div class="notice"><strong>No se eliminará esta cuenta.</strong><p>Se reemplazará su contraseña actual por una contraseña temporal. Sus asignaciones, notas e historial permanecerán intactos. La clave se mostrará una sola vez.</p></div><label class="field">Confirma tu contraseña de Dirección<input id="lsb211-admin-password" type="password" autocomplete="current-password" required maxlength="200"></label><label class="check" style="display:flex;gap:9px;align-items:flex-start"><input type="checkbox" id="lsb211-verify">He comprobado la identidad de este profesor y autorizo restablecer su acceso.</label><p id="lsb211-msg" role="status" class="sub" style="color:#a5303b"></p><div class="toolbar"><button type="button" class="button secondary" id="lsb211-cancel">Cancelar</button><button type="button" class="button" id="lsb211-confirm">Crear contraseña temporal</button></div></section>');
+    const d=document.getElementById('dialog');
+    d.querySelector('#lsb211-cancel').onclick=()=>d.close();
+    d.querySelector('#lsb211-confirm').onclick=async()=>{
+      const pass=d.querySelector('#lsb211-admin-password');
+      const msg=d.querySelector('#lsb211-msg');
+      const verify=d.querySelector('#lsb211-verify');
+      const confirm=d.querySelector('#lsb211-confirm');
+      if(inFlight)return;
+      if(!pass.value||pass.value.length>200||!verify.checked){msg.textContent='Escribe tu contraseña de Dirección y confirma la identidad del profesor.';return;}
+      inFlight=true;confirm.disabled=true;msg.textContent='Verificando autorización en Supabase…';
+      try{
+        if(!LSB18.authenticated||!LSB18.profile||LSB18.profile.id!==p.id)throw Error('La sesión de Dirección ha cambiado. Ingresa de nuevo.');
+        const client=lsb18Client();
+        const {data:sessionData,error:sessionError}=await client.auth.getSession();
+        if(sessionError||!sessionData?.session?.access_token||sessionData.session.user.id!==p.id)throw Error('Tu sesión ha caducado. Ingresa de nuevo.');
+        const res=await fetch(LSB18.url+'/functions/v1/lsb-admin-reset-teacher',{
+          method:'POST',credentials:'omit',
+          headers:{'Content-Type':'application/json','apikey':LSB18.key,'Authorization':'Bearer '+sessionData.session.access_token},
+          body:JSON.stringify({target_id:acct.id,admin_password:pass.value})
+        });
+        pass.value='';
+        const output=await res.json().catch(()=>({}));
+        if(!res.ok||output.success!==true||!output.temporary_password)throw Error(output.error||'No se confirmó el restablecimiento.');
+        if(d.open)d.close();
+        modal('<section class="lsb211-panel"><h2>Acceso docente restablecido</h2><div class="notice"><strong>Contraseña actualizada en Supabase.</strong><p>La contraseña anterior dejó de funcionar. Entrega la nueva únicamente a ese profesor y pídele cambiarla después de entrar.</p></div><label class="field">Correo para ingresar<input id="lsb211-result-email" readonly></label><label class="field">Contraseña temporal nueva<input id="lsb211-result-key" type="password" readonly autocomplete="off"></label><div class="toolbar"><button class="button secondary" type="button" id="lsb211-show-key">Mostrar</button><button class="button" type="button" id="lsb211-copy">Copiar contraseña</button></div><p id="lsb211-copy-status" class="sub" role="status">Guarda la contraseña antes de finalizar. Después no podrá consultarse de nuevo.</p><button type="button" class="button secondary" id="lsb211-done">Finalizar</button></section>');
+        const resultDialog=document.getElementById('dialog');
+        const key=resultDialog.querySelector('#lsb211-result-key');
+        resultDialog.querySelector('#lsb211-result-email').value=output.username||acct.user;
+        key.value=output.temporary_password;
+        resultDialog.querySelector('#lsb211-show-key').onclick=e=>{key.type=key.type==='password'?'text':'password';e.currentTarget.textContent=key.type==='password'?'Mostrar':'Ocultar';};
+        resultDialog.querySelector('#lsb211-copy').onclick=async()=>{
+          const status=resultDialog.querySelector('#lsb211-copy-status');
+          try{if(navigator.clipboard?.writeText)await navigator.clipboard.writeText(key.value);else{key.type='text';key.select();if(!document.execCommand('copy'))throw Error('Copia no disponible');}status.textContent='Contraseña copiada. Entrégala únicamente al profesor.';}
+          catch(e){key.type='text';key.focus();key.select();status.textContent='Selecciona y copia manualmente la contraseña.';}
+        };
+        resultDialog.querySelector('#lsb211-done').onclick=()=>{key.value='';resultDialog.close();};
+      }catch(err){pass.value='';msg.textContent=String(err?.message||err);confirm.disabled=false;}
+      finally{inFlight=false;}
+    };
+  };
+};
+})();
+</script>
 </body></html>`;
     const url=URL.createObjectURL(new Blob([doc],{type:'text/html;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download='Credenciales_Familias_San_Benito.html';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
   }
