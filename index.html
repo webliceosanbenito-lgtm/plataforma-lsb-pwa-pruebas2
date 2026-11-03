@@ -15130,4 +15130,60 @@ accountDetail=function(id){
 };
 })();
 </script>
+
+<script id="lsb-f212-correct-teacher-email">
+(function(){
+'use strict';
+if(typeof accountDetail!=='function')return;
+const previous=accountDetail;
+const escapeHTML=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+let running=false;
+accountDetail=function(id){
+ previous.apply(this,arguments);
+ const actor=typeof LSB18!=='undefined'?LSB18.profile:null;
+ if(!LSB18?.authenticated||actor?.role!=='admin_general'||actor?.active===false||role!=='admin')return;
+ const a=db?.accounts?.find(x=>String(x.id)===String(id));
+ if(!a||a.type!=='teacher'||!uuid.test(String(a.id)))return;
+ const d=document.getElementById('dialog'),bar=d?.querySelector('.toolbar');
+ if(!bar||d.querySelector('#lsb212-email-button'))return;
+ const b=document.createElement('button');
+ b.type='button';b.id='lsb212-email-button';b.className='button secondary';b.textContent='Corregir correo de acceso';
+ bar.appendChild(b);
+ b.onclick=()=>{
+  if(running)return;
+  if(d.open)d.close();
+  modal('<section class="lsb212-panel"><h2>Corregir correo docente</h2><p>Profesor: <strong>'+escapeHTML(a.name||a.user)+'</strong></p><div class="notice"><b>Correo que figura actualmente:</b><p>'+escapeHTML(a.user)+'</p><p>La corrección sincroniza el correo de acceso y el usuario del docente, sin borrar sus notas ni asignaciones.</p></div><div id="lsb212-email-form"><label class="field">Correo electrónico correcto<input id="lsb212-email-new" type="email" inputmode="email" autocomplete="off" required></label><label class="field">Contraseña de Dirección general<input id="lsb212-email-pass" type="password" autocomplete="current-password" required></label><label style="display:flex;gap:8px;align-items:flex-start"><input id="lsb212-email-verified" type="checkbox"> He verificado la identidad del docente y confirmado que controla este correo.</label><button id="lsb212-email-save" class="button" type="button">Guardar correo correcto</button></div><p id="lsb212-email-message" role="status" style="overflow-wrap:anywhere"></p><button id="lsb212-email-back" class="button secondary" type="button">Cancelar</button></section>');
+  const dlg=document.getElementById('dialog'),get=id=>dlg.querySelector('#'+id),msg=get('lsb212-email-message'),save=get('lsb212-email-save');
+  get('lsb212-email-back').onclick=()=>dlg.close();
+  save.onclick=async()=>{
+   if(running)return;
+   const email=String(get('lsb212-email-new').value||'').trim().toLowerCase(),password=get('lsb212-email-pass').value;
+   if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)||!password||!get('lsb212-email-verified').checked){
+     msg.textContent='Escribe un correo válido, la contraseña de Dirección y confirma la identidad del profesor.';return;
+   }
+   if(email===String(a.user||'').trim().toLowerCase()){msg.textContent='Ese ya es el correo registrado.';return;}
+   running=true;save.disabled=true;msg.textContent='Validando Dirección y sincronizando el correo…';
+   try{
+    const client=lsb18Client(),{data,error}=await client.auth.getSession();
+    if(error||!data?.session?.access_token||data.session.user.id!==actor.id)throw Error('Tu sesión administrativa caducó. Ingresa de nuevo.');
+    const res=await fetch(LSB18.url+'/functions/v1/lsb-admin-correct-teacher-email',{
+      method:'POST',credentials:'omit',
+      headers:{'Content-Type':'application/json','apikey':LSB18.key,'Authorization':'Bearer '+data.session.access_token},
+      body:JSON.stringify({target_id:a.id,new_email:email,admin_password:password,teacher_identity_verified:true})
+    });
+    get('lsb212-email-pass').value='';
+    const out=await res.json().catch(()=>({}));
+    if(!res.ok||out.success!==true)throw Error(out.error||'No se pudo actualizar el correo.');
+    get('lsb212-email-form').hidden=true;
+    msg.textContent='Correo actualizado: '+out.email+'. Desde ahora el profesor debe usar este correo y la última contraseña temporal emitida.';
+    get('lsb212-email-back').textContent='Actualizar listado';
+    get('lsb212-email-back').onclick=()=>location.reload();
+   }catch(e){get('lsb212-email-pass').value='';msg.textContent=String(e?.message||e);save.disabled=false;}
+   finally{running=false;}
+  };
+ };
+};
+})();
+</script>
 </body></html>
