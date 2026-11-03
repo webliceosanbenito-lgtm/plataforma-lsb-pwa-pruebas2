@@ -15669,7 +15669,7 @@ const css=`
 @media(max-width:900px){#lsb221-root .f223-filters{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:600px){#lsb221-root .f223-filters{grid-template-columns:1fr}#lsb221-root .f223-section-list{grid-template-columns:1fr}#lsb221-root .f223-teacher>summary{padding:12px 10px}#lsb221-root .f223-teacher-body{padding:9px}#lsb221-root .f223-teacher-avatar{width:36px;height:36px;flex-basis:36px}#lsb221-root .f223-course-footer{align-items:flex-start}#lsb221-root .f223-course-footer .f221-actions{width:100%}#lsb221-root .f223-heading{gap:8px}}
 `;
-const style=document.createElement('style');style.id='lsb221-style';style.textContent=css;document.head.append(style);
+const style=document.createElement('style');style.id='lsb221-style';style.textContent=css+'\n/* F224 | Formularios de confirmación integrados en LSB */\n#lsb221-root .f224-backdrop{position:fixed;inset:0;z-index:50;background:rgba(15,25,56,.62);display:flex;justify-content:center;align-items:center;padding:18px;padding-bottom:max(18px,env(safe-area-inset-bottom));backdrop-filter:blur(3px)}\n#lsb221-root .f224-modal{width:min(100%,520px);max-height:calc(100dvh - 36px);overflow-y:auto;border-radius:22px;background:#fff;border:1px solid #e2e7f2;box-shadow:0 28px 80px rgba(15,25,56,.28);padding:24px;color:#1e2948}\n#lsb221-root .f224-topline{display:flex;align-items:flex-start;gap:13px}\n#lsb221-root .f224-icon{display:grid;place-items:center;flex:none;width:44px;height:44px;border-radius:13px;background:#edf0ff;color:#3b4193}\n#lsb221-root .f224-icon svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}\n#lsb221-root .f224-title{font-size:19px;font-weight:800;color:#1c2a50;letter-spacing:-.02em;line-height:1.25;margin:1px 0 5px}\n#lsb221-root .f224-help{color:#60708f;font-size:13px;line-height:1.6;margin:0 0 15px}\n#lsb221-root .f224-fieldlabel{color:#354364;font-size:13px;font-weight:750;margin-top:17px;margin-bottom:7px}\n#lsb221-root .f224-reason{resize:vertical;min-height:118px;font-size:15px;line-height:1.5;padding:12px 14px;border:1px solid #cdd5ea;border-radius:12px}\n#lsb221-root .f224-reason:focus{outline:3px solid rgba(59,65,147,.15);border-color:#3b4193}\n#lsb221-root .f224-note{font-size:12px;color:#6b7891;margin:8px 0 0}\n#lsb221-root .f224-actions{display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap;margin-top:22px}\n#lsb221-root .f224-actions button{min-width:128px;min-height:44px;border-radius:11px}\n#lsb221-root .f224-error{min-height:0;color:#aa293e;font-size:12px;font-weight:650;margin:7px 0 0}\n@media(max-width:500px){#lsb221-root .f224-backdrop{padding:12px;align-items:center}#lsb221-root .f224-modal{padding:21px 17px;border-radius:19px;max-height:calc(100dvh - 24px)}#lsb221-root .f224-actions{display:grid;grid-template-columns:1fr 1fr}#lsb221-root .f224-actions button{min-width:0}}\n';document.head.append(style);
 function createScreen(title,description){
  document.getElementById('lsb221-root')?.remove();
  const root=document.createElement('div');root.id='lsb221-root';root.setAttribute('role','region');root.setAttribute('aria-label',title);
@@ -15679,6 +15679,40 @@ function createScreen(title,description){
  const remove=()=>{document.body.style.overflow=''};new MutationObserver((records,o)=>{if(!root.isConnected){remove();o.disconnect()}}).observe(document.body,{childList:true});
  return root;
 }
+
+// F224: Dialogos institucionales en lugar de prompt/confirm nativos del navegador.
+function academicDecision(root,kind){
+ return new Promise(resolve=>{
+  if(!root?.isConnected){resolve(null);return;}
+  const isPublish=kind==='publish';
+  const layer=document.createElement('div');layer.className='f224-backdrop';
+  const modal=document.createElement('section');modal.className='f224-modal';
+  modal.setAttribute('role','dialog');modal.setAttribute('aria-modal','true');
+  modal.setAttribute('aria-labelledby','f224-title');modal.setAttribute('aria-describedby','f224-help');
+  modal.innerHTML=`<form id="f224-form" novalidate>
+   <div class="f224-topline"><span class="f224-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 12l2 2 4-4"/><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8"/></svg></span>
+   <div><div class="f224-title" id="f224-title">${isPublish?'Publicar cuadro de notas':'Aprobar cuadro de notas'}</div>
+   <p class="f224-help" id="f224-help">${isPublish?'La publicación es definitiva y las calificaciones aprobadas se registrarán para las boletas. Escribe un motivo institucional antes de continuar.':'Confirma que revisaste las actividades y calificaciones del cuadro. Solo los cuadros aprobados podrán publicarse.'}</p></div></div>
+   ${isPublish?'<label class="f224-fieldlabel" for="f224-reason">Motivo oficial de publicación</label><textarea class="f224-reason" id="f224-reason" name="reason" rows="4" minlength="15" maxlength="500" required placeholder="Describe por qué se autoriza la publicación..."></textarea><p class="f224-note">Mínimo 15 caracteres. El motivo queda registrado en Supabase.</p>':''}
+   <p class="f224-error" id="f224-error" role="alert" aria-live="polite"></p>
+   <div class="f224-actions"><button type="button" class="secondary" id="f224-cancel">Cancelar</button><button type="submit" id="f224-accept">${isPublish?'Confirmar publicación':'Aprobar cuadro'}</button></div></form>`;
+  layer.appendChild(modal);root.appendChild(layer);
+  const form=modal.querySelector('#f224-form');const textarea=modal.querySelector('#f224-reason');
+  const previousFocus=document.activeElement;let settled=false;
+  const finish=value=>{if(settled)return;settled=true;layer.remove();if(previousFocus?.isConnected)previousFocus.focus();resolve(value);};
+  modal.querySelector('#f224-cancel').onclick=()=>finish(null);
+  layer.addEventListener('click',e=>{if(e.target===layer)finish(null)});
+  layer.addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();e.stopPropagation();finish(null)}else e.stopPropagation()});
+  form.addEventListener('submit',e=>{
+   e.preventDefault();
+   const reason=textarea?.value.trim()||'';
+   if(isPublish && reason.length<15){const err=modal.querySelector('#f224-error');err.textContent='Escribe un motivo oficial de al menos 15 caracteres.';textarea.focus();return;}
+   finish(isPublish?reason:true);
+  });
+  (textarea||modal.querySelector('#f224-accept')).focus();
+ });
+}
+
 async function authFlags(){const [a,b,c]=await Promise.all(['grade_review','grade_publish','boletas'].map(p_permission=>client().rpc('lsb_academic_authorized',{p_permission})));return {review:!a.error&&a.data===true,publish:!b.error&&b.data===true,boletas:!c.error&&c.data===true};}
 const inProgress={busy:false};
 async function openAcademic(){
@@ -15696,7 +15730,7 @@ async function openAcademic(){
   let boletasExpanded=false;
   const statusOf=x=>x.publication_id?'published':x.status==='revisado'?'reviewed':x.status==='pendiente'?'pending':'not_sent';
   const labelOf=x=>({published:'Publicado',reviewed:'Revisado',pending:'Pendiente de revisión',not_sent:'Sin enviar'})[statusOf(x)];
-  const labelSection=x=>(x.grade_name?x.grade_name+' · ':'')+(x.section_name||'Sin sección');
+  const labelSection=x=>{const grade=String(x.grade_name||'').trim(),section=String(x.section_name||'Sin sección').trim();return grade?(grade.toLocaleLowerCase('es').endsWith(' '+section.toLocaleLowerCase('es'))?grade:grade+' · '+section):section;};
   async function getQueue(yr,period){
     const {data,error}=await client().rpc('lsb_academic_queue',{p_year:yr,p_bimester:period});
     if(error)throw error;
@@ -15793,19 +15827,20 @@ async function openAcademic(){
   rowsDiv.addEventListener('click',async e=>{
    const b=e.target.closest('[data-f221-review],[data-f221-publish],[data-f221-view]');if(!b||inProgress.busy)return;
    const id=b.dataset.f221Review||b.dataset.f221Publish||b.dataset.f221View;
-   if(b.hasAttribute('data-f221-view')){try{await viewDetail(id)}catch(e){alert('No se pudo consultar el cuadro: '+e.message)}return;}
+   const statusNode=main.querySelector('#f221-status');
+   if(b.hasAttribute('data-f221-view')){try{await viewDetail(id)}catch(e){if(statusNode){statusNode.textContent='No se pudo consultar el cuadro: '+e.message;statusNode.className='f221-error';}}return;}
    if(b.hasAttribute('data-f221-review')){
-    if(!confirm('¿Ya revisaste el cuadro completo y deseas aprobarlo?'))return;
+    const approved=await academicDecision(root,'review');if(!approved)return;
     inProgress.busy=true;b.disabled=true;
     try{const {error}=await client().rpc('lsb_review_grade_progress_secure',{p_submission_id:id});if(error)throw error;await refresh();}
-    catch(err){alert('No se aprobó: '+err.message)}finally{inProgress.busy=false;b.disabled=false;}
+    catch(err){if(statusNode){statusNode.textContent='No se aprobó: '+err.message;statusNode.className='f221-error';}}
+    finally{inProgress.busy=false;b.disabled=false;}
    }else{
-    const reason=prompt('Motivo oficial de publicación (mínimo 15 caracteres):','Cuadro académico revisado y autorizado para publicación');
-    if(reason===null)return;if(reason.trim().length<15)return alert('El motivo debe tener al menos 15 caracteres.');
-    if(!confirm('¿Confirmas la publicación definitiva de este cuadro?'))return;
+    const reason=await academicDecision(root,'publish');if(reason===null)return;
     inProgress.busy=true;b.disabled=true;
-    try{const {error}=await client().rpc('lsb_publish_grade_submission_secure',{p_submission_id:id,p_reason:reason.trim()});if(error)throw error;await refresh();}
-    catch(err){alert('No se publicó: '+err.message)}finally{inProgress.busy=false;b.disabled=false;}
+    try{const {error}=await client().rpc('lsb_publish_grade_submission_secure',{p_submission_id:id,p_reason:reason});if(error)throw error;await refresh();}
+    catch(err){if(statusNode){statusNode.textContent='No se publicó: '+err.message;statusNode.className='f221-error';}}
+    finally{inProgress.busy=false;b.disabled=false;}
    }
   });
   bim.onchange=()=>refresh().catch(e=>main.querySelector('#f221-status').textContent=e.message);
