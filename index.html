@@ -2301,14 +2301,14 @@ async function lsb18Load(){
  // or silently hide a failed profile query as an empty directory.
  const isAdmin=p.role==='admin_general'||p.role==='admin_secundario';
  const profiles=isAdmin
-  ?await lsb18Fetch('lsb_profiles','id,username,full_name,role,active,can_create_accounts,can_edit_accounts')
+  ?await lsb18Fetch('lsb_profiles','id,username,full_name,role,active,can_create_accounts,can_edit_accounts,admin_modules,delegated_admin')
   :[p];
  if(isAdmin&&!profiles.some(x=>x.id===p.id))throw Error('El directorio de usuarios no está autorizado en Supabase. Revisa la política RLS de perfiles.');
  for(const q of profiles){
   fresh.accounts.push({id:q.id,name:q.full_name||q.username||'Usuario',user:q.username||'',
    type:q.role==='profesor'?'teacher':q.role==='encargado'?'family':'admin',
    enabled:q.active!==false,owner:q.role==='admin_general',children:[],
-   canCreateAccounts:q.can_create_accounts===true,canEditAccounts:q.can_edit_accounts===true});
+   canCreateAccounts:q.can_create_accounts===true,canEditAccounts:q.can_edit_accounts===true,adminModules:Array.isArray(q.admin_modules)?q.admin_modules:[],adminAccess:q.delegated_admin===true});
  }
  const a=fresh.accounts.find(x=>x.id===p.id);
  // Maps contain exactly the records authorized by RLS; do not merge seeded example students.
@@ -15280,11 +15280,19 @@ accountDetail=function(id){
 };
 })();
 </script>
-<script id="lsb-f215-debit-inline">/* Plataforma Academica LSB / F218: Administrador Debit (acciones verificadas) */
+<style id="lsb-f220-guardian-tools">
+/* F220: herramientas delegadas, exportación local únicamente por acción explícita. */
+body[data-area="teacher"][data-page="lsb_debit"] #f220-guardian-status{flex:0 1 205px;min-width:155px;max-width:100%}
+body[data-area="teacher"][data-page="lsb_debit"] #f220-guardian-export{white-space:normal;min-height:42px}
+body[data-area="teacher"][data-page="lsb_debit"] #f217-results{max-width:100%;overflow-wrap:anywhere}
+@media(max-width:680px){body[data-area="teacher"][data-page="lsb_debit"] .f217-guardian-toolbar{display:grid;grid-template-columns:1fr;gap:9px}body[data-area="teacher"][data-page="lsb_debit"] #f220-guardian-status,body[data-area="teacher"][data-page="lsb_debit"] #f220-guardian-export{width:100%;max-width:none}}
+</style>
+<script id="lsb-f215-debit-inline">/* Plataforma Academica LSB / F220: Administrador Debit (acciones verificadas) */
 (function(){
   'use strict';
   if (typeof accountDetail !== 'function' || typeof render !== 'function') return;
   const list = [
+    ['grade_review','Revisar cuadros'],['grade_publish','Publicar notas'],['boletas','Verificar boletas'],
     ['courses','Notas'],['students','Estudiantes'],['families','Encargados'],
     ['teachers','Profesores'],['attendance','Asistencia'],['reports','Boletas'],
     ['payments','Pagos'],['schedule','Horarios'],['notices','Avisos'],
@@ -15462,13 +15470,44 @@ accountDetail=function(id){
     if(error)throw Error(error.message||'No fue posible consultar los encargados');
     if(!panel.isConnected||!debitScreen)return;
     const guardians=Array.isArray(data)?data:[];
-    panel.innerHTML='<div class="panelhead"><h2>Encargados · gestión autorizada</h2><span class="badge">'+guardians.length+' registros</span></div><div class="panelbody"><p class="sub">Puedes consultar los encargados y corregir sus nombres. El registro de cuentas nuevas todavía requiere una función del servidor autorizada para Debit.</p><div class="f217-guardian-toolbar"><input type="search" id="f217-search" placeholder="Buscar encargado por nombre o usuario" aria-label="Buscar encargado"></div><div id="f217-results"></div><p id="f217-feedback" role="status" class="sub"></p></div>';
+    panel.innerHTML='<div class="panelhead"><h2>Encargados · gestión autorizada</h2><span class="badge">'+guardians.length+' registros</span></div><div class="panelbody"><p class="sub">Puedes consultar los encargados y corregir sus nombres. El registro de cuentas nuevas todavía requiere una función del servidor autorizada para Debit.</p><div class="f217-guardian-toolbar"><input type="search" id="f217-search" placeholder="Buscar encargado por nombre o usuario" aria-label="Buscar encargado"><select id="f220-guardian-status" aria-label="Filtrar encargados por estado"><option value="all">Todos</option><option value="active">Activos</option><option value="inactive">Pendientes o inactivos</option></select><button type="button" class="button secondary" id="f220-guardian-export">Exportar listado CSV</button></div><div id="f217-results"></div><p id="f217-feedback" role="status" class="sub"></p></div>';
     const results=panel.querySelector('#f217-results');
     const feedback=panel.querySelector('#f217-feedback');
     const search=panel.querySelector('#f217-search');
-    function repaint(){
+    const statusFilter=panel.querySelector('#f220-guardian-status');
+    const exporter=panel.querySelector('#f220-guardian-export');
+    function filterResults(){
       const value=search.value.trim().toLocaleLowerCase('es');
-      const filtered=guardians.filter(x=>(String(x.full_name||'')+' '+String(x.username||'')).toLocaleLowerCase('es').includes(value));
+      return guardians.filter(x=>(String(x.full_name||'')+' '+String(x.username||'')).toLocaleLowerCase('es').includes(value)
+        && (statusFilter.value==='all'||(statusFilter.value==='active'?x.active===true:x.active!==true)));
+    }
+    // Exportación explícita y protegida; nunca exponer datos fuera de una sesión delegada válida.
+    exporter.addEventListener('click',async()=>{
+      exporter.disabled=true;
+      try{
+        const permission=await refreshPermission();
+        if(!permission||(permission.admin_modules||[]).indexOf('families')<0)throw Error('Dirección retiró este permiso.');
+        const selected=filterResults();
+        if(!selected.length){feedback.textContent='No hay encargados para exportar con los filtros actuales.';return;}
+        const field=x=>{
+          let v=String(x??'').replace(/\r?\n/g,' ').trim();
+          // Evita que Excel ejecute fórmulas procedentes de campos de texto.
+          if(/^[=+@-]/.test(v))v="'"+v;
+          return '"'+v.replace(/"/g,'""')+'"';
+        };
+        const rows=[['Nombre completo','Usuario','Estado'],...selected.map(x=>[x.full_name||'',x.username||'',x.active?'Activo':'Pendiente o inactivo'])];
+        const csv='\ufeff'+rows.map(row=>row.map(field).join(';')).join('\r\n');
+        const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8;'}));
+        const link=document.createElement('a');link.href=url;link.download='LSB_Encargados_Debit.csv';
+        document.body.append(link);link.click();link.remove();
+        setTimeout(()=>URL.revokeObjectURL(url),5000);
+        feedback.textContent='Listado exportado: '+selected.length+' encargados.';
+      }catch(err){feedback.textContent='No se pudo exportar: '+String(err?.message||err);}
+      finally{exporter.disabled=false;}
+    });
+    statusFilter.addEventListener('change',repaint);
+    function repaint(){
+      const filtered=filterResults();
       results.innerHTML=filtered.length?filtered.map(g=>'<div class="f217-guardian-item" data-guardian="'+esc(g.id)+'"><div><strong>'+esc(g.full_name||'Sin nombre')+'</strong><small>Usuario: '+esc(g.username||'—')+' · '+(g.active?'Activo':'Pendiente o inactivo')+'</small></div><button class="button secondary" type="button" data-f217-edit="'+esc(g.id)+'">Editar nombre</button></div>').join(''):'<p class="sub">No se encontraron encargados.</p>';
     }
     search.addEventListener('input',repaint);
@@ -15506,6 +15545,7 @@ accountDetail=function(id){
     try{
       const p=await refreshPermission();
       if(!p||(p.admin_modules||[]).indexOf(module)===-1){showDebit();throw Error('Dirección general retiró esta autorización.');}
+      if(['grade_review','grade_publish','boletas'].includes(module)){window.LSB221?.openAcademic();return;}
       if(module==='families'){await showFamilies(panel);return;}
       const {data,error}=await client().rpc('lsb_debit_overview',{p_module:module});
       if(error||!data)throw Error(error?.message||'Consulta no autorizada');
@@ -15537,5 +15577,232 @@ accountDetail=function(id){
     }catch(e){if(panel.isConnected)panel.innerHTML='<div class="panelbody"><p role="alert">'+esc(e.message||e)+'</p></div>';}
   }
 })();
+</script>
+<script id="lsb-f221-academic-and-secondary">
+/* F221 — Coordinación académica y Dirección secundaria, protegidas por Supabase */
+(function(){
+'use strict';
+const permissions=[['grade_review','Revisar cuadros'],['grade_publish','Publicar notas'],['boletas','Verificar boletas'],['courses','Cursos y notas'],['students','Estudiantes'],['families','Encargados'],['teachers','Profesores'],['attendance','Asistencia'],['reports','Reportes'],['payments','Pagos'],['schedule','Horarios'],['notices','Avisos'],['periods','Ciclos escolares'],['catalog','Catálogo'],['accounts','Administrar cuentas']];
+const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const client=()=>lsb18Client();
+const p=()=>typeof LSB18!=='undefined'&&LSB18.authenticated?LSB18.profile:null;
+const isGeneral=()=>p()?.role==='admin_general';
+const isSecondary=()=>p()?.role==='admin_secundario';
+let secondaryModules=[];let academicRoot=null;let latest=0;
+const allowedRoute=(route)=>{
+ if(!isSecondary())return true;
+ const map={home:[],grade_center:['grade_review','grade_publish','boletas'],
+  reports:['reports','boletas'],published_grades:['boletas'],courses:['courses'],catalog:['catalog','courses'],
+  students:['students'],teachers:['teachers'],families:['families'],accounts:['accounts'],
+  attendance:['attendance'],payments:['payments'],schedule:['schedule'],notices:['notices'],
+  cycles:['periods'],periods:['periods'],exports:['reports'],school_reports:['reports'],support:[],
+  lsb_ai:[]};
+ return (map[route]||[]).length===0 ? ['home','support'].includes(route) : map[route].some(m=>secondaryModules.includes(m));
+};
+const css=`
+#lsb221-root{position:fixed;inset:0;z-index:1800;overflow-y:auto;background:#f5f7fd;color:#17234b;font:14px/1.5 'DM Sans',system-ui,sans-serif}
+#lsb221-root *{box-sizing:border-box}
+#lsb221-root .f221-top{position:sticky;top:0;z-index:2;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:18px max(18px,calc((100vw - 1250px)/2));background:#fff;border-bottom:1px solid #e4e8f3}
+#lsb221-root .f221-mark{display:flex;align-items:center;gap:11px;color:#2d347e;font-weight:800;font-size:17px}
+#lsb221-root .f221-mark svg{width:27px;height:27px;fill:none;stroke:#3b4193;stroke-width:1.9}
+#lsb221-root .f221-body{max-width:1250px;margin:0 auto;padding:26px 18px 85px}
+#lsb221-root h1{font-size:25px;letter-spacing:-.03em;margin:0 0 4px;color:#17234b}#lsb221-root h2{font-size:17px;margin:0;color:#283667}
+#lsb221-root p{line-height:1.6}#lsb221-root .f221-card{background:#fff;border:1px solid #e2e7f4;border-radius:17px;padding:20px;margin:16px 0;box-shadow:0 7px 23px #18274a07}
+#lsb221-root .f221-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
+#lsb221-root .f221-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+#lsb221-root .f221-stats div{border-radius:12px;background:#f1f4fb;padding:15px}#lsb221-root .f221-stats strong{display:block;font-size:25px;color:#343c90}
+#lsb221-root .f221-small{font-size:12px;color:#6a7690}#lsb221-root .f221-tag{display:inline-block;border-radius:30px;padding:5px 10px;background:#e9eefb;font-size:11px;color:#34478b;font-weight:750}
+#lsb221-root .f221-tag.done{background:#dff6eb;color:#17734c}#lsb221-root .f221-tag.wait{background:#fff2d3;color:#8c5c0a}
+#lsb221-root .f221-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+#lsb221-root button{min-height:40px;border:0;border-radius:10px;padding:9px 14px;color:#fff;background:#3b4193;font:650 13px 'DM Sans',system-ui;cursor:pointer}
+#lsb221-root button.secondary{background:#eef1fb;color:#35417c;border:1px solid #dee4f2}
+#lsb221-root button:disabled{opacity:.45;cursor:not-allowed}
+#lsb221-root input,#lsb221-root select,#lsb221-root textarea{display:block;min-width:0;width:100%;min-height:42px;padding:10px;border-radius:9px;border:1px solid #cfd7e7;color:#202c48;background:#fff;font:inherit}
+#lsb221-root label{display:block;font-size:12px;font-weight:700;color:#53617e;margin:12px 0 5px}
+#lsb221-root label.f221-check{display:flex;align-items:center;gap:9px;padding:8px 12px;margin:0;border:1px solid #e5e9f2;border-radius:10px;font-weight:600}
+#lsb221-root .f221-check input{width:18px;min-height:18px;height:18px;margin:0;accent-color:#3b4193}
+#lsb221-root .f221-fields{display:grid;grid-template-columns:repeat(3,minmax(150px,1fr));gap:12px}
+#lsb221-root .f221-box{background:#f8f9fd;padding:14px;border:1px solid #e5e9f5;border-radius:12px;overflow-wrap:anywhere}
+#lsb221-root .f221-row{border:1px solid #e2e6f0;border-radius:13px;padding:15px;margin:10px 0}
+#lsb221-root .f221-row-head{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+#lsb221-root .f221-scroll{overflow-x:auto;max-width:100%}#lsb221-root table{width:100%;border-collapse:collapse;text-align:left;white-space:normal;font-size:12px}
+#lsb221-root th,#lsb221-root td{padding:11px;border-bottom:1px solid #e5e9f4;vertical-align:top}#lsb221-root th{background:#eff2fb;color:#586584}
+#lsb221-root .f221-error{color:#a42d39;font-weight:650}#lsb221-root .f221-success{color:#11734d;font-weight:650}
+@media(max-width:750px){#lsb221-root .f221-stats{grid-template-columns:repeat(2,minmax(0,1fr))}#lsb221-root .f221-fields{grid-template-columns:1fr}#lsb221-root .f221-grid{grid-template-columns:1fr}#lsb221-root .f221-top{padding:14px}#lsb221-root .f221-body{padding:15px 13px 85px}#lsb221-root .f221-card{padding:15px}#lsb221-root h1{font-size:21px}#lsb221-root button{white-space:normal}}
+`;
+const style=document.createElement('style');style.id='lsb221-style';style.textContent=css;document.head.append(style);
+function createScreen(title,description){
+ document.getElementById('lsb221-root')?.remove();
+ const root=document.createElement('div');root.id='lsb221-root';root.setAttribute('role','region');root.setAttribute('aria-label',title);
+ root.innerHTML='<div class="f221-top"><div class="f221-mark"><svg viewBox="0 0 24 24"><path d="m12 2 9 4v6c0 5.5-3.6 8.4-9 10-5.4-1.6-9-4.5-9-10V6z"/><path d="m8 12 2.5 2.5L16 9"/></svg> LSB · Gestión delegada</div><button type="button" class="secondary" id="lsb221-close">Volver a la plataforma</button></div><div class="f221-body"><h1>'+esc(title)+'</h1><p class="f221-small">'+esc(description)+'</p><div id="lsb221-main" role="status">Comprobando permisos…</div></div>';
+ document.body.append(root);root.querySelector('#lsb221-close').onclick=()=>root.remove();document.body.style.overflow='hidden';
+ root.addEventListener('keydown',e=>{if(e.key==='Escape'){root.remove();document.body.style.overflow=''}});
+ const remove=()=>{document.body.style.overflow=''};new MutationObserver((records,o)=>{if(!root.isConnected){remove();o.disconnect()}}).observe(document.body,{childList:true});
+ return root;
+}
+async function authFlags(){const [a,b,c]=await Promise.all(['grade_review','grade_publish','boletas'].map(p_permission=>client().rpc('lsb_academic_authorized',{p_permission})));return {review:!a.error&&a.data===true,publish:!b.error&&b.data===true,boletas:!c.error&&c.data===true};}
+const inProgress={busy:false};
+async function openAcademic(){
+ if(!p())return alert('Inicia sesión antes de abrir Coordinación Académica.');
+ const root=createScreen('Coordinación Académica','Seguimiento de cuadros, aprobación, publicación y verificación de boletas.');
+ const main=root.querySelector('#lsb221-main');const current=++latest;
+ try{
+  const f=await authFlags();if(!f.review&&!f.publish&&!f.boletas)throw Error('Dirección General no autorizó esta función.');
+  if(!root.isConnected||current!==latest)return;
+  main.innerHTML='<div class="f221-card"><h2>Seguimiento de calificaciones</h2><div class="f221-fields"><div><label>Ciclo escolar</label><select id="f221-year"><option value="">Todos los ciclos</option></select></div><div><label>Bimestre</label><select id="f221-bimester"><option value="">Todos</option><option value="1">Bimestre 1</option><option value="2">Bimestre 2</option><option value="3">Bimestre 3</option><option value="4">Bimestre 4</option></select></div><div><label>Buscar curso o profesor</label><input id="f221-search" type="search" placeholder="Escribe un nombre"></div></div><div class="f221-actions"><button id="f221-refresh" class="secondary">Actualizar estados</button></div><p class="f221-small">Solo se aprueban cuadros enviados. Publicar registra la copia oficial que consultan las boletas cuando su visibilidad está autorizada.</p></div><div id="f221-status" role="status" class="f221-small"></div><div id="f221-stats"></div><section id="f221-rows"></section>';
+  const year=main.querySelector('#f221-year'),bim=main.querySelector('#f221-bimester'),search=main.querySelector('#f221-search'),rowsDiv=main.querySelector('#f221-rows');
+  let all=[];
+  async function refresh(){
+   main.querySelector('#f221-status').textContent='Consultando registros oficiales…';
+   const {data,error}=await client().rpc('lsb_academic_queue',{p_year:year.value?Number(year.value):null,p_bimester:bim.value?Number(bim.value):null});
+   if(error)throw error;if(!root.isConnected)return;all=Array.isArray(data)?data:[];
+   const yrs=[...new Set(all.map(x=>x.school_year))].sort((a,b)=>b-a);
+   const chosen=year.value;year.innerHTML='<option value="">Todos los ciclos</option>'+yrs.map(y=>'<option value="'+Number(y)+'">'+Number(y)+'</option>').join('');year.value=chosen&&yrs.map(String).includes(chosen)?chosen:'';
+   draw();main.querySelector('#f221-status').textContent='Datos consultados en Supabase.';
+  }
+  function draw(){
+   const needle=search.value.trim().toLocaleLowerCase('es');const items=all.filter(x=>(x.course_name+' '+x.teacher_name+' '+x.section_name).toLocaleLowerCase('es').includes(needle));
+   const published=items.filter(x=>x.publication_id).length,pending=items.filter(x=>x.status==='pendiente'&&!x.publication_id).length,reviewed=items.filter(x=>x.status==='revisado'&&!x.publication_id).length;
+   const sectionMap=new Map();for(const x of items){const k=x.school_year+':'+x.section_id+':'+x.bimester;sectionMap.set(k,{name:x.section_name,year:x.school_year,bim:x.bimester,done:Number(x.section_published||0),total:Number(x.section_courses||0)});}
+   const ready=[...sectionMap.values()].filter(x=>x.total>0&&x.done===x.total).length;
+   main.querySelector('#f221-stats').innerHTML='<div class="f221-stats"><div><strong>'+pending+'</strong><span>Pendientes de revisión</span></div><div><strong>'+reviewed+'</strong><span>Revisados sin publicar</span></div><div><strong>'+published+'</strong><span>Cuadros publicados</span></div><div><strong>'+ready+'</strong><span>Secciones con boletas completas</span></div></div>';
+   const sectionBlocks=[...sectionMap.values()].sort((a,b)=>b.year-a.year||a.name.localeCompare(b.name,'es'));
+   const checklist='<div class="f221-card"><h2>Estado de boletas por sección</h2><div class="f221-grid">'+sectionBlocks.map(x=>'<div class="f221-box"><strong>'+esc(x.name)+'</strong> · '+Number(x.year)+' · B'+Number(x.bim)+'<br><span class="f221-tag '+(x.total&&x.done===x.total?'done':'wait')+'">'+Number(x.done)+' / '+Number(x.total)+' materias publicadas</span><br><small>'+(x.total&&x.done===x.total?'Listas para habilitar boletas':'Faltan materias por publicar')+'</small></div>').join('')+'</div></div>';
+   rowsDiv.innerHTML=checklist+'<div class="f221-card"><h2>Cuadros por curso</h2>'+items.map(x=>{
+    const state=x.publication_id?'Publicado':x.status==='revisado'?'Revisado':x.status==='pendiente'?'Pendiente':'Sin enviar';
+    const actions=[];if(x.submission_id){actions.push('<button type="button" class="secondary" data-f221-view="'+esc(x.submission_id)+'">Ver cuadro</button>');}
+    if(f.review&&x.submission_id&&x.status==='pendiente'&&!x.publication_id&&!(p()?.role==='profesor'&&(x.submitted_by===p()?.id)))actions.push('<button type="button" data-f221-review="'+esc(x.submission_id)+'">Aprobar cuadro</button>');
+    if(f.publish&&x.submission_id&&x.status==='revisado'&&!x.publication_id&&!(p()?.role==='profesor'&&(x.submitted_by===p()?.id)))actions.push('<button type="button" data-f221-publish="'+esc(x.submission_id)+'">Publicar notas</button>');
+    return '<article class="f221-row"><div class="f221-row-head"><div><strong>'+esc(x.course_name)+'</strong><div class="f221-small">'+esc(x.teacher_name)+' · '+esc(x.section_name)+' · '+Number(x.school_year)+' · Bimestre '+Number(x.bimester)+'</div></div><span class="f221-tag '+(x.publication_id?'done':x.status==='pendiente'?'wait':'')+'">'+esc(state)+'</span></div><div class="f221-small">'+Number(x.enrolled||0)+' estudiantes inscritos</div><div class="f221-actions">'+actions.join('')+'</div></article>';
+   }).join('')+'</div>';
+  }
+  async function viewDetail(id){
+    const {data,error}=await client().rpc('lsb_academic_submission_detail',{p_submission_id:id});if(error)throw error;
+    const activities=data?.activities||[],students=data?.students||[];
+    const dialog=createScreen('Cuadro de calificaciones','Vista de comprobación. Ninguna nota puede editarse desde este panel.');
+    const body=dialog.querySelector('#lsb221-main');body.innerHTML='<div class="f221-card"><h2>Bimestre '+Number(data.bimester)+'</h2><p class="f221-small">Actividades: '+esc(activities.map(x=>x.title+' ('+x.max_score+' pts)').join(' · '))+'</p><div class="f221-scroll"><table><thead><tr><th>Estudiante</th><th>Calificaciones</th><th>Total</th><th>Estado</th></tr></thead><tbody>'+students.map(x=>'<tr><td>'+esc(x.last_name)+' '+esc(x.first_name)+'</td><td>'+esc((x.scores||[]).map(a=>a.activity+': '+(a.score??'Sin nota')).join(' | '))+'</td><td>'+Number(x.total||0)+'</td><td>'+((x.scores_count===x.assessments_count&&x.assessments_count>0)?'Completo':'Incompleto')+'</td></tr>').join('')+'</tbody></table></div></div>';
+    dialog.querySelector('#lsb221-close').onclick=()=>{dialog.remove();document.body.style.overflow='';openAcademic();};
+  }
+  rowsDiv.addEventListener('click',async e=>{
+   const b=e.target.closest('[data-f221-review],[data-f221-publish],[data-f221-view]');if(!b||inProgress.busy)return;
+   const id=b.dataset.f221Review||b.dataset.f221Publish||b.dataset.f221View;
+   if(b.hasAttribute('data-f221-view')){try{await viewDetail(id)}catch(e){alert('No se pudo consultar el cuadro: '+e.message)}return;}
+   if(b.hasAttribute('data-f221-review')){
+    if(!confirm('¿Ya revisaste el cuadro completo y deseas aprobarlo?'))return;
+    inProgress.busy=true;b.disabled=true;
+    try{const {error}=await client().rpc('lsb_review_grade_progress_secure',{p_submission_id:id});if(error)throw error;await refresh();}
+    catch(err){alert('No se aprobó: '+err.message)}finally{inProgress.busy=false;b.disabled=false;}
+   }else{
+    const reason=prompt('Motivo oficial de publicación (mínimo 15 caracteres):','Cuadro académico revisado y autorizado para publicación');
+    if(reason===null)return;if(reason.trim().length<15)return alert('El motivo debe tener al menos 15 caracteres.');
+    if(!confirm('¿Confirmas la publicación definitiva de este cuadro?'))return;
+    inProgress.busy=true;b.disabled=true;
+    try{const {error}=await client().rpc('lsb_publish_grade_submission_secure',{p_submission_id:id,p_reason:reason.trim()});if(error)throw error;await refresh();}
+    catch(err){alert('No se publicó: '+err.message)}finally{inProgress.busy=false;b.disabled=false;}
+   }
+  });
+  bim.onchange=()=>refresh().catch(e=>main.querySelector('#f221-status').textContent=e.message);
+  year.onchange=()=>refresh().catch(e=>main.querySelector('#f221-status').textContent=e.message);
+  search.oninput=draw;main.querySelector('#f221-refresh').onclick=()=>refresh().catch(e=>main.querySelector('#f221-status').textContent=e.message);
+  await refresh();
+ }catch(e){if(root.isConnected)main.innerHTML='<p class="f221-card f221-error">'+esc(e.message||e)+'</p>';}
+}
+async function openAdministrators(){
+ if(!isGeneral())return alert('Solo Dirección General puede invitar y autorizar administradores.');
+ const root=createScreen('Administradores secundarios','Invitación por correo y asignación individual de las funciones de Dirección.');
+ const main=root.querySelector('#lsb221-main');
+ main.innerHTML='<div class="f221-card"><h2>Registrar administrador secundario</h2><p class="f221-small">Dirección registra el correo y las funciones. El invitado crea su contraseña y confirma su correo. Ninguna cuenta recibe permisos sin autorización de Dirección.</p><form id="f221-admin-form"><div class="f221-fields"><div><label>Nombre completo</label><input name="full_name" required minlength="3" maxlength="100"></div><div><label>Correo de acceso</label><input name="email" type="email" required></div></div><h2 style="margin:18px 0 12px">Funciones que podrá utilizar</h2><div class="f221-actions"><button type="button" class="secondary" id="f221-select-all">Seleccionar todas</button><button type="button" class="secondary" id="f221-select-none">Quitar selección</button></div><div id="f221-admin-modules" class="f221-grid">'+permissions.map(([key,label])=>'<label class="f221-check"><input type="checkbox" name="modules" value="'+key+'">'+esc(label)+'</label>').join('')+'</div><p class="f221-small">Puedes autorizar varias funciones o dejarlas sin seleccionar para configurarlas más adelante. Cada operación sensible conserva su verificación de servidor.</p><div class="f221-actions"><button type="submit">Generar invitación segura</button><button type="button" class="secondary" id="f221-admin-reload">Actualizar administradores</button></div><p role="status" id="f221-admin-status"></p></form><div id="f221-invite-result"></div></div><div class="f221-card"><h2>Administradores registrados</h2><div id="f221-admin-list" role="status">Consultando…</div></div>';
+ const form=main.querySelector('#f221-admin-form'),status=main.querySelector('#f221-admin-status'),list=main.querySelector('#f221-admin-list');
+ main.querySelector('#f221-select-all').onclick=()=>form.querySelectorAll('[name=modules]').forEach(c=>c.checked=true);
+ main.querySelector('#f221-select-none').onclick=()=>form.querySelectorAll('[name=modules]').forEach(c=>c.checked=false);
+ async function reload(){const {data,error}=await client().from('lsb_profiles').select('id,full_name,username,active,admin_modules').eq('role','admin_secundario').order('full_name');if(error)throw error;list.innerHTML=(data||[]).map(a=>'<section class="f221-row"><div class="f221-row-head"><div><strong>'+esc(a.full_name)+'</strong><div class="f221-small">'+esc(a.username)+'</div></div><span class="f221-tag">'+(a.active?'Activo':'Suspendido')+'</span></div><div class="f221-actions"><button type="button" class="secondary" data-f221-edit="'+esc(a.id)+'">Editar nombre y permisos</button><button type="button" class="secondary" data-f221-toggle="'+esc(a.id)+'" data-f221-active="'+(a.active?'1':'0')+'">'+(a.active?'Suspender acceso':'Reactivar acceso')+'</button></div><small class="f221-small">'+esc((a.admin_modules||[]).map(x=>permissions.find(z=>z[0]===x)?.[1]||x).join(', ')||'Sin permisos')+'</small></section>').join('')||'<p class="f221-small">Todavía no existen administradores secundarios.</p>';
+ list.querySelectorAll('[data-f221-toggle]').forEach(b=>b.onclick=async()=>{
+  const active=b.dataset.f221Active==='1';if(!confirm(active?'¿Suspender esta cuenta administrativa?':'¿Reactivar esta cuenta administrativa?'))return;
+  b.disabled=true;const {error}=await client().rpc('lsb_set_secondary_active',{p_secondary_id:b.dataset.f221Toggle,p_active:!active});
+  if(error){alert('No fue posible cambiar el estado: '+error.message);b.disabled=false;return;}await reload();
+ });
+ list.querySelectorAll('[data-f221-edit]').forEach(b=>b.onclick=async()=>{
+  const target=(data||[]).find(a=>a.id===b.dataset.f221Edit);if(!target)return;
+  form.elements.full_name.value=target.full_name;form.elements.email.value=target.username;form.elements.email.readOnly=true;
+  form.querySelectorAll('[name=modules]').forEach(c=>c.checked=(target.admin_modules||[]).includes(c.value));
+  status.innerHTML='Estás modificando permisos de <b>'+esc(target.full_name)+'</b>.';
+  form.dataset.editId=target.id;
+  form.querySelector('[type=submit]').textContent='Guardar permisos';
+ });}
+ main.querySelector('#f221-admin-reload').onclick=()=>reload().catch(e=>list.textContent=e.message);
+ form.addEventListener('submit',async e=>{
+  e.preventDefault();const button=form.querySelector('[type=submit]');button.disabled=true;status.textContent='Verificando autorización…';
+  try{const modules=[...form.querySelectorAll('[name=modules]:checked')].map(x=>x.value);
+   if(form.dataset.editId){const {error}=await client().rpc('lsb_update_secondary_admin',{p_secondary_id:form.dataset.editId,p_full_name:form.elements.full_name.value.trim(),p_modules:modules});if(error)throw error;status.textContent='Nombre y permisos actualizados en Supabase.';delete form.dataset.editId;form.elements.email.readOnly=false;form.reset();button.textContent='Generar invitación segura';await reload();return;}
+   const {data,error}=await client().rpc('lsb_prepare_secondary_invitation',{p_email:form.elements.email.value.trim(),p_full_name:form.elements.full_name.value.trim(),p_modules:modules});if(error)throw error;
+   const link=new URL(window.location.href);link.search='';link.hash='';link.searchParams.set('secondary_invite',data.token);
+   const result=main.querySelector('#f221-invite-result');result.innerHTML='<div class="f221-box"><strong>Invitación lista para compartir</strong><p class="f221-small">El correo todavía no se envía automáticamente desde la plataforma. Comparte este enlace con el administrador y pídele que confirme su correo y establezca su contraseña.</p><input id="f221-invite-url" readonly value="'+esc(link.toString())+'"><div class="f221-actions"><button type="button" id="f221-copy">Copiar enlace</button><button type="button" class="secondary" id="f221-mail">Preparar correo</button></div></div>';
+   result.querySelector('#f221-copy').onclick=async()=>{try{await navigator.clipboard.writeText(link.toString());status.textContent='Enlace copiado.'}catch{result.querySelector('#f221-invite-url').select();status.textContent='Selecciona el enlace para copiarlo.'}};
+   result.querySelector('#f221-mail').onclick=()=>{const href='mailto:'+encodeURIComponent(data.email)+'?subject='+encodeURIComponent('Invitación a Dirección secundaria · Liceo San Benito')+'&body='+encodeURIComponent('Has sido invitado a crear tu acceso administrativo. Abre este enlace, confirma tu correo y establece tu contraseña:\n\n'+link.toString());window.location.href=href;};
+   status.textContent='Invitación registrada en Supabase. Enlace válido durante siete días.';
+  }catch(e){status.textContent='Error: '+String(e.message||e)}finally{button.disabled=false;}
+ });
+ await reload().catch(e=>list.textContent=e.message);
+}
+function inviteOnboarding(){
+ const token=new URLSearchParams(location.search).get('secondary_invite');if(!token)return;
+ const root=createScreen('Activar cuenta de Dirección','Tu correo debe coincidir con el que registró Dirección General.');
+ const main=root.querySelector('#lsb221-main');
+ main.innerHTML='<div class="f221-card"><h2>Completa tu acceso</h2><p>Escribe tu correo institucional y crea una contraseña personal. Si ya tienes acceso a Supabase, utiliza «Ya tengo cuenta».</p><form id="f221-accept"><label>Correo invitado</label><input type="email" name="email" required autocomplete="email"><label>Contraseña personal (mínimo 10 caracteres)</label><input type="password" name="password" required minlength="10" autocomplete="new-password"><div class="f221-actions"><button type="submit" name="mode" value="signup">Crear contraseña y confirmar correo</button><button type="button" class="secondary" id="f221-existing">Ya tengo cuenta</button></div><p id="f221-accept-status" role="status" class="f221-small"></p></form></div>';
+ const form=main.querySelector('#f221-accept'),status=main.querySelector('#f221-accept-status');
+ let existing=false;const switcher=main.querySelector('#f221-existing');switcher.onclick=()=>{existing=!existing;form.querySelector('[name=mode]').textContent=existing?'Iniciar sesión y aceptar':'Crear contraseña y confirmar correo';switcher.textContent=existing?'Crear cuenta nueva':'Ya tengo cuenta';};
+ async function accept(){const {data,error}=await client().rpc('lsb_accept_secondary_invitation',{p_token:token});if(error)throw error;status.textContent='Cuenta activada con éxito. Ya puedes iniciar sesión desde Dirección con tu correo y contraseña.';status.className='f221-success';form.querySelectorAll('input,button').forEach(x=>x.disabled=true);setTimeout(()=>{root.remove();document.body.style.overflow='';history.replaceState({},'',location.pathname);},2000);}
+ form.addEventListener('submit',async e=>{
+  e.preventDefault();status.textContent='Validando correo y acceso…';const email=form.elements.email.value.trim().toLowerCase(),password=form.elements.password.value;
+  try{
+   if(existing){const {error}=await client().auth.signInWithPassword({email,password});if(error)throw error;await accept();}
+   else{
+    const redirect=new URL(location.origin+location.pathname);redirect.searchParams.set('secondary_invite',token);
+    const {data,error}=await client().auth.signUp({email,password,options:{emailRedirectTo:redirect.toString()}});if(error)throw error;
+    if(data.session){await accept();}else{status.textContent='Revisa tu correo y confirma la cuenta. Después regresa a este enlace para iniciar sesión y completar la invitación.';existing=true;switcher.textContent='Crear cuenta nueva';form.querySelector('[name=mode]').textContent='Iniciar sesión y aceptar';}
+   }
+  }catch(err){status.className='f221-error';status.textContent=String(err.message||err);}
+ });
+ client().auth.getUser().then(({data})=>{if(data?.user?.email_confirmed_at){status.textContent='Hay una sesión confirmada. Introduce el mismo correo y contraseña para aceptar la invitación.';existing=true;form.querySelector('[name=mode]').textContent='Iniciar sesión y aceptar';}}).catch(()=>{});
+}
+// Usar el formulario original de Alta de administrador, pero sin crear perfiles ficticios.
+if(typeof newAccount==='function'){
+ const previousNewAccount=newAccount;
+ newAccount=function(type,existing=null){if(type==='admin'&&!existing&&isGeneral()){openAdministrators();return;}return previousNewAccount.apply(this,arguments);};
+}
+// Menú de Dirección: misma interfaz; la cuenta secundaria solo ve apartados autorizados.
+let lastSecondary='';
+function syncDirection(){
+ if(!p()||typeof role==='undefined'||role!=='admin')return;
+ const root=document.getElementById('lsb-f23-shell')?.shadowRoot;
+ if(!root)return;
+ const nav=root.getElementById('side-links');if(nav){
+  if(isGeneral()||isSecondary()){
+   if((isGeneral()||secondaryModules.some(x=>['grade_review','grade_publish','boletas'].includes(x)))&&!nav.querySelector('[data-f221-academic]')){const b=document.createElement('button');b.className='navlink';b.dataset.f221Academic='1';b.textContent='🛡️ Coordinación Académica';b.style.cssText='display:block;width:100%;text-align:left;padding:12px 14px;border:1px solid #ced5ea;border-radius:12px;margin:10px 0;background:#fff;color:#353e8f;font-weight:800';b.onclick=openAcademic;nav.append(b);}
+   if(isGeneral()&&!nav.querySelector('[data-f221-administrators]')){const b=document.createElement('button');b.className='navlink';b.dataset.f221Administrators='1';b.textContent='👤 Administradores secundarios';b.style.cssText='display:block;width:100%;text-align:left;padding:12px 14px;border:1px solid #ced5ea;border-radius:12px;margin:10px 0;background:#fff;color:#353e8f;font-weight:800';b.onclick=openAdministrators;nav.append(b);}
+   if(isSecondary()){
+    root.querySelectorAll('[data-f23route]').forEach(b=>{b.hidden=!allowedRoute(b.dataset.f23route);});
+    root.querySelectorAll('[data-f23group]').forEach(b=>{const group=b.closest('.navgroup');if(group){const links=[...group.querySelectorAll('[data-f23route]')];if(links.length)group.hidden=links.every(x=>x.hidden);}});
+   }
+  }
+ }
+}
+async function loadSecondary(){
+ if(!isSecondary()){secondaryModules=[];lastSecondary='';return;}
+ const id=p().id;if(lastSecondary===id)return;
+ lastSecondary=id;
+ const {data,error}=await client().from('lsb_profiles').select('admin_modules').eq('id',id).single();
+ if(error){lastSecondary='';return;}
+ secondaryModules=Array.isArray(data.admin_modules)?data.admin_modules:[];syncDirection();
+}
+const root=document.getElementById('lsb-f23-shell')?.shadowRoot;
+if(root){const side=root.getElementById('side-links');if(side){new MutationObserver(()=>queueMicrotask(syncDirection)).observe(side,{childList:true});}}
+if(typeof render==='function'){const old=render;render=function(...args){const v=old.apply(this,args);loadSecondary();queueMicrotask(syncDirection);return v;};}
+if(typeof go==='function'){const prev=go;go=function(path){if(isSecondary()&&!allowedRoute(path)){alert('Dirección General no autorizó este apartado.');return;}return prev.apply(this,arguments);};}
+if(root){root.addEventListener('click',e=>{if(!isSecondary())return;const b=e.target.closest('[data-f23route]');if(b&&!allowedRoute(b.dataset.f23route)){e.preventDefault();e.stopImmediatePropagation();alert('Módulo no autorizado por Dirección General.');}},true);}
+const api={openAcademic,openAdministrators,allowSection:allowedRoute};window.LSB221=api;
+queueMicrotask(()=>{loadSecondary().catch(console.warn);syncDirection();inviteOnboarding();});
+})();
+
 </script>
 </body></html>
