@@ -15187,7 +15187,7 @@ accountDetail=function(id){
 };
 })();
 </script>
-<script id="lsb-f213-debit-inline">/* Plataforma Academica LSB / F213: Administrador Debit (consulta segura) */
+<script id="lsb-f215-debit-inline">/* Plataforma Academica LSB / F215: Administrador Debit (acciones verificadas) */
 (function(){
   'use strict';
   if (typeof accountDetail !== 'function' || typeof render !== 'function') return;
@@ -15216,7 +15216,7 @@ accountDetail=function(id){
     dialog.querySelector('#saveaccess10')?.closest('fieldset')?.remove();
     if(dialog.querySelector('#lsb213grant'))return out;
     const choices=list.map(([key,label])=>'<label><input type="checkbox" name="lsb213module" value="'+key+'" disabled> '+esc(label)+'</label>').join('');
-    bar.insertAdjacentHTML('beforebegin','<fieldset id="lsb213grant"><legend><b>Administrador Debit · Supabase</b></legend><p class="sub">Acceso delegado de consulta; no modifica notas, cuentas ni pagos.</p><label><input type="checkbox" id="lsb213enabled" disabled> Habilitar docente delegado</label><div class="choices">'+choices+'</div><button class="button" type="button" id="lsb213save" disabled>Guardar permisos</button><p id="lsb213status" role="status" class="sub">Cargando permisos…</p></fieldset>');
+    bar.insertAdjacentHTML('beforebegin','<fieldset id="lsb213grant"><legend><b>Administrador Debit · Supabase</b></legend><p class="sub">Permisos de consulta y acciones autorizadas. Los módulos se habilitan individualmente en Supabase.</p><label><input type="checkbox" id="lsb213enabled" disabled> Habilitar docente delegado</label><div class="choices">'+choices+'</div><button class="button" type="button" id="lsb213save" disabled>Guardar permisos</button><p id="lsb213status" role="status" class="sub">Cargando permisos…</p></fieldset>');
     const root=dialog.querySelector('#lsb213grant');
     const enabled=root.querySelector('#lsb213enabled');
     const save=root.querySelector('#lsb213save');
@@ -15241,51 +15241,86 @@ accountDetail=function(id){
         if(error||!data)throw Error(error?.message||'No hubo confirmación');
         acc.adminAccess=data.enabled===true;acc.adminModules=data.modules||[];
         if(!data.enabled)checkboxes.forEach(c=>c.checked=false);
-        status.textContent=data.enabled?'Delegación guardada. El profesor verá el botón al recargar su sesión.':'Delegación revocada correctamente.';
+        status.textContent=data.enabled?'Delegación guardada. El profesor verá Administrador Debit en su menú.':'Delegación revocada correctamente.';
       }catch(e){status.textContent='No se pudo guardar: '+String(e.message||e);}
       finally{busy=false;save.disabled=false;}
     };
     return out;
   };
 
+
   const cache={id:null,data:undefined,loading:false};
-  function showEntry(){
-    if(typeof LSB18==='undefined'||!LSB18.authenticated||LSB18.profile?.role!=='profesor'||role!=='teacher')return;
-    const id=LSB18.profile.id,app=document.getElementById('app');
-    if(!app||!id)return;
-    if(cache.id!==id){cache.id=id;cache.data=undefined;cache.loading=false;}
+  let debitScreen=false;
+  function profileReady(){return typeof LSB18!=='undefined'&&LSB18.authenticated&&LSB18.profile?.role==='profesor'&&role==='teacher'&&LSB18.profile?.id;}
+  async function refreshPermission(){
+    const id=profileReady();
+    if(!id) return null;
+    const {data,error}=await client().from('lsb_profiles').select('active,delegated_admin,admin_modules').eq('id',id).single();
+    if(error) throw Error(error.message||'No se pudieron verificar los permisos');
+    cache.id=id;cache.data=data;
+    return data?.active&&data.delegated_admin?data:null;
+  }
+  function menuEntry(){
+    const id=profileReady(),nav=document.getElementById('nav');
+    if(!id||!nav)return;
+    if(cache.id!==id){cache.id=id;cache.data=undefined;cache.loading=false;debitScreen=false;}
     if(cache.data===undefined&&!cache.loading){
       cache.loading=true;
-      client().from('lsb_profiles').select('delegated_admin,admin_modules,active').eq('id',id).single().then(({data,error})=>{
-        cache.data=error?null:data;cache.loading=false;showEntry();
-      }).catch(()=>{cache.data=null;cache.loading=false;});
+      refreshPermission().then(()=>{cache.loading=false;menuEntry();}).catch(()=>{cache.data=null;cache.loading=false;});
     }
-    if(!cache.data?.active||!cache.data?.delegated_admin||!cache.data?.admin_modules?.length||app.querySelector('#lsb213entry'))return;
-    const btn=document.createElement('button');
-    btn.className='button secondary';btn.id='lsb213entry';btn.type='button';btn.textContent='Administrador Debit · Ver consultas autorizadas';btn.onclick=openPanel;
-    app.insertBefore(btn,app.firstChild);
+    if(!cache.data?.active||!cache.data?.delegated_admin||!cache.data?.admin_modules?.length) return;
+    if(nav.querySelector('[data-f215-menu]'))return;
+    const b=document.createElement('button');b.type='button';b.dataset.f215Menu='1';
+    b.className='f52-item';b.textContent='Administrador Debit';
+    b.addEventListener('click',()=>{debitScreen=true;showDebit();});nav.appendChild(b);
+    if(debitScreen)showDebit();
   }
   const priorRender=render;
-  render=function(){const output=priorRender.apply(this,arguments);queueMicrotask(showEntry);return output;};
-  queueMicrotask(showEntry);
-  function openPanel(){
-    const permitted=cache.data?.admin_modules||[];
-    const buttons=list.filter(x=>permitted.includes(x[0])).map(([key,label])=>'<button class="button secondary" type="button" data-lsb213="'+key+'">'+esc(label)+'</button>').join('');
-    modal('<section id="lsb213modal"><h2>Administrador Debit</h2><p class="sub">Consulta autorizada por Dirección general. No permite modificar datos.</p><div class="choices">'+buttons+'</div><p id="lsb213output" role="status">Selecciona un módulo.</p><div id="lsb213items"></div><button class="button secondary" data-close type="button">Cerrar</button></section>');
-    const root=document.getElementById('lsb213modal');
-    root.querySelectorAll('[data-lsb213]').forEach(b=>b.onclick=async()=>{
-      const module=b.dataset.lsb213,info=root.querySelector('#lsb213output'),items=root.querySelector('#lsb213items');
-      info.textContent='Consultando Supabase…';items.replaceChildren();
-      root.querySelectorAll('[data-lsb213]').forEach(x=>x.disabled=true);
-      try{
-        const {data,error}=await client().rpc('lsb_debit_overview',{p_module:module});
-        if(error||!data)throw Error(error?.message||'Consulta fallida');
-        if(!root.isConnected)return;
-        info.textContent=(list.find(x=>x[0]===module)?.[1]||module)+': '+data.total+' registro(s). Solo lectura.';
-        items.innerHTML=(data.items||[]).map(x=>'<article><b>'+esc(x.name)+'</b><small>'+esc(x.detail)+'</small></article>').join('')||'<p class="sub">Resumen disponible, sin más detalles.</p>';
-      }catch(e){if(root.isConnected)info.textContent='Consulta rechazada: '+String(e.message||e);}
-      finally{if(root.isConnected)root.querySelectorAll('[data-lsb213]').forEach(x=>x.disabled=false);}
-    });
+  render=function(){debitScreen=false;const result=priorRender.apply(this,arguments);queueMicrotask(menuEntry);return result;};
+  queueMicrotask(menuEntry);
+  function showDebit(){
+    const app=document.getElementById('app');if(!app)return;
+    const p=cache.data;
+    if(!profileReady()||!p?.active||!p.delegated_admin){app.textContent='No tienes autorización para este apartado.';return;}
+    const allowed=list.filter(([key])=>(p.admin_modules||[]).includes(key));
+    document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('active',!!b.dataset.f215Menu));
+    app.innerHTML='<div class="heading"><div><p class="eyebrow">PERMISOS DE DIRECCIÓN GENERAL</p><h1>Administrador Debit</h1><p class="sub">Funciones autorizadas para tu cuenta. La autorización se verifica al realizar cada operación.</p></div></div><section class="panel"><div class="panelhead"><h2>Módulos asignados</h2></div><div class="panelbody"><div id="f215-modules" class="toolbar">'+allowed.map(([key,label])=>'<button type="button" class="button secondary" data-f215-module="'+key+'">'+esc(label)+'</button>').join('')+'</div><p class="sub" style="margin-top:12px">Avisos permite publicar para profesores o familias, cuando está autorizado. Los demás módulos mantienen consultas protegidas; las operaciones de edición requieren autorización específica en Supabase.</p></div></section><section id="f215-content" class="panel"><div class="panelbody"><p class="sub">Selecciona un módulo para comenzar.</p></div></section>';
+    app.querySelectorAll('[data-f215-module]').forEach(b=>b.addEventListener('click',()=>loadModule(b.dataset.f215Module)));
+  }
+  async function loadModule(module){
+    const panel=document.getElementById('f215-content');if(!panel||!debitScreen)return;
+    panel.innerHTML='<div class="panelbody"><p role="status">Verificando autorización y cargando información…</p></div>';
+    try{
+      const p=await refreshPermission();
+      if(!p||(p.admin_modules||[]).indexOf(module)===-1){showDebit();throw Error('Dirección general retiró esta autorización.');}
+      const {data,error}=await client().rpc('lsb_debit_overview',{p_module:module});
+      if(error||!data)throw Error(error?.message||'Consulta no autorizada');
+      if(!panel.isConnected||!debitScreen)return;
+      const label=list.find(([key])=>key===module)?.[1]||module;
+      const items=Array.isArray(data.items)?data.items:[];
+      panel.innerHTML='<div class="panelhead"><h2>'+esc(label)+'</h2><span class="badge">'+Number(data.total||0)+' registros</span></div><div class="panelbody"><div id="f215-actions"></div><div id="f215-list"></div></div>';
+      const area=panel.querySelector('#f215-list');
+      if(items.length){const ul=document.createElement('ul');ul.style.cssText='list-style:none;padding:0;display:grid;gap:10px';items.forEach(item=>{const li=document.createElement('li');li.className='notice';const strong=document.createElement('strong');strong.textContent=item.name??'';const small=document.createElement('small');small.style.display='block';small.textContent=item.detail??'';li.append(strong,small);ul.append(li)});area.append(ul);}
+      else area.innerHTML='<p class="sub">Sin detalles adicionales disponibles.</p>';
+      if(module==='notices'){
+        const actions=panel.querySelector('#f215-actions');
+        actions.innerHTML='<h3>Publicar aviso institucional</h3><p class="sub">Acción administrativa habilitada por Dirección General. El mensaje se enviará a todos los miembros del grupo seleccionado.</p><form id="f215-notice-form"><label class="field">Destinatarios<select name="kind" required><option value="teachers">Todos los profesores</option><option value="families">Todas las familias</option></select></label><label class="field">Título<input name="title" required maxlength="120" minlength="1"></label><label class="field">Mensaje<textarea name="body" required maxlength="3000" rows="5"></textarea></label><div class="toolbar"><button class="button" type="submit">Publicar aviso</button></div><p id="f215-notice-status" class="sub" role="status"></p></form><hr style="border:0;border-top:1px solid var(--line);margin:23px 0">';
+        const f=actions.querySelector('form');
+        f.addEventListener('submit',async e=>{
+          e.preventDefault();const b=f.querySelector('[type=submit]'),status=f.querySelector('#f215-notice-status');
+          const title=f.elements.title.value.trim(),body=f.elements.body.value.trim(),kind=f.elements.kind.value;
+          if(!title||!body)return;
+          if(!window.confirm('¿Publicar este aviso a '+(kind==='families'?'todas las familias':'todos los profesores')+'?'))return;
+          b.disabled=true;status.textContent='Publicando…';
+          try{
+            const {data,error}=await client().rpc('lsb_debit_publish_notice',{p_title:title,p_body:body,p_target_kind:kind});
+            if(error||!data)throw Error(error?.message||'No se confirmó la publicación');
+            status.textContent='Aviso publicado y registrado correctamente.';f.reset();
+          }catch(err){status.textContent='No se pudo publicar: '+String(err.message||err);}
+          finally{b.disabled=false;}
+        });
+      }
+    }catch(e){if(panel.isConnected)panel.innerHTML='<div class="panelbody"><p role="alert">'+esc(e.message||e)+'</p></div>';}
   }
 })();
 </script>
