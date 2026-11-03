@@ -15629,6 +15629,45 @@ const css=`
 #lsb221-root th,#lsb221-root td{padding:11px;border-bottom:1px solid #e5e9f4;vertical-align:top}#lsb221-root th{background:#eff2fb;color:#586584}
 #lsb221-root .f221-error{color:#a42d39;font-weight:650}#lsb221-root .f221-success{color:#11734d;font-weight:650}
 @media(max-width:750px){#lsb221-root .f221-stats{grid-template-columns:repeat(2,minmax(0,1fr))}#lsb221-root .f221-fields{grid-template-columns:1fr}#lsb221-root .f221-grid{grid-template-columns:1fr}#lsb221-root .f221-top{padding:14px}#lsb221-root .f221-body{padding:15px 13px 85px}#lsb221-root .f221-card{padding:15px}#lsb221-root h1{font-size:21px}#lsb221-root button{white-space:normal}}
+#lsb221-root .f223-filters{grid-template-columns:repeat(4,minmax(0,1fr))}
+#lsb221-root .f223-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+#lsb221-root .f223-heading h2{margin:0}
+#lsb221-root .f223-heading .f221-small{margin:5px 0 0}
+#lsb221-root .f223-count{font-size:12px;font-weight:800;color:#3b4193;background:#eef1fb;padding:7px 10px;border-radius:999px;white-space:nowrap}
+#lsb221-root .f223-teacher-list{display:grid;gap:9px;margin-top:15px}
+#lsb221-root .f223-teacher{border:1px solid #e1e6f2;border-radius:14px;background:#fff;overflow:hidden}
+#lsb221-root .f223-teacher>summary{display:flex;align-items:center;gap:12px;min-height:74px;padding:13px 15px;cursor:pointer;list-style:none}
+#lsb221-root .f223-teacher>summary::-webkit-details-marker,#lsb221-root .f223-boletas>summary::-webkit-details-marker{display:none}
+#lsb221-root .f223-teacher[open]{border-color:#c9d3f4;box-shadow:0 6px 22px #2635670d}
+#lsb221-root .f223-teacher-avatar{display:grid;place-items:center;width:40px;height:40px;flex:0 0 40px;background:#eef1ff;border-radius:11px;color:#454ba5}
+#lsb221-root .f223-teacher-avatar svg{width:25px;height:25px}
+#lsb221-root .f223-teacher-title{min-width:0;display:flex;flex:1;flex-direction:column;gap:2px}
+#lsb221-root .f223-teacher-title strong{font-size:14px;color:#243358;overflow-wrap:anywhere}
+#lsb221-root .f223-teacher-title small{font-size:11px;color:#718098}
+#lsb221-root .f223-teacher-title .f223-teacher-summary{font-size:11px;color:#48577b}
+#lsb221-root .f223-chevron{display:inline-block;font-size:23px;color:#667493;line-height:1;transition:transform .15s ease;flex:0 0 auto}
+#lsb221-root details[open]>summary .f223-chevron{transform:rotate(180deg)}
+#lsb221-root .f223-teacher-body{border-top:1px solid #e7ebf5;padding:8px 15px 15px;background:#fafbff;display:grid;gap:10px}
+#lsb221-root .f223-course{background:#fff;border:1px solid #e9edf5;border-radius:12px;padding:11px 13px}
+#lsb221-root .f223-course h3{font-size:13px;margin:0 0 8px;color:#323e78}
+#lsb221-root .f223-course-line{padding:10px 0;border-top:1px solid #edf0f6}
+#lsb221-root .f223-course-line:first-of-type{border-top:0;padding-top:4px}
+#lsb221-root .f223-course-meta{display:flex;align-items:center;justify-content:space-between;gap:9px;flex-wrap:wrap;font-size:12px;color:#334365}
+#lsb221-root .f223-course-footer{display:flex;align-items:center;justify-content:space-between;gap:9px;flex-wrap:wrap;margin-top:4px}
+#lsb221-root .f223-course-footer small{font-size:11px;color:#738197}
+#lsb221-root .f223-course-footer .f221-actions{margin:3px 0 0}
+#lsb221-root .f223-course-footer .f221-actions button{min-height:34px;padding:7px 10px;font-size:12px}
+#lsb221-root .f223-boletas>summary{cursor:pointer;list-style:none}
+#lsb221-root .f223-section-list{padding-top:15px;display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:11px}
+#lsb221-root .f223-section-row{border:1px solid #e4e8f1;background:#f8faff;border-radius:12px;padding:12px}
+#lsb221-root .f223-section-title{display:flex;flex-direction:column;gap:3px;margin-bottom:9px}
+#lsb221-root .f223-section-title strong{color:#253662;font-size:12px}
+#lsb221-root .f223-section-title span{color:#687891;font-size:11px}
+#lsb221-root .f223-progress{height:7px;border-radius:10px;background:#e3e9f4;overflow:hidden}
+#lsb221-root .f223-progress span{display:block;height:100%;background:#35a987;border-radius:10px}
+#lsb221-root .f223-empty{color:#65758e;font-size:13px;padding:18px;text-align:center;background:#f8faff;border-radius:12px}
+@media(max-width:900px){#lsb221-root .f223-filters{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:600px){#lsb221-root .f223-filters{grid-template-columns:1fr}#lsb221-root .f223-section-list{grid-template-columns:1fr}#lsb221-root .f223-teacher>summary{padding:12px 10px}#lsb221-root .f223-teacher-body{padding:9px}#lsb221-root .f223-teacher-avatar{width:36px;height:36px;flex-basis:36px}#lsb221-root .f223-course-footer{align-items:flex-start}#lsb221-root .f223-course-footer .f221-actions{width:100%}#lsb221-root .f223-heading{gap:8px}}
 `;
 const style=document.createElement('style');style.id='lsb221-style';style.textContent=css;document.head.append(style);
 function createScreen(title,description){
@@ -15649,33 +15688,101 @@ async function openAcademic(){
  try{
   const f=await authFlags();if(!f.review&&!f.publish&&!f.boletas)throw Error('Dirección General no autorizó esta función.');
   if(!root.isConnected||current!==latest)return;
-  main.innerHTML='<div class="f221-card"><h2>Seguimiento de calificaciones</h2><div class="f221-fields"><div><label>Ciclo escolar</label><select id="f221-year"><option value="">Todos los ciclos</option></select></div><div><label>Bimestre</label><select id="f221-bimester"><option value="">Todos</option><option value="1">Bimestre 1</option><option value="2">Bimestre 2</option><option value="3">Bimestre 3</option><option value="4">Bimestre 4</option></select></div><div><label>Buscar curso o profesor</label><input id="f221-search" type="search" placeholder="Escribe un nombre"></div></div><div class="f221-actions"><button id="f221-refresh" class="secondary">Actualizar estados</button></div><p class="f221-small">Solo se aprueban cuadros enviados. Publicar registra la copia oficial que consultan las boletas cuando su visibilidad está autorizada.</p></div><div id="f221-status" role="status" class="f221-small"></div><div id="f221-stats"></div><section id="f221-rows"></section>';
+  main.innerHTML='<div class="f221-card"><h2>Seguimiento de calificaciones</h2><div class="f221-fields f223-filters"><div><label>Ciclo escolar</label><select id="f221-year"><option value="">Todos los ciclos</option></select></div><div><label>Bimestre</label><select id="f221-bimester"><option value="">Todos</option><option value="1">Bimestre 1</option><option value="2">Bimestre 2</option><option value="3">Bimestre 3</option><option value="4">Bimestre 4</option></select></div><div><label>Estado</label><select id="f223-status-filter"><option value="all">Todos los estados</option><option value="pending">Pendientes de revisión</option><option value="reviewed">Revisados</option><option value="published">Publicados</option><option value="not_sent">Sin enviar</option></select></div><div><label>Buscar profesor, materia o grado</label><input id="f221-search" type="search" placeholder="Buscar..."></div></div><div class="f221-actions"><button id="f221-refresh" class="secondary">Actualizar estados</button></div><p class="f221-small">Solo se aprueban cuadros enviados. Publicar registra la copia oficial que consultan las boletas cuando su visibilidad está autorizada.</p></div><div id="f221-status" role="status" class="f221-small"></div><div id="f221-stats"></div><section id="f221-rows"></section>';
   const year=main.querySelector('#f221-year'),bim=main.querySelector('#f221-bimester'),search=main.querySelector('#f221-search'),rowsDiv=main.querySelector('#f221-rows');
-  let all=[];
+  const statusFilter=main.querySelector('#f223-status-filter');
+  let all=[],yearsAvailable=[],periodReady=false;
+  const expandedTeachers=new Set();
+  let boletasExpanded=false;
+  const statusOf=x=>x.publication_id?'published':x.status==='revisado'?'reviewed':x.status==='pendiente'?'pending':'not_sent';
+  const labelOf=x=>({published:'Publicado',reviewed:'Revisado',pending:'Pendiente de revisión',not_sent:'Sin enviar'})[statusOf(x)];
+  const labelSection=x=>(x.grade_name?x.grade_name+' · ':'')+(x.section_name||'Sin sección');
+  async function getQueue(yr,period){
+    const {data,error}=await client().rpc('lsb_academic_queue',{p_year:yr,p_bimester:period});
+    if(error)throw error;
+    return Array.isArray(data)?data:[];
+  }
   async function refresh(){
-   main.querySelector('#f221-status').textContent='Consultando registros oficiales…';
-   const {data,error}=await client().rpc('lsb_academic_queue',{p_year:year.value?Number(year.value):null,p_bimester:bim.value?Number(bim.value):null});
-   if(error)throw error;if(!root.isConnected)return;all=Array.isArray(data)?data:[];
-   const yrs=[...new Set(all.map(x=>x.school_year))].sort((a,b)=>b-a);
-   const chosen=year.value;year.innerHTML='<option value="">Todos los ciclos</option>'+yrs.map(y=>'<option value="'+Number(y)+'">'+Number(y)+'</option>').join('');year.value=chosen&&yrs.map(String).includes(chosen)?chosen:'';
-   draw();main.querySelector('#f221-status').textContent='Datos consultados en Supabase.';
+    main.querySelector('#f221-status').textContent='Consultando cuadros oficiales…';
+    if(!periodReady){
+      const preview=await getQueue(null,null);
+      yearsAvailable=[...new Set(preview.map(x=>Number(x.school_year)).filter(Number.isFinite))].sort((a,b)=>b-a);
+      periodReady=true;
+      year.innerHTML='<option value="">Todos los ciclos</option>'+yearsAvailable.map(y=>'<option value="'+y+'">'+y+'</option>').join('');
+      year.value=yearsAvailable.length?String(yearsAvailable[0]):'';
+      bim.value='1';
+    }
+    const yr=year.value?Number(year.value):null,period=bim.value?Number(bim.value):null;
+    const current=await getQueue(yr,period);
+    if(!root.isConnected)return;
+    all=current;
+    draw();
+    main.querySelector('#f221-status').textContent='Información actualizada · '+all.length+' cuadros en el período seleccionado.';
   }
   function draw(){
-   const needle=search.value.trim().toLocaleLowerCase('es');const items=all.filter(x=>(x.course_name+' '+x.teacher_name+' '+x.section_name).toLocaleLowerCase('es').includes(needle));
-   const published=items.filter(x=>x.publication_id).length,pending=items.filter(x=>x.status==='pendiente'&&!x.publication_id).length,reviewed=items.filter(x=>x.status==='revisado'&&!x.publication_id).length;
-   const sectionMap=new Map();for(const x of items){const k=x.school_year+':'+x.section_id+':'+x.bimester;sectionMap.set(k,{name:x.section_name,year:x.school_year,bim:x.bimester,done:Number(x.section_published||0),total:Number(x.section_courses||0)});}
-   const ready=[...sectionMap.values()].filter(x=>x.total>0&&x.done===x.total).length;
-   main.querySelector('#f221-stats').innerHTML='<div class="f221-stats"><div><strong>'+pending+'</strong><span>Pendientes de revisión</span></div><div><strong>'+reviewed+'</strong><span>Revisados sin publicar</span></div><div><strong>'+published+'</strong><span>Cuadros publicados</span></div><div><strong>'+ready+'</strong><span>Secciones con boletas completas</span></div></div>';
-   const sectionBlocks=[...sectionMap.values()].sort((a,b)=>b.year-a.year||a.name.localeCompare(b.name,'es'));
-   const checklist='<div class="f221-card"><h2>Estado de boletas por sección</h2><div class="f221-grid">'+sectionBlocks.map(x=>'<div class="f221-box"><strong>'+esc(x.name)+'</strong> · '+Number(x.year)+' · B'+Number(x.bim)+'<br><span class="f221-tag '+(x.total&&x.done===x.total?'done':'wait')+'">'+Number(x.done)+' / '+Number(x.total)+' materias publicadas</span><br><small>'+(x.total&&x.done===x.total?'Listas para habilitar boletas':'Faltan materias por publicar')+'</small></div>').join('')+'</div></div>';
-   rowsDiv.innerHTML=checklist+'<div class="f221-card"><h2>Cuadros por curso</h2>'+items.map(x=>{
-    const state=x.publication_id?'Publicado':x.status==='revisado'?'Revisado':x.status==='pendiente'?'Pendiente':'Sin enviar';
-    const actions=[];if(x.submission_id){actions.push('<button type="button" class="secondary" data-f221-view="'+esc(x.submission_id)+'">Ver cuadro</button>');}
-    if(f.review&&x.submission_id&&x.status==='pendiente'&&!x.publication_id&&!(p()?.role==='profesor'&&(x.submitted_by===p()?.id)))actions.push('<button type="button" data-f221-review="'+esc(x.submission_id)+'">Aprobar cuadro</button>');
-    if(f.publish&&x.submission_id&&x.status==='revisado'&&!x.publication_id&&!(p()?.role==='profesor'&&(x.submitted_by===p()?.id)))actions.push('<button type="button" data-f221-publish="'+esc(x.submission_id)+'">Publicar notas</button>');
-    return '<article class="f221-row"><div class="f221-row-head"><div><strong>'+esc(x.course_name)+'</strong><div class="f221-small">'+esc(x.teacher_name)+' · '+esc(x.section_name)+' · '+Number(x.school_year)+' · Bimestre '+Number(x.bimester)+'</div></div><span class="f221-tag '+(x.publication_id?'done':x.status==='pendiente'?'wait':'')+'">'+esc(state)+'</span></div><div class="f221-small">'+Number(x.enrolled||0)+' estudiantes inscritos</div><div class="f221-actions">'+actions.join('')+'</div></article>';
-   }).join('')+'</div>';
+    const needle=search.value.trim().toLocaleLowerCase('es');
+    const filter=statusFilter?.value||'all';
+    const items=all.filter(x=>{
+      const matches=(x.course_name+' '+x.teacher_name+' '+labelSection(x)).toLocaleLowerCase('es').includes(needle);
+      return matches&&(filter==='all'||statusOf(x)===filter);
+    });
+    const byStatus=(key)=>all.filter(x=>statusOf(x)===key).length;
+    const sectionMap=new Map();
+    for(const x of all){
+      const k=x.school_year+':'+x.section_id+':'+x.bimester;
+      sectionMap.set(k,{name:labelSection(x),year:Number(x.school_year),bim:Number(x.bimester),done:Number(x.section_published||0),total:Number(x.section_courses||0)});
+    }
+    const sectionBlocks=[...sectionMap.values()].sort((a,b)=>b.year-a.year||a.bim-b.bim||a.name.localeCompare(b.name,'es'));
+    const ready=sectionBlocks.filter(x=>x.total>0&&x.done===x.total).length;
+    const stats=main.querySelector('#f221-stats');
+    stats.innerHTML=`<div class="f221-stats"><div><strong>${byStatus('not_sent')}</strong><span>Sin enviar</span></div><div><strong>${byStatus('pending')}</strong><span>Pendientes de revisión</span></div><div><strong>${byStatus('reviewed')}</strong><span>Revisados</span></div><div><strong>${byStatus('published')}</strong><span>Publicados</span></div></div>`;
+    const teacherMap=new Map();
+    for(const x of items){
+      const k=x.teacher_id||x.teacher_name;
+      if(!teacherMap.has(k))teacherMap.set(k,{name:x.teacher_name||'Profesor sin nombre',key:k,items:[]});
+      teacherMap.get(k).items.push(x);
+    }
+    const teachers=[...teacherMap.values()].sort((a,b)=>a.name.localeCompare(b.name,'es'));
+    const professorCards=teachers.map(t=>{
+      const published=t.items.filter(x=>statusOf(x)==='published').length;
+      const pending=t.items.filter(x=>statusOf(x)==='pending').length;
+      const reviewed=t.items.filter(x=>statusOf(x)==='reviewed').length;
+      const notSent=t.items.filter(x=>statusOf(x)==='not_sent').length;
+      const subjects=new Map();
+      for(const x of t.items){
+        const k=x.course_name||'Materia sin nombre';
+        if(!subjects.has(k))subjects.set(k,[]);
+        subjects.get(k).push(x);
+      }
+      const teacherRows=[...subjects.entries()].sort((a,b)=>a[0].localeCompare(b[0],'es')).map(([courseName,records])=>{
+        const subsection=records.sort((a,b)=>labelSection(a).localeCompare(labelSection(b),'es')||Number(a.bimester)-Number(b.bimester)).map(x=>{
+          const st=statusOf(x);
+          const disabledOwn=p()?.role==='profesor'&&(x.submitted_by===p()?.id||x.teacher_id===p()?.id);
+          const actions=[];
+          if(x.submission_id)actions.push(`<button type="button" class="secondary" data-f221-view="${esc(x.submission_id)}">Ver cuadro</button>`);
+          if(f.review&&x.submission_id&&st==='pending'&&!disabledOwn)actions.push(`<button type="button" data-f221-review="${esc(x.submission_id)}">Aprobar</button>`);
+          if(f.publish&&x.submission_id&&st==='reviewed'&&!disabledOwn)actions.push(`<button type="button" data-f221-publish="${esc(x.submission_id)}">Publicar</button>`);
+          return `<div class="f223-course-line"><div class="f223-course-meta"><span>${esc(labelSection(x))} · B${Number(x.bimester)}</span><span class="f221-tag ${st==='published'?'done':st==='pending'?'wait':''}">${esc(labelOf(x))}</span></div><div class="f223-course-footer"><small>${Number(x.enrolled||0)} estudiantes</small>${actions.length?`<div class="f221-actions">${actions.join('')}</div>`:''}</div></div>`;
+        }).join('');
+        return `<section class="f223-course"><h3>${esc(courseName)}</h3>${subsection}</section>`;
+      }).join('');
+      const chips=[published?`${published} publicados`:null,pending?`${pending} pendientes`:null,reviewed?`${reviewed} revisados`:null,notSent?`${notSent} sin enviar`:null].filter(Boolean).join(' · ');
+      return `<details class="f223-teacher" data-professor-key="${esc(t.key)}" ${expandedTeachers.has(String(t.key))?'open':''}><summary><span class="f223-teacher-avatar" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m2 9 10-5 10 5-10 5z"/><path d="M6 12v5c4 3 8 3 12 0v-5"/></svg></span><span class="f223-teacher-title"><strong>${esc(t.name)}</strong><small>${subjects.size} ${subjects.size===1?'materia':'materias'} · ${t.items.length} ${t.items.length===1?'cuadro':'cuadros'}</small><small class="f223-teacher-summary">${esc(chips||'Sin registros')}</small></span><span class="f223-chevron" aria-hidden="true">⌄</span></summary><div class="f223-teacher-body">${teacherRows}</div></details>`;
+    }).join('');
+    const boletasRows=sectionBlocks.map(x=>{
+      const ratio=x.total?Math.min(100,Math.round((x.done/x.total)*100)):0;
+      return `<div class="f223-section-row"><div class="f223-section-title"><strong>${esc(x.name)}</strong><span>${Number(x.done)} de ${Number(x.total)} publicadas · B${Number(x.bim)}</span></div><div class="f223-progress" role="progressbar" aria-valuenow="${Number(x.done)}" aria-valuemin="0" aria-valuemax="${Number(x.total)}"><span style="width:${ratio}%"></span></div></div>`;
+    }).join('');
+    rowsDiv.innerHTML=`<div class="f221-card f223-teachers-card"><div class="f223-heading"><div><h2>Cuadros agrupados por profesor</h2><p class="f221-small">Abre un profesor para consultar sus materias, secciones y acciones disponibles.</p></div><span class="f223-count">${teachers.length} ${teachers.length===1?'profesor':'profesores'}</span></div><div class="f223-teacher-list">${professorCards||'<div class="f223-empty">No hay cuadros para los filtros seleccionados.</div>'}</div></div><details class="f221-card f223-boletas" id="f223-boletas" ${boletasExpanded?'open':''}><summary class="f223-heading"><div><h2>Estado de boletas por sección</h2><p class="f221-small">Ver avance de publicación por grado y sección.</p></div><span class="f223-count">${ready}/${sectionBlocks.length} completas</span><span class="f223-chevron" aria-hidden="true">⌄</span></summary><div class="f223-section-list">${boletasRows||'<p class="f221-small">Sin secciones en este período.</p>'}</div></details>`;
   }
+  rowsDiv.addEventListener('toggle',e=>{
+    const detail=e.target;
+    if(detail.matches?.('[data-professor-key]')){
+      const key=detail.dataset.professorKey;
+      if(detail.open)expandedTeachers.add(key);else expandedTeachers.delete(key);
+    }
+    if(detail.id==='f223-boletas')boletasExpanded=detail.open;
+  },true);
   async function viewDetail(id){
     const {data,error}=await client().rpc('lsb_academic_submission_detail',{p_submission_id:id});if(error)throw error;
     const activities=data?.activities||[],students=data?.students||[];
@@ -15703,7 +15810,7 @@ async function openAcademic(){
   });
   bim.onchange=()=>refresh().catch(e=>main.querySelector('#f221-status').textContent=e.message);
   year.onchange=()=>refresh().catch(e=>main.querySelector('#f221-status').textContent=e.message);
-  search.oninput=draw;main.querySelector('#f221-refresh').onclick=()=>refresh().catch(e=>main.querySelector('#f221-status').textContent=e.message);
+  search.oninput=draw;if(statusFilter)statusFilter.onchange=draw;main.querySelector('#f221-refresh').onclick=()=>refresh().catch(e=>main.querySelector('#f221-status').textContent=e.message);
   await refresh();
  }catch(e){if(root.isConnected)main.innerHTML='<p class="f221-card f221-error">'+esc(e.message||e)+'</p>';}
 }
@@ -15830,7 +15937,7 @@ function syncDirection(){
   mobileMenu.querySelectorAll('[data-f221-administrators]').forEach(el=>el.remove());
   if(isGeneral()&&!mobileMenu.querySelector('[data-f221-mobile-settings]')){
    const btn=document.createElement('button');btn.type='button';btn.dataset.f221MobileSettings='1';
-   btn.innerHTML='<b><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3m0 14v3M2 12h3m14 0h3M5 5l2 2m10 10 2 2m2-14-2 2M7 17l-2 2"/></svg></b><span>Configuración</span>';
+   btn.innerHTML='<b><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M10 2h4l.7 2.5 2 1.1 2.5-.8 2 3.5-1.8 1.8v2.3l1.8 1.8-2 3.5-2.5-.8-2 1.1L14 22h-4l-.7-2.5-2-1.1-2.5.8-2-3.5 1.8-1.8v-2.3L2.8 9.8l2-3.5 2.5.8 2-1.1z"/></svg></b><span>Configuración</span>';
    btn.onclick=()=>{const overlay=shadow.getElementById('f132-overlay');if(overlay)overlay.hidden=true;const open=shadow.querySelector('#profile-menu button[data-open="Configuración"]');if(open)open.click();else alert('Abre Configuración desde tu perfil de Dirección.');};
    mobileMenu.append(btn);
   }
@@ -15846,7 +15953,7 @@ function syncDirection(){
    .f222-admin-card p{margin:0;color:#63728b;font-size:12px;line-height:1.6;max-width:470px}
    .f222-admin-card .f222-admin-open{display:inline-flex;justify-content:center;align-items:center;gap:9px;max-width:100%;min-height:43px;background:#3b4193;color:#fff;border:0;border-radius:12px;padding:11px 15px;cursor:pointer;font-size:13px;font-weight:700}
    .f222-admin-card .f222-admin-open svg{width:19px;height:19px;flex:none}
-   :host([data-f132="mobile"]) #f132-overlay .f222-mobile-academic{background:#f0edff!important;border-color:#d7d3fa!important;color:#373c94!important}
+   :host([data-f132="mobile"]) #f132-overlay .f222-mobile-academic{background:#fff!important;border-color:#e4e8f3!important;color:#25345b!important}
    @media(max-width:700px){.f222-admin-card{display:block;padding:16px}.f222-admin-card .f222-admin-open{margin-top:14px;width:100%}}
   `;shadow.append(style);
  }
