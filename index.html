@@ -15596,6 +15596,48 @@ body[data-area="teacher"][data-page="lsb_debit"] #f217-results{max-width:100%;ov
 #lsb221-root .f225-status{display:block;color:#566b90;font-size:12px}
 @media(max-width:680px){#lsb221-root .f225-numbers{grid-template-columns:repeat(2,minmax(0,1fr))}#lsb221-root .f225-result{padding:12px}#lsb221-root #f225-check{white-space:normal;min-height:44px}}
 </style>
+<style id="lsb-f227-academic-personalized">
+/* F227: selects del panel academico, no dialogos nativos de Brave */
+#lsb221-root .f227-select-wrap{position:relative;min-width:0}
+#lsb221-root .f227-select-wrap>select.f227-select-native{position:absolute!important;width:1px!important;min-width:1px!important;height:1px!important;min-height:1px!important;overflow:hidden!important;opacity:0!important;pointer-events:none!important;clip-path:inset(50%)!important;padding:0!important;border:0!important}
+#lsb221-root .f227-select-trigger{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-height:50px;text-align:left;border-radius:13px;background:#fff!important;color:#25345c!important;border:1px solid #d7deef!important;box-shadow:0 2px 9px #14244b0b;padding:12px 15px;font-size:14px;font-weight:750;white-space:normal}
+#lsb221-root .f227-select-trigger svg{height:19px;width:19px;flex:none;stroke:#68749f;stroke-width:2;fill:none;transition:transform .17s}
+#lsb221-root .f227-select-trigger:focus-visible{outline:3px solid #b9c7f4;outline-offset:3px}
+#lsb221-root .f227-select-layer{position:fixed;inset:0;z-index:150;display:flex;align-items:flex-end;justify-content:center;padding:14px;box-sizing:border-box}
+#lsb221-root .f227-select-shade{position:absolute;inset:0;background:rgba(17,28,62,.44);backdrop-filter:blur(2px)}
+#lsb221-root .f227-select-sheet{position:relative;width:min(100%,550px);max-height:min(75dvh,620px);overflow:hidden;display:flex;flex-direction:column;background:#fff;border:1px solid #e0e6f2;box-shadow:0 18px 75px #16265033;border-radius:22px;padding:17px;color:#24345a}
+#lsb221-root .f227-sheet-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:1px 2px 14px;border-bottom:1px solid #e9ecf6}
+#lsb221-root .f227-sheet-head strong{font-size:17px;letter-spacing:-.01em;color:#1d2d58}
+#lsb221-root .f227-sheet-head .f227-select-close{width:36px;min-height:36px;height:36px;padding:0;border-radius:11px;background:#f1f3fb;color:#3b4193;border:1px solid #e1e6f2;font-size:22px}
+#lsb221-root .f227-sheet-options{overflow-y:auto;overscroll-behavior:contain;padding:11px 1px 2px;display:grid;gap:7px}
+#lsb221-root .f227-option{display:flex;justify-content:space-between;align-items:center;text-align:left;gap:12px;width:100%;min-height:51px;padding:12px 14px;border-radius:13px;border:1px solid #e5e9f3;background:#fff;color:#243458;font-size:14px;font-weight:700;white-space:normal}
+#lsb221-root .f227-option[aria-selected=true]{background:#eeedfd;border-color:#bfc5f3;color:#3b4193}
+#lsb221-root .f227-option .f227-check{width:23px;height:23px;display:grid;place-items:center;border-radius:50%;background:#e8ebf7;color:#8895ac;font-size:13px;flex:none}
+#lsb221-root .f227-option[aria-selected=true] .f227-check{background:#3b4193;color:#fff}
+#lsb221-root .f227-workflow{margin:14px 0 12px;display:flex;gap:10px;flex-wrap:wrap}
+#lsb221-root .f227-step{display:flex;align-items:center;gap:8px;border-radius:11px;background:#f6f7fd;color:#526181;border:1px solid #e6eaf4;padding:8px 10px;font-size:12px;line-height:1.4}
+#lsb221-root .f227-step b{display:grid;place-items:center;width:24px;height:24px;border-radius:7px;background:#e6e9fb;color:#3b4193}
+#lsb221-root .f227-publish-card{background:#fafbff;border:1px solid #e2e6f1;border-radius:15px;padding:14px 16px;margin:14px 0 4px}
+#lsb221-root .f227-publish-card h3{font-size:15px;margin:0 0 4px;color:#233461}
+#lsb221-root .f227-publish-card p{color:#68758e;font-size:12px;line-height:1.6;margin:4px 0 10px}
+#lsb221-root .f227-publish-card .f221-actions{margin-top:8px}
+#lsb221-root .f227-publish-card button:disabled{opacity:1;background:#eceff6;color:#6c7691;border:1px dashed #c9d1e3;cursor:not-allowed;box-shadow:none}
+#lsb221-root .f227-publish-card button:not(:disabled){background:#3b4193;color:white}
+#lsb221-root .f227-status-info{display:flex;align-items:start;gap:9px;padding:9px 10px;border-radius:10px;background:#eef2fb;color:#566585;font-size:12px;margin-top:12px}
+#lsb221-root .f227-status-info svg{width:17px;height:17px;flex:none;stroke:#6475ad;fill:none;stroke-width:2;margin-top:1px}
+@media(max-width:700px){
+ #lsb221-root .f227-select-layer{padding:0;align-items:flex-end}
+ #lsb221-root .f227-select-sheet{width:100%;max-height:75dvh;border-radius:22px 22px 0 0;padding:17px 17px max(19px,env(safe-area-inset-bottom))}
+ #lsb221-root .f227-workflow{display:grid;grid-template-columns:1fr;gap:7px}
+ #lsb221-root .f227-publish-card{padding:13px}
+ #lsb221-root .f227-publish-card .f221-actions{display:grid;grid-template-columns:1fr}
+ #lsb221-root .f227-publish-card button{width:100%;min-height:47px}
+ #lsb221-root .f221-top{display:flex;flex-wrap:nowrap;align-items:center;gap:8px;padding:12px 13px}
+ #lsb221-root .f221-top .f221-mark{font-size:13px;line-height:1.25;min-width:0;gap:7px}
+ #lsb221-root .f221-top .f221-mark svg{width:22px;height:22px;flex:none}
+ #lsb221-root #lsb221-close{flex:0 0 auto;min-height:39px;padding:8px 10px;font-size:11px;max-width:132px;line-height:1.15}
+}
+</style>
 <script id="lsb-f221-academic-and-secondary">
 /* F222 — Coordinación académica en Archivos, administración secundaria en Configuración */
 (function(){
@@ -15740,11 +15782,12 @@ const inProgress={busy:false};
 async function openAcademic(){
  if(!p())return alert('Inicia sesión antes de abrir Coordinación Académica.');
  const root=createScreen('Coordinación Académica','Seguimiento de cuadros, aprobación, publicación y verificación de boletas.');
+ const returnButton=root.querySelector('#lsb221-close');if(returnButton){returnButton.setAttribute('aria-label','Volver a la plataforma');returnButton.textContent='← Volver';}
  const main=root.querySelector('#lsb221-main');const current=++latest;
  try{
   const f=await authFlags();if(!f.review&&!f.publish&&!f.boletas)throw Error('Dirección General no autorizó esta función.');
   if(!root.isConnected||current!==latest)return;
-  main.innerHTML='<div class="f221-card"><h2>Seguimiento de calificaciones</h2><div class="f221-fields f223-filters"><div><label>Ciclo escolar</label><select id="f221-year"><option value="">Todos los ciclos</option></select></div><div><label>Bimestre</label><select id="f221-bimester"><option value="">Todos</option><option value="1">Bimestre 1</option><option value="2">Bimestre 2</option><option value="3">Bimestre 3</option><option value="4">Bimestre 4</option></select></div><div><label>Estado</label><select id="f223-status-filter"><option value="all">Todos los estados</option><option value="pending">Pendientes de revisión</option><option value="reviewed">Revisados</option><option value="published">Publicados</option><option value="not_sent">Sin enviar</option></select></div><div><label>Buscar profesor, materia o grado</label><input id="f221-search" type="search" placeholder="Buscar..."></div></div><div class="f221-actions"><button id="f221-refresh" class="secondary">Actualizar estados</button><button id="f225-check" type="button" class="secondary">Comprobar cuadros automáticamente</button><button id="f226-boletas-check" type="button" class="secondary">Auditar boletas por estudiante</button><button id="f226-release" type="button" hidden>Habilitar boletas para familias</button><button id="f226-bulk" type="button" hidden>Publicar cuadros listos</button></div><div id="f225-result" class="f225-result" hidden aria-live="polite"></div><div id="f226-boletas-result" class="f225-result" hidden aria-live="polite"></div><p id="f226-publish-status" class="f221-small" role="status" aria-live="polite"></p><p class="f221-small">Solo se aprueban cuadros enviados. Publicar registra la copia oficial que consultan las boletas cuando su visibilidad está autorizada.</p></div><div id="f221-status" role="status" class="f221-small"></div><div id="f221-stats"></div><section id="f221-rows"></section>';
+  main.innerHTML='<div class="f221-card"><h2>Seguimiento de calificaciones</h2><div class="f221-fields f223-filters"><div><label>Ciclo escolar</label><select id="f221-year"><option value="">Todos los ciclos</option></select></div><div><label>Bimestre</label><select id="f221-bimester"><option value="">Todos</option><option value="1">Bimestre 1</option><option value="2">Bimestre 2</option><option value="3">Bimestre 3</option><option value="4">Bimestre 4</option></select></div><div><label>Estado</label><select id="f223-status-filter"><option value="all">Todos los estados</option><option value="pending">Pendientes de revisión</option><option value="reviewed">Revisados</option><option value="published">Publicados</option><option value="not_sent">Sin enviar</option></select></div><div><label>Buscar profesor, materia o grado</label><input id="f221-search" type="search" placeholder="Buscar..."></div></div><div class="f227-workflow"><div class="f227-step"><b>1</b> Selecciona ciclo y bimestre</div><div class="f227-step"><b>2</b> Comprueba cuadros y boletas</div><div class="f227-step"><b>3</b> Publica solo si están completos</div></div><div class="f221-actions"><button id="f221-refresh" class="secondary">Actualizar estados</button><button id="f225-check" type="button" class="secondary">Comprobar cuadros automáticamente</button><button id="f226-boletas-check" type="button" class="secondary">Auditar boletas por estudiante</button></div><section class="f227-publish-card"><h3>Publicación institucional</h3><p>Estas acciones requieren una revisión correcta, las notas completas y autorización de Dirección. Nunca se publican automáticamente.</p><div class="f221-actions"><button id="f226-bulk" type="button" disabled>Publicar cuadros listos (0)</button><button id="f226-release" type="button" disabled>Habilitar boletas para familias</button></div><div id="f227-action-help" class="f227-status-info"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 11v6m0-10v1"/></svg><span>Ejecuta las comprobaciones. Las acciones se habilitarán solo cuando los requisitos se cumplan.</span></div></section><div id="f225-result" class="f225-result" hidden aria-live="polite"></div><div id="f226-boletas-result" class="f225-result" hidden aria-live="polite"></div><p id="f226-publish-status" class="f221-small" role="status" aria-live="polite"></p><p class="f221-small">Solo se aprueban cuadros enviados. Publicar registra la copia oficial que consultan las boletas cuando su visibilidad está autorizada.</p></div><div id="f221-status" role="status" class="f221-small"></div><div id="f221-stats"></div><section id="f221-rows"></section>';
   const year=main.querySelector('#f221-year'),bim=main.querySelector('#f221-bimester'),search=main.querySelector('#f221-search'),rowsDiv=main.querySelector('#f221-rows');
   const statusFilter=main.querySelector('#f223-status-filter');
 
@@ -15758,6 +15801,70 @@ async function openAcademic(){
   const batchMessage=main.querySelector('#f226-publish-status');
   let batchCandidates=[],batchPeriod='';
   let releasePeriod='',releaseConfirmed=false;
+  const help=main.querySelector('#f227-action-help span');
+  bulkButton.hidden=!f.publish;
+  releaseButton.hidden=!f.boletas;
+  bulkButton.disabled=true;
+  releaseButton.disabled=true;
+
+  // Controles visuales propios de la plataforma, preservando el select original
+  // y sus eventos para no alterar las consultas de Supabase ni las pruebas aprobadas.
+  function setupAcademicPicker(sel,label){
+    if(!sel || sel.dataset.f227Picker==='1')return ()=>{};
+    sel.dataset.f227Picker='1';
+    const wrap=document.createElement('div');wrap.className='f227-select-wrap';
+    sel.parentNode.insertBefore(wrap,sel);wrap.appendChild(sel);
+    sel.classList.add('f227-select-native');sel.tabIndex=-1;sel.setAttribute('aria-hidden','true');
+    const trigger=document.createElement('button');trigger.type='button';
+    trigger.className='f227-select-trigger';trigger.setAttribute('aria-label','Seleccionar '+label);
+    const display=document.createElement('span');
+    const chev=document.createElementNS('http://www.w3.org/2000/svg','svg');
+    chev.setAttribute('viewBox','0 0 24 24');chev.setAttribute('aria-hidden','true');
+    const path=document.createElementNS('http://www.w3.org/2000/svg','path');path.setAttribute('d','m6 9 6 6 6-6');
+    chev.appendChild(path);trigger.append(display,chev);wrap.appendChild(trigger);
+    const sync=()=>{display.textContent=sel.options[sel.selectedIndex]?.textContent||'Seleccionar';};
+    sel.addEventListener('change',sync);
+    const ob=new MutationObserver(sync);ob.observe(sel,{childList:true,subtree:true});
+    trigger.addEventListener('click',()=>{
+      if(!root.isConnected)return;
+      const layer=document.createElement('div');layer.className='f227-select-layer';
+      layer.setAttribute('role','presentation');
+      const backdrop=document.createElement('div');backdrop.className='f227-select-shade';
+      const sheet=document.createElement('div');sheet.className='f227-select-sheet';
+      sheet.setAttribute('role','dialog');sheet.setAttribute('aria-modal','true');
+      sheet.setAttribute('aria-label','Seleccionar '+label);
+      const head=document.createElement('div');head.className='f227-sheet-head';
+      const title=document.createElement('strong');title.textContent=label;
+      const closeBtn=document.createElement('button');closeBtn.type='button';closeBtn.className='f227-select-close';
+      closeBtn.textContent='×';closeBtn.setAttribute('aria-label','Cerrar opciones');
+      head.append(title,closeBtn);
+      const list=document.createElement('div');list.className='f227-sheet-options';list.setAttribute('role','listbox');
+      function close(){layer.remove();root.removeEventListener('keydown',onEsc,true);trigger.focus();}
+      function onEsc(e){if(e.key==='Escape'){e.preventDefault();e.stopImmediatePropagation();close();}}
+      [...sel.options].forEach(opt=>{
+        const choice=document.createElement('button');choice.type='button';choice.className='f227-option';
+        choice.setAttribute('role','option');choice.setAttribute('aria-selected',String(opt.value===sel.value));
+        const caption=document.createElement('span');caption.textContent=opt.textContent;
+        const check=document.createElement('span');check.className='f227-check';check.textContent=opt.value===sel.value?'✓':'•';
+        choice.append(caption,check);
+        choice.disabled=opt.disabled;
+        choice.addEventListener('click',()=>{
+          if(sel.value!==opt.value){sel.value=opt.value;sync();sel.dispatchEvent(new Event('change',{bubbles:true}));}
+          close();
+        });
+        list.appendChild(choice);
+      });
+      sheet.append(head,list);layer.append(backdrop,sheet);root.appendChild(layer);
+      backdrop.addEventListener('click',close);closeBtn.addEventListener('click',close);
+      root.addEventListener('keydown',onEsc,true);
+      const current=list.querySelector('[aria-selected=true]');
+      (current||closeBtn).focus();
+    });
+    sync();return sync;
+  }
+  const syncYearPicker=setupAcademicPicker(year,'Ciclo escolar');
+  const syncBimPicker=setupAcademicPicker(bim,'Bimestre');
+  setupAcademicPicker(statusFilter,'Estado de los cuadros');
   checkButton?.addEventListener('click',async()=>{
     if(!root.isConnected)return;
     checkButton.disabled=true;
@@ -15775,7 +15882,9 @@ async function openAcademic(){
       const myself=p()?.id;
       batchCandidates=entries.filter(x=>x.readiness==='listo_publicar'&&x.submission_id&&(! (p()?.role==='profesor') || all.some(y=>y.assignment_id===x.assignment_id&&y.teacher_id!==myself&&y.submitted_by!==myself)));
       batchPeriod=selectedYear+':'+selectedBimester;
-      bulkButton.hidden=!(f.publish&&batchCandidates.length);
+      bulkButton.hidden=!f.publish;
+      bulkButton.disabled=!(f.publish&&batchCandidates.length);
+      if(help)help.textContent=batchCandidates.length?'Hay '+batchCandidates.length+' cuadro(s) listos para publicar. Se verificará todo otra vez antes de confirmar.':'No hay cuadros listos para publicar. Los profesores deben completar y enviar sus cuadros, y Coordinación debe revisarlos antes.';
       bulkButton.textContent='Publicar '+batchCandidates.length+' cuadro'+(batchCandidates.length===1?' listo':'s listos');
       const statusLabel={publicado:'Publicado',sin_enviar:'Sin enviar',incompleto:'Cuadro incompleto',pendiente_revision:'Listo para revisar',listo_publicar:'Listo para publicar',cambios_posteriores:'Cambios posteriores a la revisión',verificar:'Necesita revisión'};
       const count=(key)=>entries.filter(x=>x.readiness===key).length;
@@ -15799,7 +15908,7 @@ async function openAcademic(){
       '<div class="f225-numbers"><div><strong>'+entries.length+'</strong><span>Cuadros</span></div><div><strong>'+count('listo_publicar')+'</strong><span>Listos para publicar</span></div><div><strong>'+count('pendiente_revision')+'</strong><span>Por revisar</span></div><div><strong>'+count('publicado')+'</strong><span>Publicados</span></div></div>'+
       '<p class="f225-explain">'+count('sin_enviar')+' sin enviar · '+count('incompleto')+' incompletos · '+count('cambios_posteriores')+' modificados tras revisión. La publicación vuelve a comprobar todos los requisitos.</p>'+
       (blocks||'<p>No hay cuadros para este período.</p>');
-    }catch(err){if(root.isConnected){batchCandidates=[];bulkButton.hidden=true;checkResult.innerHTML='<p role="alert" class="f221-error">No se pudo comprobar: '+esc(err.message||err)+'</p>';}}
+    }catch(err){if(root.isConnected){batchCandidates=[];bulkButton.disabled=true;checkResult.innerHTML='<p role="alert" class="f221-error">No se pudo comprobar: '+esc(err.message||err)+'</p>';}}
     finally{if(checkButton.isConnected)checkButton.disabled=false;}
   });
 
@@ -15820,7 +15929,9 @@ async function openAcademic(){
      const summary=data?.summary||{}, sections=Array.isArray(data?.sections)?data.sections:[];
      releasePeriod=yr+':'+period;
      releaseConfirmed=summary.all_complete===true&&Number(summary.students||0)>0;
-     releaseButton.hidden=!(f.boletas&&releaseConfirmed);
+     releaseButton.hidden=!f.boletas;
+     releaseButton.disabled=!(f.boletas&&releaseConfirmed);
+     if(help)help.textContent=releaseConfirmed?'Auditoría completa: puedes habilitar las boletas con autorización expresa.':'Las boletas aún tienen materias o notas pendientes. El botón seguirá bloqueado hasta completar todas las calificaciones oficiales.';
      const sectionCards=sections.map(section=>{
        const grade=String(section.grade_name||'Grado'),sectionName=String(section.section_name||'');
        const name=(grade.toLowerCase().endsWith(' '+sectionName.toLowerCase())?grade:grade+' · '+sectionName);
@@ -15838,7 +15949,7 @@ async function openAcademic(){
       (summary.all_complete?'<p class="f226-success">Todas las boletas del período tienen sus notas oficiales. Dirección puede configurar su visibilidad para las familias desde el apartado Boletas.</p>':'<p class="f226-warning">No se recomienda habilitar las boletas de este período para todas las familias hasta resolver los faltantes.</p>')+
       (sectionCards||'<p>No hay secciones activas para el período seleccionado.</p>')+
       '<p class="f225-explain">La auditoría no envía datos a un servicio generativo externo, no cambia notas ni hace públicas las boletas.</p>';
-   }catch(err){if(root.isConnected){releaseButton.hidden=true;releaseConfirmed=false;studentAuditResult.innerHTML='<p role="alert" class="f221-error">No se pudo auditar: '+esc(err.message||err)+'</p>';}}
+   }catch(err){if(root.isConnected){releaseButton.disabled=true;releaseConfirmed=false;studentAuditResult.innerHTML='<p role="alert" class="f221-error">No se pudo auditar: '+esc(err.message||err)+'</p>';}}
    finally{if(studentAuditButton.isConnected)studentAuditButton.disabled=false;}
   });
 
@@ -15846,7 +15957,7 @@ async function openAcademic(){
   releaseButton.addEventListener('click',async()=>{
    if(!f.boletas||!releaseConfirmed||!root.isConnected||inProgress.busy)return;
    const yr=Number(year.value),period=Number(bim.value);
-   if(releasePeriod!==yr+':'+period){releaseButton.hidden=true;return;}
+   if(releasePeriod!==yr+':'+period){releaseButton.disabled=true;return;}
    releaseButton.disabled=true;
    try{
     const approved=await academicDecision(root,'release_report_cards');
@@ -15855,7 +15966,7 @@ async function openAcademic(){
     const {data,error}=await client().rpc('lsb_release_complete_report_cards',{p_year:yr,p_bimester:period});
     if(error)throw error;
     if(root.isConnected){
-      releaseButton.hidden=true;releaseConfirmed=false;
+      releaseButton.disabled=true;releaseConfirmed=false;
       batchMessage.textContent='Visibilidad autorizada para familias: '+Number(data?.students||0)+' estudiantes del período '+yr+' · B'+period+'.';
       studentAuditResult.insertAdjacentHTML('afterbegin','<p class="f226-success">Boletas completas habilitadas para consulta familiar. La autorización quedó registrada en Supabase.</p>');
     }
@@ -15868,7 +15979,7 @@ async function openAcademic(){
   bulkButton.addEventListener('click',async()=>{
    if(!f.publish||inProgress.busy||bulkButton.hidden||!root.isConnected)return;
    const yr=Number(year.value),period=Number(bim.value);
-   if(batchPeriod!==yr+':'+period){batchCandidates=[];bulkButton.hidden=true;return;}
+   if(batchPeriod!==yr+':'+period){batchCandidates=[];bulkButton.disabled=true;return;}
    bulkButton.disabled=true;
    batchMessage.textContent='Verificando de nuevo los cuadros listos...';
    try{
@@ -15876,7 +15987,7 @@ async function openAcademic(){
      if(error)throw error;
      const refreshed=Array.isArray(data)?data:[];
      const actual=refreshed.filter(x=>x.readiness==='listo_publicar'&&batchCandidates.some(y=>y.submission_id===x.submission_id));
-     if(!actual.length){batchMessage.textContent='No hay cuadros que cumplan los requisitos ahora. No se publicó nada.';batchCandidates=[];bulkButton.hidden=true;return;}
+     if(!actual.length){batchMessage.textContent='No hay cuadros que cumplan los requisitos ahora. No se publicó nada.';batchCandidates=[];bulkButton.disabled=true;return;}
      const reason=await academicDecision(root,'bulk_publish',actual.length);
      if(reason===null){batchMessage.textContent='Publicación cancelada. No se realizó ningún cambio.';return;}
      inProgress.busy=true;
@@ -15887,7 +15998,7 @@ async function openAcademic(){
        if(e)failures.push(String(course.course_name||'Materia')+': '+String(e.message||e));
        else successes++;
      }
-     batchCandidates=[];bulkButton.hidden=true;
+     batchCandidates=[];bulkButton.disabled=true;
      if(root.isConnected){
        await refresh();
        checkResult.hidden=false;
@@ -15919,6 +16030,8 @@ async function openAcademic(){
       year.innerHTML='<option value="">Todos los ciclos</option>'+yearsAvailable.map(y=>'<option value="'+y+'">'+y+'</option>').join('');
       year.value=yearsAvailable.length?String(yearsAvailable[0]):'';
       bim.value='1';
+      syncYearPicker();
+      syncBimPicker();
     }
     const yr=year.value?Number(year.value):null,period=bim.value?Number(bim.value):null;
     const current=await getQueue(yr,period);
@@ -16017,8 +16130,8 @@ async function openAcademic(){
     finally{inProgress.busy=false;b.disabled=false;}
    }
   });
-  bim.onchange=()=>{batchCandidates=[];bulkButton.hidden=true;releaseConfirmed=false;releaseButton.hidden=true;checkResult.hidden=true;studentAuditResult.hidden=true;return refresh().catch(e=>main.querySelector('#f221-status').textContent=e.message);};
-  year.onchange=()=>{batchCandidates=[];bulkButton.hidden=true;releaseConfirmed=false;releaseButton.hidden=true;checkResult.hidden=true;studentAuditResult.hidden=true;return refresh().catch(e=>main.querySelector('#f221-status').textContent=e.message);};
+  bim.onchange=()=>{batchCandidates=[];bulkButton.disabled=true;releaseConfirmed=false;releaseButton.disabled=true;checkResult.hidden=true;studentAuditResult.hidden=true;if(help)help.textContent='Seleccionaste otro período. Ejecuta nuevamente las comprobaciones para habilitar las acciones.';return refresh().catch(e=>main.querySelector('#f221-status').textContent=e.message);};
+  year.onchange=()=>{batchCandidates=[];bulkButton.disabled=true;releaseConfirmed=false;releaseButton.disabled=true;checkResult.hidden=true;studentAuditResult.hidden=true;if(help)help.textContent='Seleccionaste otro período. Ejecuta nuevamente las comprobaciones para habilitar las acciones.';return refresh().catch(e=>main.querySelector('#f221-status').textContent=e.message);};
   search.oninput=draw;if(statusFilter)statusFilter.onchange=draw;main.querySelector('#f221-refresh').onclick=()=>refresh().catch(e=>main.querySelector('#f221-status').textContent=e.message);
   await refresh();
  }catch(e){if(root.isConnected)main.innerHTML='<p class="f221-card f221-error">'+esc(e.message||e)+'</p>';}
