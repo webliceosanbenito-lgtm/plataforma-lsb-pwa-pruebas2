@@ -11406,6 +11406,15 @@ const css=`
 #lsb157-screen .lsb157-brand{font-size:11px;letter-spacing:1px;font-weight:800;color:#3b4193!important;text-transform:uppercase}
 #lsb157-screen label{display:block;color:#2b3e5c!important;font-size:13px;font-weight:700;margin:16px 0 8px}
 #lsb157-screen input{width:100%;border-radius:11px;border:1px solid #b8c6df;background:#fff!important;color:#1b2e51!important;padding:13px 14px;font:16px system-ui,sans-serif;min-height:48px}
+/* F228 · Visibilidad de contraseñas, limitada al formulario de recuperación */
+#lsb157-screen .lsb228-password-field{position:relative}
+#lsb157-screen .lsb228-password-field input{padding-right:62px!important}
+#lsb157-screen .lsb228-eye{position:absolute;right:7px;top:50%;transform:translateY(-50%);width:44px;height:40px;display:flex;align-items:center;justify-content:center;padding:0;border:1px solid #d9e1f1;border-radius:10px;background:#f3f6fc;color:#354792;cursor:pointer;touch-action:manipulation}
+#lsb157-screen .lsb228-eye svg{height:21px;width:21px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;pointer-events:none}
+#lsb157-screen .lsb228-eye .lsb228-slash{display:none}
+#lsb157-screen .lsb228-eye[aria-pressed="true"] .lsb228-slash{display:block}
+#lsb157-screen .lsb228-eye:hover{background:#e9effb}
+#lsb157-screen .lsb228-eye:focus-visible{outline:3px solid #89a4eb;outline-offset:2px}
 #lsb157-screen .lsb157-primary{display:block;width:100%;margin:19px 0 11px;min-height:47px;padding:12px 18px;border:0;border-radius:11px;color:white!important;background:#3b4193!important;font-weight:800;cursor:pointer}
 #lsb157-screen .lsb157-primary:disabled{opacity:.7;cursor:wait}
 #lsb157-screen .lsb157-close{border:0;padding:8px;background:transparent;color:#47619b!important;font:600 13px system-ui;cursor:pointer}
@@ -11427,8 +11436,20 @@ function close(){if(working)return;overlay?.remove();overlay=null}
 function show(which){
  prepare();mode=which;overlay?.remove();overlay=document.createElement('div');overlay.id='lsb157-screen';overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');
  const isPwd=which==='set';
- overlay.innerHTML=`<section class="lsb157-card"><div class="lsb157-logo"><span></span><span></span><span></span></div><div class="lsb157-brand">Liceo Mixto Particular San Benito</div><h2>${isPwd?'Establece tu contraseña':'Activación y recuperación docente'}</h2><p>${isPwd?'Crea una contraseña personal para acceder al portal de Profesores.':'Si ya aceptaste tu invitación y apareciste en la pantalla de inicio de sesión, solicita aquí el enlace para establecer tu contraseña.'}</p><form id="lsb157-form">${isPwd?`<label for="lsb157-password">Nueva contraseña</label><input id="lsb157-password" type="password" autocomplete="new-password" required><label for="lsb157-repeat">Confirmar contraseña</label><input id="lsb157-repeat" type="password" autocomplete="new-password" required>`:`<label for="lsb157-email">Correo con el que te invitaron</label><input id="lsb157-email" type="email" autocomplete="email" maxlength="254" required placeholder="correo@ejemplo.com">`}<p class="lsb157-status" role="status" aria-live="polite"></p><button type="submit" class="lsb157-primary">${isPwd?'Guardar mi contraseña':'Enviar enlace de recuperación'}</button></form><button type="button" class="lsb157-close">Volver al inicio de sesión</button></section>`;
+ overlay.innerHTML=`<section class="lsb157-card"><div class="lsb157-logo"><span></span><span></span><span></span></div><div class="lsb157-brand">Liceo Mixto Particular San Benito</div><h2>${isPwd?'Establece tu contraseña':'Activación y recuperación docente'}</h2><p>${isPwd?'Crea una contraseña personal para acceder a la Plataforma Académica LSB.':'Si ya aceptaste tu invitación y apareciste en la pantalla de inicio de sesión, solicita aquí el enlace para establecer tu contraseña.'}</p><form id="lsb157-form">${isPwd?`<label for="lsb157-password">Nueva contraseña</label><div class="lsb228-password-field"><input id="lsb157-password" type="password" autocomplete="new-password" autocapitalize="off" spellcheck="false" required><button type="button" class="lsb228-eye" data-target="lsb157-password" aria-label="Mostrar nueva contraseña" aria-pressed="false" title="Mostrar contraseña"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-6.5 10-6.5S22 12 22 12s-3.5 6.5-10 6.5S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/><path class="lsb228-slash" d="M3 3l18 18"/></svg></button></div><label for="lsb157-repeat">Confirmar contraseña</label><div class="lsb228-password-field"><input id="lsb157-repeat" type="password" autocomplete="new-password" autocapitalize="off" spellcheck="false" required><button type="button" class="lsb228-eye" data-target="lsb157-repeat" aria-label="Mostrar confirmación de contraseña" aria-pressed="false" title="Mostrar contraseña"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-6.5 10-6.5S22 12 22 12s-3.5 6.5-10 6.5S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/><path class="lsb228-slash" d="M3 3l18 18"/></svg></button></div>`:`<label for="lsb157-email">Correo con el que te invitaron</label><input id="lsb157-email" type="email" autocomplete="email" maxlength="254" required placeholder="correo@ejemplo.com">`}<p class="lsb157-status" role="status" aria-live="polite"></p><button type="submit" class="lsb157-primary">${isPwd?'Guardar mi contraseña':'Enviar enlace de recuperación'}</button></form><button type="button" class="lsb157-close">Volver al inicio de sesión</button></section>`;
  document.body.append(overlay);
+ // F228: each eye controls only its corresponding password input; never log or transmit input values.
+ overlay.querySelectorAll('.lsb228-eye').forEach(button=>button.addEventListener('click',()=>{
+  const field=overlay.querySelector('#'+button.dataset.target);
+  if(!field)return;
+  const reveal=field.type==='password';
+  field.type=reveal?'text':'password';
+  button.setAttribute('aria-pressed',String(reveal));
+  const isConfirmation=button.dataset.target==='lsb157-repeat';
+  button.setAttribute('aria-label',(reveal?'Ocultar ':'Mostrar ')+(isConfirmation?'confirmación de contraseña':'nueva contraseña'));
+  button.title=reveal?'Ocultar contraseña':'Mostrar contraseña';
+  field.focus({preventScroll:true});
+ }));
  overlay.querySelector('.lsb157-close').addEventListener('click',()=>{if(!working){close();if(mode==='set')window.location.assign(appRoot);}});
  overlay.querySelector('#lsb157-form').addEventListener('submit',async e=>{
   e.preventDefault();if(working)return;working=true;const button=overlay.querySelector('button[type=submit]');button.disabled=true;status('Procesando…');
@@ -11438,7 +11459,7 @@ function show(which){
     const p=overlay.querySelector('#lsb157-password').value,repeat=overlay.querySelector('#lsb157-repeat').value;
     if(p!==repeat)throw Error('Las contraseñas no coinciden.');
     const {error}=await auth.updateUser({password:p});if(error)throw error;
-    status('Contraseña guardada. Ya puedes iniciar sesión en el portal Profesores.',true);
+    status('Contraseña guardada. Ya puedes iniciar sesión en la Plataforma Académica LSB.',true);
     overlay.querySelector('#lsb157-form').reset();
     await auth.signOut({scope:'local'});
     button.textContent='Ir al inicio de sesión';button.type='button';button.disabled=false;
@@ -16305,5 +16326,51 @@ const api={openAcademic,openAdministrators,allowSection:allowedRoute};window.LSB
 queueMicrotask(()=>{loadSecondary().catch(console.warn);syncDirection();inviteOnboarding();});
 })();
 
+</script>
+<script id="lsb-f228-password-eye-login">
+/* F228: visibility toggle for the existing login field; no authentication changes. */
+(()=>{
+ 'use strict';
+ const css=document.createElement('style');
+ css.id='lsb-f228-login-eye-css';
+ css.textContent=`
+ #loginform label.lsb228-login-label{position:relative!important}
+ #loginform label.lsb228-login-label input[name="password"]{padding-right:63px!important}
+ #loginform .lsb228-login-eye{position:absolute;right:7px;bottom:7px;display:flex;align-items:center;justify-content:center;width:44px;height:39px;padding:0;border:1px solid #d8e2f3;border-radius:10px;background:#eef3fc;color:#3b4193;cursor:pointer;z-index:2;touch-action:manipulation}
+ #loginform .lsb228-login-eye svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;pointer-events:none}
+ #loginform .lsb228-login-eye .lsb228-slash{display:none}
+ #loginform .lsb228-login-eye[aria-pressed="true"] .lsb228-slash{display:block}
+ #loginform .lsb228-login-eye:focus-visible{outline:3px solid #8aa2e5;outline-offset:2px}
+ `;
+ const icon='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-6.5 10-6.5S22 12 22 12s-3.5 6.5-10 6.5S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/><path class="lsb228-slash" d="M3 3l18 18"/></svg>';
+ const install=()=>{
+  const input=document.querySelector('#loginform input[name="password"]');
+  if(!input)return;
+  const label=input.closest('label');
+  if(!label||label.querySelector('.lsb228-login-eye'))return;
+  label.classList.add('lsb228-login-label');
+  const btn=document.createElement('button');btn.type='button';btn.className='lsb228-login-eye';
+  btn.setAttribute('aria-label','Mostrar contraseña');btn.setAttribute('aria-pressed','false');
+  btn.title='Mostrar contraseña';btn.innerHTML=icon;
+  btn.addEventListener('click',e=>{
+   e.preventDefault();e.stopPropagation();
+   const revealed=input.type==='password';
+   input.type=revealed?'text':'password';
+   btn.setAttribute('aria-pressed',String(revealed));
+   btn.setAttribute('aria-label',revealed?'Ocultar contraseña':'Mostrar contraseña');
+   btn.title=revealed?'Ocultar contraseña':'Mostrar contraseña';
+   input.focus({preventScroll:true});
+  });
+  label.append(btn);
+ };
+ const init=()=>{
+  if(!document.getElementById(css.id))document.head.append(css);
+  install();
+  const login=document.getElementById('login');
+  if(login)new MutationObserver(install).observe(login,{subtree:true,childList:true});
+  document.addEventListener('focusin',e=>{if(e.target?.matches?.('#loginform input[name="password"]'))install();});
+ };
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
+})();
 </script>
 </body></html>
