@@ -15578,6 +15578,24 @@ body[data-area="teacher"][data-page="lsb_debit"] #f217-results{max-width:100%;ov
   }
 })();
 </script>
+<style id="lsb-f225-academic-health">
+#lsb221-root .f225-result{margin:14px 0 8px;padding:16px;border-radius:16px;border:1px solid #dce4f1;background:#f8faff;color:#243458}
+#lsb221-root .f225-result[hidden]{display:none!important}
+#lsb221-root .f225-heading{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;margin:0 0 14px}
+#lsb221-root .f225-heading small{font-size:12px;color:#65758c}
+#lsb221-root .f225-numbers{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:0 0 12px}
+#lsb221-root .f225-numbers>div{min-width:0;border:1px solid #e2e7f1;border-radius:12px;padding:11px;background:#fff}
+#lsb221-root .f225-numbers strong{display:block;font-size:23px;color:#334184}
+#lsb221-root .f225-numbers span{font-size:11px;line-height:1.3;color:#63718a}
+#lsb221-root .f225-explain{margin:8px 0 15px;color:#52627d;line-height:1.6}
+#lsb221-root .f225-teacher{margin:8px 0;border:1px solid #e2e7f1;border-radius:12px;background:#fff;overflow:hidden}
+#lsb221-root .f225-teacher summary{display:flex;justify-content:space-between;gap:10px;padding:13px;cursor:pointer;align-items:center}
+#lsb221-root .f225-teacher summary span{font-size:12px;color:#5d6b81;text-align:right}
+#lsb221-root .f225-teacher ul{margin:0;padding:0 15px 13px 32px}
+#lsb221-root .f225-teacher li{padding:7px 0;border-top:1px solid #eef1f7;line-height:1.5}
+#lsb221-root .f225-status{display:block;color:#566b90;font-size:12px}
+@media(max-width:680px){#lsb221-root .f225-numbers{grid-template-columns:repeat(2,minmax(0,1fr))}#lsb221-root .f225-result{padding:12px}#lsb221-root #f225-check{white-space:normal;min-height:44px}}
+</style>
 <script id="lsb-f221-academic-and-secondary">
 /* F222 — Coordinación académica en Archivos, administración secundaria en Configuración */
 (function(){
@@ -15722,9 +15740,53 @@ async function openAcademic(){
  try{
   const f=await authFlags();if(!f.review&&!f.publish&&!f.boletas)throw Error('Dirección General no autorizó esta función.');
   if(!root.isConnected||current!==latest)return;
-  main.innerHTML='<div class="f221-card"><h2>Seguimiento de calificaciones</h2><div class="f221-fields f223-filters"><div><label>Ciclo escolar</label><select id="f221-year"><option value="">Todos los ciclos</option></select></div><div><label>Bimestre</label><select id="f221-bimester"><option value="">Todos</option><option value="1">Bimestre 1</option><option value="2">Bimestre 2</option><option value="3">Bimestre 3</option><option value="4">Bimestre 4</option></select></div><div><label>Estado</label><select id="f223-status-filter"><option value="all">Todos los estados</option><option value="pending">Pendientes de revisión</option><option value="reviewed">Revisados</option><option value="published">Publicados</option><option value="not_sent">Sin enviar</option></select></div><div><label>Buscar profesor, materia o grado</label><input id="f221-search" type="search" placeholder="Buscar..."></div></div><div class="f221-actions"><button id="f221-refresh" class="secondary">Actualizar estados</button></div><p class="f221-small">Solo se aprueban cuadros enviados. Publicar registra la copia oficial que consultan las boletas cuando su visibilidad está autorizada.</p></div><div id="f221-status" role="status" class="f221-small"></div><div id="f221-stats"></div><section id="f221-rows"></section>';
+  main.innerHTML='<div class="f221-card"><h2>Seguimiento de calificaciones</h2><div class="f221-fields f223-filters"><div><label>Ciclo escolar</label><select id="f221-year"><option value="">Todos los ciclos</option></select></div><div><label>Bimestre</label><select id="f221-bimester"><option value="">Todos</option><option value="1">Bimestre 1</option><option value="2">Bimestre 2</option><option value="3">Bimestre 3</option><option value="4">Bimestre 4</option></select></div><div><label>Estado</label><select id="f223-status-filter"><option value="all">Todos los estados</option><option value="pending">Pendientes de revisión</option><option value="reviewed">Revisados</option><option value="published">Publicados</option><option value="not_sent">Sin enviar</option></select></div><div><label>Buscar profesor, materia o grado</label><input id="f221-search" type="search" placeholder="Buscar..."></div></div><div class="f221-actions"><button id="f221-refresh" class="secondary">Actualizar estados</button><button id="f225-check" type="button" class="secondary">Comprobar cuadros automáticamente</button></div><div id="f225-result" class="f225-result" hidden aria-live="polite"></div><p class="f221-small">Solo se aprueban cuadros enviados. Publicar registra la copia oficial que consultan las boletas cuando su visibilidad está autorizada.</p></div><div id="f221-status" role="status" class="f221-small"></div><div id="f221-stats"></div><section id="f221-rows"></section>';
   const year=main.querySelector('#f221-year'),bim=main.querySelector('#f221-bimester'),search=main.querySelector('#f221-search'),rowsDiv=main.querySelector('#f221-rows');
   const statusFilter=main.querySelector('#f223-status-filter');
+
+  // F225: diagnóstico seguro de publicación, solo lectura. No crea ni aprueba cuadros.
+  const checkButton=main.querySelector('#f225-check');
+  const checkResult=main.querySelector('#f225-result');
+  checkButton?.addEventListener('click',async()=>{
+    if(!root.isConnected)return;
+    checkButton.disabled=true;
+    checkResult.hidden=false;
+    checkResult.textContent='Comprobando actividades, calificaciones y autorizaciones…';
+    try{
+      const selectedYear=Number(year.value),selectedBimester=Number(bim.value);
+      if(!Number.isInteger(selectedYear)||!Number.isInteger(selectedBimester)||selectedBimester<1||selectedBimester>4){
+        throw Error('Selecciona un ciclo y un bimestre concretos para comprobar su preparación.');
+      }
+      const {data,error}=await client().rpc('lsb_academic_readiness',{p_year:selectedYear,p_bimester:selectedBimester});
+      if(error)throw error;
+      if(!root.isConnected)return;
+      const entries=Array.isArray(data)?data:[];
+      const statusLabel={publicado:'Publicado',sin_enviar:'Sin enviar',incompleto:'Cuadro incompleto',pendiente_revision:'Listo para revisar',listo_publicar:'Listo para publicar',cambios_posteriores:'Cambios posteriores a la revisión',verificar:'Necesita revisión'};
+      const count=(key)=>entries.filter(x=>x.readiness===key).length;
+      const byTeacher=new Map();
+      for(const item of entries){
+        const teacher=String(item.teacher_name||'Profesor sin identificar');
+        if(!byTeacher.has(teacher))byTeacher.set(teacher,[]);
+        byTeacher.get(teacher).push(item);
+      }
+      const blocks=[...byTeacher.entries()].sort((a,b)=>a[0].localeCompare(b[0],'es')).map(([teacher,items])=>{
+        const remaining=items.filter(x=>x.readiness!=='publicado');
+        const rows=remaining.map(x=>{
+          const missing=Math.max(0,Number(x.enrolled||0)*Number(x.activities||0)-Number(x.scores_present||0));
+          const problem=x.readiness==='incompleto'?' · '+Number(x.max_points||0)+'/100 puntos de actividades'+(missing?' · '+missing+' calificaciones faltantes':''):'';
+          const grade=String(x.grade_name||'Grado');const section=String(x.section_name||'').trim();
+          return '<li><strong>'+esc(x.course_name||'Curso')+'</strong> · '+esc(grade)+(section?' · '+esc(section):'')+'<span class="f225-status">'+esc(statusLabel[x.readiness]||x.readiness)+esc(problem)+'</span></li>';
+        }).join('');
+        return '<details class="f225-teacher"><summary><strong>'+esc(teacher)+'</strong><span>'+remaining.length+' sin publicar de '+items.length+'</span></summary><ul>'+(rows||'<li>Todos los cuadros del período están publicados.</li>')+'</ul></details>';
+      }).join('');
+      checkResult.innerHTML='<div class="f225-heading"><strong>Diagnóstico del período · '+esc(selectedYear)+' · B'+selectedBimester+'</strong><small>Solo consulta; no cambia las notas</small></div>'+
+      '<div class="f225-numbers"><div><strong>'+entries.length+'</strong><span>Cuadros</span></div><div><strong>'+count('listo_publicar')+'</strong><span>Listos para publicar</span></div><div><strong>'+count('pendiente_revision')+'</strong><span>Por revisar</span></div><div><strong>'+count('publicado')+'</strong><span>Publicados</span></div></div>'+
+      '<p class="f225-explain">'+count('sin_enviar')+' sin enviar · '+count('incompleto')+' incompletos · '+count('cambios_posteriores')+' modificados tras revisión. La publicación vuelve a comprobar todos los requisitos.</p>'+
+      (blocks||'<p>No hay cuadros para este período.</p>');
+    }catch(err){if(root.isConnected)checkResult.innerHTML='<p role="alert" class="f221-error">No se pudo comprobar: '+esc(err.message||err)+'</p>';}
+    finally{if(checkButton.isConnected)checkButton.disabled=false;}
+  });
+
   let all=[],yearsAvailable=[],periodReady=false;
   const expandedTeachers=new Set();
   let boletasExpanded=false;
