@@ -6850,20 +6850,48 @@ if(document.getElementById('login')?.hidden){sync()}
     {label:'Calificaciones',desc:'Bimestres y revisiones',color:'gold',area:'academico',nav:'Calificaciones',icon:'#i-file'},
     {label:'Pagos',desc:'Cobros y colegiaturas',color:'pink',area:'gestion',nav:'Control de pagos',icon:'#i-wallet'},
     {label:'Reportes',desc:'Cuadros y descargas',color:'sky',area:'archivos',nav:'Cuadros y reportes',icon:'#i-chart'},
+    {label:'Cursos y asignaturas',desc:'Materias y secciones autorizadas',color:'blue',area:'academico',nav:'Cursos y asignaturas',icon:'#i-cap'},
+    {label:'Padres de familia',desc:'Familias y encargados',color:'mint',area:'personas',nav:'Familias por grado',icon:'#i-people'},
     {label:'Avisos',desc:'Comunicados institucionales',color:'purple',area:'comunicacion',nav:'Avisos y comunicados',icon:'#i-mail'},
     {label:'Horarios',desc:'Clases y distribución',color:'blue',area:'horarios',nav:'Horarios de clases',icon:'#i-calendar'},
     {label:'Bimestres',desc:'Cierre y publicación',color:'mint',area:'ciclos',nav:'Administrar bimestres',icon:'#i-clock'}
   ];
   const DEFAULT_SHORTCUTS=['Estudiantes','Profesores','Asistencia','Calificaciones','Pagos','Reportes'];
   let pickerDraft=null;
-
+  // F233: las preferencias de Dirección Secundaria pertenecen al usuario, no a toda la sesión de Chrome.
+  const accessProfile=()=>typeof LSB18!=='undefined'&&LSB18.authenticated?LSB18.profile:null;
+  const isSecondary=()=>accessProfile()?.role==='admin_secundario';
+  const shortcutRoute={
+    'Estudiantes':'students','Profesores':'teachers','Asistencia':'attendance',
+    'Calificaciones':'grade_center','Pagos':'payments','Reportes':'exports',
+    'Cursos y asignaturas':'catalog','Padres de familia':'families',
+    'Avisos':'notices','Horarios':'schedule','Bimestres':'periods'
+  };
+  const canShowShortcut=(name)=>{
+    if(!isSecondary())return true;
+    const route=shortcutRoute[name];
+    return !!(route&&typeof window.LSB233RouteAllowed==='function'&&window.LSB233RouteAllowed(route));
+  };
+  const storageKey=()=>isSecondary()?'lsb_f233_secondary_quick_'+String(accessProfile()?.id||''):STORAGE_KEY;
   function safeParse(value,fallback){try{const out=JSON.parse(value);return Array.isArray(out)?out:fallback}catch(_){return fallback}}
   function readShortcuts(){
-    const saved=safeParse(localStorage.getItem(STORAGE_KEY),DEFAULT_SHORTCUTS).filter(Boolean);
-    const filtered=saved.filter(name=>ALL_SHORTCUTS.some(x=>x.label===name));
-    return filtered.length?filtered.slice(0,6):DEFAULT_SHORTCUTS.slice();
+    const secondary=isSecondary(),key=storageKey();
+    if(!secondary){
+      const saved=safeParse(localStorage.getItem(key),DEFAULT_SHORTCUTS).filter(Boolean);
+      const filtered=saved.filter(name=>ALL_SHORTCUTS.some(x=>x.label===name));
+      return filtered.length?filtered.slice(0,6):DEFAULT_SHORTCUTS.slice();
+    }
+    const defaults=['Cursos y asignaturas','Padres de familia','Asistencia','Pagos','Reportes','Estudiantes','Profesores','Avisos','Horarios','Bimestres','Calificaciones'].filter(canShowShortcut);
+    const raw=localStorage.getItem(key);
+    const saved=raw===null?defaults:safeParse(raw,defaults);
+    const selected=saved.filter(name=>ALL_SHORTCUTS.some(x=>x.label===name)&&canShowShortcut(name)).slice(0,6);
+    // Si Dirección revoca los accesos anteriores, mostrar solo los que aún estén autorizados.
+    return selected.length||saved.length===0?selected:defaults.slice(0,6);
   }
-  function saveShortcuts(list){localStorage.setItem(STORAGE_KEY,JSON.stringify(list.slice(0,6)))}
+  function saveShortcuts(list){
+    const allowed=(Array.isArray(list)?list:[]).filter(name=>ALL_SHORTCUTS.some(x=>x.label===name)&&canShowShortcut(name));
+    localStorage.setItem(storageKey(),JSON.stringify(allowed.slice(0,6)));
+  }
   function getMeta(label){return ALL_SHORTCUTS.find(x=>x.label===label) || ALL_SHORTCUTS[0]}
 
   function waitForShell(){
@@ -6993,6 +7021,15 @@ if(document.getElementById('login')?.hidden){sync()}
     root.appendChild(style);
     buildModal(root);
     patchSurface(root);
+    window.LSB233RefreshShortcuts=()=>{
+      if(!root.isConnected)return;
+      const m=root.getElementById('f32-shortcuts-modal');
+      if(m?.classList.contains('open')){
+        pickerDraft=(pickerDraft||[]).filter(canShowShortcut);
+        renderModalChoices(root);
+      }
+      renderFolders(root);
+    };
     const obs=new MutationObserver(()=>{syncMenu(root); if(root.querySelector('.folders')&&!root.querySelector('.folders [data-bound="1"]'))patchSurface(root);});
     obs.observe(root,{childList:true,subtree:true});
   }
@@ -7028,7 +7065,7 @@ if(document.getElementById('login')?.hidden){sync()}
     const draft=pickerDraft || readShortcuts();
     modal.querySelector('.f32-counter').textContent=`${draft.length} / 6`;
     const grid=modal.querySelector('.f32-grid');
-    grid.innerHTML=ALL_SHORTCUTS.map(item=>{
+    grid.innerHTML=ALL_SHORTCUTS.filter(item=>canShowShortcut(item.label)).map(item=>{
       const selected=draft.includes(item.label);
       const disabled=!selected && draft.length>=6;
       return `<button class="f32-choice ${selected?'selected':''} ${disabled?'disabled':''}" data-label="${item.label}" type="button">
@@ -7073,13 +7110,14 @@ if(document.getElementById('login')?.hidden){sync()}
   }
 
   function navigateShortcut(root,label){
+    if(!canShowShortcut(label))return;
     const item=getMeta(label);
     const rail=root.querySelector(`.railbtn[data-area="${item.area}"]`);
     if(!rail) return;
     rail.click();
     setTimeout(()=>{
       const navButtons=[...root.querySelectorAll('.navlink')];
-      const target=navButtons.find(b=>b.textContent.replace(/\s+/g,' ').trim()===item.nav) || navButtons.find(b=>b.textContent.includes(item.nav));
+      const target=navButtons.find(b=>b.dataset.f23route===shortcutRoute[label]) || navButtons.find(b=>b.textContent.replace(/\s+/g,' ').trim()===item.nav) || navButtons.find(b=>b.textContent.includes(item.nav));
       if(target) target.click();
     },90);
   }
@@ -16450,6 +16488,7 @@ queueMicrotask(()=>{loadSecondary().catch(console.warn);syncDirection();inviteOn
  };
  const shortcutLabels={
    'Estudiantes':'students','Profesores':'teachers','Asistencia':'attendance',
+   'Padres de familia':'families',
    'Calificaciones':'grade_center','Pagos':'payments','Reportes':'exports',
    'Avisos':'notices','Horarios':'schedule','Bimestres':'periods',
    'Ciclos escolares':'cycles','Cursos y asignaturas':'catalog',
@@ -16484,6 +16523,8 @@ queueMicrotask(()=>{loadSecondary().catch(console.warn);syncDirection();inviteOn
    const required=routeModules[route];
    return Boolean(grants && required && required.some(m=>grants.includes(m)));
  };
+ // API de consulta para la personalización de Inicio; solo informa permisos que fueron verificados en Supabase.
+ window.LSB233RouteAllowed=routeAllowed;
  const shortcutRoute=(name)=>shortcutLabels[String(name||'').trim()]||null;
  const hasAny=(...modules)=>Boolean(grants&&modules.some(m=>grants.includes(m)));
  const f232Text=(el,secondary,text)=>{if(!el)return; if(!el.hasAttribute('data-f232-original-text'))el.setAttribute('data-f232-original-text',el.textContent);const value=secondary?text:el.getAttribute('data-f232-original-text');if(el.textContent!==value)el.textContent=value;};
@@ -16532,9 +16573,11 @@ queueMicrotask(()=>{loadSecondary().catch(console.warn);syncDirection();inviteOn
      if(profile?.role==='admin_general')s.querySelectorAll('[data-f23route]').forEach(el=>el.hidden=false);
      paintDock(s,false);
      document.body.classList.remove('lsb-f232-secondary');
+     if(typeof window.LSB233RefreshShortcuts==='function')window.LSB233RefreshShortcuts();
      f232Text(s.querySelector('#home-view .hero h1'),false,'');
      f232Text(s.querySelector('#profile-top b'),false,'');
      f232Text(s.querySelector('#detail-view .eyebrow'),false,'');
+     s.querySelectorAll('.f132-list [data-f132-go="families"] span,[data-f23route="families"] span').forEach(x=>f232Text(x,false,''));
      const heading=s.querySelector('#f132-overlay .f132-sheethead h3');
      if(heading&&heading.textContent==='Menú autorizado')heading.textContent='Menú de Dirección';
      return;
@@ -16544,6 +16587,7 @@ queueMicrotask(()=>{loadSecondary().catch(console.warn);syncDirection();inviteOn
    f232Text(s.querySelector('#home-view .hero h1'),true,'Panel de administración secundaria');
    f232Text(s.querySelector('#profile-top b'),true,'Administración secundaria');
    f232Text(s.querySelector('#detail-view .eyebrow'),true,'LSB · ACCESO DELEGADO');
+   s.querySelectorAll('.f132-list [data-f132-go="families"] span,[data-f23route="families"] span').forEach(x=>f232Text(x,true,'Padres de familia'));
    if(profile.id!==cachedId){
       cachedId=profile.id;grants=null;loadingId=null;
    }
@@ -16572,6 +16616,8 @@ queueMicrotask(()=>{loadSecondary().catch(console.warn);syncDirection();inviteOn
       const route=shortcutRoute(b.dataset.label);
       setAllowed(b,Boolean(route&&routeAllowed(route)));
    }
+   // La personalización permanece visible, pero ofrece solamente accesos autorizados.
+   setAllowed(s.getElementById('customize'),true);
    // Elementos de Inicio que no eran botones de menú y seguían apareciendo.
    setAllowed(s.getElementById('cycle'),hasAny('periods'));
    setAllowed(s.getElementById('notif'),hasAny('notices'));
@@ -16607,6 +16653,7 @@ queueMicrotask(()=>{loadSecondary().catch(console.warn);syncDirection();inviteOn
    }finally{
      if(loadingId===id)loadingId=null;
      schedule();
+     if(typeof window.LSB233RefreshShortcuts==='function')window.LSB233RefreshShortcuts();
    }
  }
  function guardClick(e){
@@ -16634,6 +16681,6 @@ queueMicrotask(()=>{loadSecondary().catch(console.warn);syncDirection();inviteOn
  if(document.readyState!=='loading')schedule();
 })();
 </script>
-<!-- F232 | Menús, enlaces, tarjetas y controles filtrados por permisos de Dirección Secundaria. -->
+<!-- F233 | Accesos rápidos personalizables por cuenta y estrictamente autorizados. -->
 <!-- F229 | Validación de invitación confirmada, recuperación correcta del callback y fin del bloqueo de acceso. -->
 </body></html>
