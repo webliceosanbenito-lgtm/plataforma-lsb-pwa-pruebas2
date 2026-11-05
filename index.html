@@ -16423,8 +16423,9 @@ queueMicrotask(()=>{loadSecondary().catch(console.warn);syncDirection();inviteOn
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();
 </script>
-<script id="lsb-f231-secondary-navigation">
-/* F231: Solo presentar apartados que Dirección General concedió.
+<script id="lsb-f232-secondary-navigation">
+/* F232: Visibilidad integral, acceso directo y accesos rápidos por permisos reales.
+   Original F231: Solo presentar apartados que Dirección General concedió.
    Capa visual; todas las comprobaciones de autorización del servidor siguen vigentes. */
 (()=>{
  'use strict';
@@ -16435,7 +16436,7 @@ queueMicrotask(()=>{loadSecondary().catch(console.warn);syncDirection();inviteOn
    attendance:['attendance'],students:['students'],teachers:['teachers'],
    families:['families'],payments:['payments'],schedule:['schedule'],
    cycles:['periods'],periods:['periods'],
-   exports:['reports'],reports:['reports','boletas'],published_grades:['boletas'],
+   exports:['reports'],reports:['boletas'],published_grades:['boletas'],
    school_reports:['reports'],notices:['notices'],accounts:['accounts'],
    lsb_ai:['__no_access__'],chatbot:['__no_access__']
  };
@@ -16470,7 +16471,10 @@ queueMicrotask(()=>{loadSecondary().catch(console.warn);syncDirection();inviteOn
    }
    if(!originalDock.has(dock))originalDock.set(dock,dock.innerHTML);
    const choices=['home',...dockPriority.filter(routeAllowed).slice(0,3),'menu'];
-   const signature=choices.join('|');if(dock.dataset.f231Signature===signature)return;
+   const signature=choices.join('|');
+   const actual=[...dock.querySelectorAll(':scope > button[data-f132-go]')].map(b=>b.dataset.f132Go);
+   // F132 puede reconstruir la barra; comprobar el DOM real, no solo el sello previo.
+   if(dock.dataset.f231Signature===signature&&actual.join('|')===signature)return;
    dock.dataset.f231Signature=signature;
    dock.innerHTML=choices.map(r=>'<button type="button" data-f132-go="'+r+'"><b><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(dockIcons[r]||'<path d="M4 5h16v14H4zM8 9h8m-8 4h8"/>')+'</svg></b><span>'+dockLabels[r]+'</span></button>').join('');
  }
@@ -16481,6 +16485,8 @@ queueMicrotask(()=>{loadSecondary().catch(console.warn);syncDirection();inviteOn
    return Boolean(grants && required && required.some(m=>grants.includes(m)));
  };
  const shortcutRoute=(name)=>shortcutLabels[String(name||'').trim()]||null;
+ const hasAny=(...modules)=>Boolean(grants&&modules.some(m=>grants.includes(m)));
+ const f232Text=(el,secondary,text)=>{if(!el)return; if(!el.hasAttribute('data-f232-original-text'))el.setAttribute('data-f232-original-text',el.textContent);const value=secondary?text:el.getAttribute('data-f232-original-text');if(el.textContent!==value)el.textContent=value;};
  const setAllowed=(el,allowed)=>{
    if(!el)return;
    const denied=!allowed;
@@ -16500,6 +16506,13 @@ queueMicrotask(()=>{loadSecondary().catch(console.warn);syncDirection();inviteOn
      :host([data-f231-secondary="1"]) .f32-grid .f32-choice[data-f231-denied="1"]{
        display:none!important;visibility:hidden!important;
      }
+     :host([data-f231-secondary="1"]) #home-view .metrics:empty{display:none!important;}
+     :host([data-f231-secondary="1"]) .rightcol[data-f231-denied="1"]{display:none!important;}
+     :host([data-f231-secondary="1"]) #f132-overlay .f132-list{grid-auto-flow:row!important;}
+     :host([data-f231-secondary="1"]) #f32-shortcuts-modal .f32-choice[data-f231-denied="1"]{display:none!important;}
+     :host([data-f231-secondary="1"]) #profile-top small{white-space:normal!important;}
+     :host([data-f231-secondary="1"]) #home-view .metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));}
+   
    `;
    s.appendChild(style);
  }
@@ -16518,11 +16531,19 @@ queueMicrotask(()=>{loadSecondary().catch(console.warn);syncDirection();inviteOn
      // El render anterior de F221 pudo dejar elementos con hidden al cambiar de cuenta.
      if(profile?.role==='admin_general')s.querySelectorAll('[data-f23route]').forEach(el=>el.hidden=false);
      paintDock(s,false);
+     document.body.classList.remove('lsb-f232-secondary');
+     f232Text(s.querySelector('#home-view .hero h1'),false,'');
+     f232Text(s.querySelector('#profile-top b'),false,'');
+     f232Text(s.querySelector('#detail-view .eyebrow'),false,'');
      const heading=s.querySelector('#f132-overlay .f132-sheethead h3');
      if(heading&&heading.textContent==='Menú autorizado')heading.textContent='Menú de Dirección';
      return;
    }
    host.setAttribute('data-f231-secondary','1');
+   document.body.classList.add('lsb-f232-secondary');
+   f232Text(s.querySelector('#home-view .hero h1'),true,'Panel de administración secundaria');
+   f232Text(s.querySelector('#profile-top b'),true,'Administración secundaria');
+   f232Text(s.querySelector('#detail-view .eyebrow'),true,'LSB · ACCESO DELEGADO');
    if(profile.id!==cachedId){
       cachedId=profile.id;grants=null;loadingId=null;
    }
@@ -16545,12 +16566,28 @@ queueMicrotask(()=>{loadSecondary().catch(console.warn);syncDirection();inviteOn
    for(const b of s.querySelectorAll('.f132-list [data-f132-go]'))setAllowed(b,routeAllowed(b.dataset.f132Go));
    for(const b of s.querySelectorAll('.folders .folder[data-open],#home-view [data-open]')){
       const route=shortcutRoute(b.dataset.open);
-      if(route)setAllowed(b,routeAllowed(route));
+      setAllowed(b,Boolean(route&&routeAllowed(route)));
    }
    for(const b of s.querySelectorAll('#f32-shortcuts-modal .f32-choice[data-label]')){
       const route=shortcutRoute(b.dataset.label);
-      if(route)setAllowed(b,routeAllowed(route));
+      setAllowed(b,Boolean(route&&routeAllowed(route)));
    }
+   // Elementos de Inicio que no eran botones de menú y seguían apareciendo.
+   setAllowed(s.getElementById('cycle'),hasAny('periods'));
+   setAllowed(s.getElementById('notif'),hasAny('notices'));
+   setAllowed(s.querySelector('.topbar .search'),hasAny('students','teachers'));
+   setAllowed(s.getElementById('open-chat-card'),false);
+   setAllowed(s.querySelector('#home-view .ai-note'),false);
+   setAllowed(s.querySelector('#home-view .rightcol .panel'),hasAny('notices'));
+   setAllowed(s.querySelector('#home-view .rightcol'),hasAny('notices'));
+   setAllowed(s.querySelector('#home-view .hint'),false);
+   const metrics=s.querySelectorAll('#home-view .metric');
+   const metricRights=[hasAny('students'),hasAny('teachers'),hasAny('families'),hasAny('notices')];
+   metrics.forEach((item,i)=>setAllowed(item,Boolean(metricRights[i])));
+   setAllowed(s.querySelector('#home-view .metrics'),metricRights.some(Boolean));
+   // Evitar el acceso directo a ciclos y las opciones artificiales de menú.
+   for(const b of s.querySelectorAll('[data-f221-mobile-settings],[data-f221-administrators],#side-links [data-f221-administrators]'))setAllowed(b,false);
+   for(const b of s.querySelectorAll('#f132-overlay .f132-list button:not([data-f132-go]):not([data-f221-mobile-academic])'))setAllowed(b,false);
    const menuTitle=s.querySelector('#f132-overlay .f132-sheethead h3');
    if(menuTitle&&menuTitle.textContent!=='Menú autorizado')menuTitle.textContent='Menú autorizado';
  }
@@ -16576,15 +16613,27 @@ queueMicrotask(()=>{loadSecondary().catch(console.warn);syncDirection();inviteOn
    const profile=getProfile();
    if(profile?.role!=='admin_secundario')return;
    const target=e.target?.closest?.('[data-f231-denied="1"]');
-   if(target){e.preventDefault();e.stopImmediatePropagation();}
+   if(target){e.preventDefault();e.stopImmediatePropagation();return;}
+   // Controles fuera de las rutas clásicas deben comprobar su autorización.
+   const inside=e.target?.closest?.('[data-f132-go],[data-f23route],[data-open],#cycle,#notif,#open-chat-card');
+   if(!inside)return;
+   let allowed=true;
+   if(inside.hasAttribute('data-f132-go'))allowed=routeAllowed(inside.dataset.f132Go);
+   else if(inside.hasAttribute('data-f23route'))allowed=routeAllowed(inside.dataset.f23route);
+   else if(inside.id==='cycle')allowed=hasAny('periods');
+   else if(inside.id==='notif')allowed=hasAny('notices');
+   else if(inside.id==='open-chat-card')allowed=false;
+   else if(inside.hasAttribute('data-open') && inside.closest('#home-view')){const r=shortcutRoute(inside.dataset.open);allowed=Boolean(r&&routeAllowed(r));}
+   if(!allowed){e.preventDefault();e.stopImmediatePropagation();}
  }
  function schedule(){if(frame)return;frame=requestAnimationFrame(refresh);}
  document.addEventListener('DOMContentLoaded',schedule,{once:true});
  document.addEventListener('visibilitychange',()=>{if(!document.hidden)schedule();});
  window.addEventListener('focus',schedule);
+ if(!document.getElementById('lsb-f232-outside-style')){const st=document.createElement('style');st.id='lsb-f232-outside-style';st.textContent='body.lsb-f232-secondary #lsb-f171-launch,body.lsb-f232-secondary #lsb-f171-float{display:none!important;visibility:hidden!important;}';document.head.appendChild(st);}
  if(document.readyState!=='loading')schedule();
 })();
 </script>
-<!-- F231 | Menús y accesos visibles según permisos de administrador secundario; Dirección General no cambia. -->
+<!-- F232 | Menús, enlaces, tarjetas y controles filtrados por permisos de Dirección Secundaria. -->
 <!-- F229 | Validación de invitación confirmada, recuperación correcta del callback y fin del bloqueo de acceso. -->
 </body></html>
