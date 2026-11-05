@@ -16423,5 +16423,168 @@ queueMicrotask(()=>{loadSecondary().catch(console.warn);syncDirection();inviteOn
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();
 </script>
+<script id="lsb-f231-secondary-navigation">
+/* F231: Solo presentar apartados que Dirección General concedió.
+   Capa visual; todas las comprobaciones de autorización del servidor siguen vigentes. */
+(()=>{
+ 'use strict';
+ const routeModules={
+   home:[],support:[],menu:[],
+   catalog:['catalog','courses'],courses:['courses'],
+   grade_center:['grade_review','grade_publish','boletas'],
+   attendance:['attendance'],students:['students'],teachers:['teachers'],
+   families:['families'],payments:['payments'],schedule:['schedule'],
+   cycles:['periods'],periods:['periods'],
+   exports:['reports'],reports:['reports','boletas'],published_grades:['boletas'],
+   school_reports:['reports'],notices:['notices'],accounts:['accounts'],
+   lsb_ai:['__no_access__'],chatbot:['__no_access__']
+ };
+ const sections={
+   inicio:['home'],academico:['grade_center','catalog','attendance'],
+   personas:['students','teachers','families'],gestion:['payments'],
+   horarios:['schedule'],ciclos:['cycles','periods'],
+   archivos:['exports','reports','grade_center'],
+   comunicacion:['notices','school_reports'],soporte:['support'],
+   ia:['lsb_ai','chatbot']
+ };
+ const shortcutLabels={
+   'Estudiantes':'students','Profesores':'teachers','Asistencia':'attendance',
+   'Calificaciones':'grade_center','Pagos':'payments','Reportes':'exports',
+   'Avisos':'notices','Horarios':'schedule','Bimestres':'periods',
+   'Ciclos escolares':'cycles','Cursos y asignaturas':'catalog',
+   'Familias por grado':'families','Cuadros y descargas':'exports',
+   'Boletas':'reports','Reportes escolares':'school_reports',
+   'Asistente IA':'lsb_ai','Chatbot de ayuda':'chatbot',
+   'Coordinación Académica':'grade_center'
+ };
+ let cachedId=null, grants=null, loadingId=null, shadow=null, frame=0;
+ const originalDock=new WeakMap();
+ const dockPriority=['catalog','attendance','payments','families','reports','school_reports','grade_center','notices','students','teachers','schedule','periods','exports'];
+ const dockLabels={home:'Inicio',catalog:'Cursos',attendance:'Asistencia',payments:'Pagos',families:'Encargados',reports:'Boletas',school_reports:'Reportes',grade_center:'Notas',notices:'Avisos',students:'Estudiantes',teachers:'Profesores',schedule:'Horarios',periods:'Bimestres',exports:'Reportes',menu:'Menú'};
+ const dockIcons={home:'<path d="m3 10 9-7 9 7v10H3z"/><path d="M9 21v-7h6v7"/>',catalog:'<path d="M4 6h8a3 3 0 0 1 3 3v12H7a3 3 0 0 0-3 0zM20 6h-3a3 3 0 0 0-2 1v14h2a3 3 0 0 1 3 0z"/>',attendance:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4m10-4v4M3 10h18m5 5 2 2 5-5"/>',payments:'<rect x="3" y="5" width="18" height="15" rx="2"/><path d="M3 9h18M7 15h4"/>',menu:'<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>'};
+ function paintDock(s,secondary){
+   const dock=s.getElementById('f132-dock');if(!dock)return;
+   if(!secondary){
+      if(originalDock.has(dock)){dock.innerHTML=originalDock.get(dock);originalDock.delete(dock);delete dock.dataset.f231Signature;}
+      return;
+   }
+   if(!originalDock.has(dock))originalDock.set(dock,dock.innerHTML);
+   const choices=['home',...dockPriority.filter(routeAllowed).slice(0,3),'menu'];
+   const signature=choices.join('|');if(dock.dataset.f231Signature===signature)return;
+   dock.dataset.f231Signature=signature;
+   dock.innerHTML=choices.map(r=>'<button type="button" data-f132-go="'+r+'"><b><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(dockIcons[r]||'<path d="M4 5h16v14H4zM8 9h8m-8 4h8"/>')+'</svg></b><span>'+dockLabels[r]+'</span></button>').join('');
+ }
+ const getProfile=()=>typeof LSB18!=='undefined' && LSB18.authenticated ? LSB18.profile : null;
+ const routeAllowed=(route)=>{
+   if(route==='home'||route==='support'||route==='menu')return true;
+   const required=routeModules[route];
+   return Boolean(grants && required && required.some(m=>grants.includes(m)));
+ };
+ const shortcutRoute=(name)=>shortcutLabels[String(name||'').trim()]||null;
+ const setAllowed=(el,allowed)=>{
+   if(!el)return;
+   const denied=!allowed;
+   if((el.getAttribute('data-f231-denied')==='1')!==denied){
+      if(denied)el.setAttribute('data-f231-denied','1');
+      else el.removeAttribute('data-f231-denied');
+   }
+ };
+ function installStyle(s){
+   if(s.getElementById('lsb-f231-permissions-style'))return;
+   const style=document.createElement('style');style.id='lsb-f231-permissions-style';
+   style.textContent=`
+     :host([data-f231-secondary="1"]) [data-f231-denied="1"],
+     :host([data-f231-secondary="1"]) #f132-overlay .f132-list [data-f231-denied="1"],
+     :host([data-f231-secondary="1"]) #f132-dock [data-f231-denied="1"],
+     :host([data-f231-secondary="1"]) .folders .folder[data-f231-denied="1"],
+     :host([data-f231-secondary="1"]) .f32-grid .f32-choice[data-f231-denied="1"]{
+       display:none!important;visibility:hidden!important;
+     }
+   `;
+   s.appendChild(style);
+ }
+ function refresh(){
+   frame=0;
+   const host=document.getElementById('lsb-f23-shell');
+   const s=host?.shadowRoot;
+   if(!s)return;
+   if(shadow!==s){shadow=s;installStyle(s);s.addEventListener('click',guardClick,true);new MutationObserver(schedule).observe(s,{childList:true,subtree:true});}
+   const profile=getProfile();
+   const secondary=profile?.role==='admin_secundario';
+   if(!secondary){
+     host.removeAttribute('data-f231-secondary');
+     cachedId=null;grants=null;loadingId=null;
+     s.querySelectorAll('[data-f231-denied]').forEach(el=>el.removeAttribute('data-f231-denied'));
+     // El render anterior de F221 pudo dejar elementos con hidden al cambiar de cuenta.
+     if(profile?.role==='admin_general')s.querySelectorAll('[data-f23route]').forEach(el=>el.hidden=false);
+     paintDock(s,false);
+     const heading=s.querySelector('#f132-overlay .f132-sheethead h3');
+     if(heading&&heading.textContent==='Menú autorizado')heading.textContent='Menú de Dirección';
+     return;
+   }
+   host.setAttribute('data-f231-secondary','1');
+   if(profile.id!==cachedId){
+      cachedId=profile.id;grants=null;loadingId=null;
+   }
+   if(!grants && !loadingId && cachedId)loadGrants(cachedId);
+   paintDock(s,true);
+   for(const b of s.querySelectorAll('[data-f132-go]'))setAllowed(b,routeAllowed(b.dataset.f132Go));
+   for(const b of s.querySelectorAll('[data-f23route]'))setAllowed(b,routeAllowed(b.dataset.f23route));
+   for(const b of s.querySelectorAll('[data-f221-mobile-academic],[data-f221-academic]'))setAllowed(b,routeAllowed('grade_center'));
+   for(const b of s.querySelectorAll('.railbtn[data-area]')){
+     const routes=sections[b.dataset.area]||[];
+     setAllowed(b,routes.some(routeAllowed));
+   }
+   for(const b of s.querySelectorAll('[data-f23group]')){
+     const routes=sections[b.dataset.f23group]||[];
+     const ok=routes.some(routeAllowed);
+     setAllowed(b,ok);
+     setAllowed(b.closest('.navgroup'),ok);
+   }
+   // La hoja de menú para teléfono no comparte atributos con el menú de PC.
+   for(const b of s.querySelectorAll('.f132-list [data-f132-go]'))setAllowed(b,routeAllowed(b.dataset.f132Go));
+   for(const b of s.querySelectorAll('.folders .folder[data-open],#home-view [data-open]')){
+      const route=shortcutRoute(b.dataset.open);
+      if(route)setAllowed(b,routeAllowed(route));
+   }
+   for(const b of s.querySelectorAll('#f32-shortcuts-modal .f32-choice[data-label]')){
+      const route=shortcutRoute(b.dataset.label);
+      if(route)setAllowed(b,routeAllowed(route));
+   }
+   const menuTitle=s.querySelector('#f132-overlay .f132-sheethead h3');
+   if(menuTitle&&menuTitle.textContent!=='Menú autorizado')menuTitle.textContent='Menú autorizado';
+ }
+ async function loadGrants(id){
+   loadingId=id;
+   try{
+     const c=typeof lsb18Client==='function'?lsb18Client():(typeof LSB18!=='undefined'?LSB18.client:null);
+     if(!c)throw Error('Cliente de Supabase no disponible');
+     const {data,error}=await c.from('lsb_profiles').select('id,role,active,admin_modules').eq('id',id).single();
+     if(error)throw error;
+     if(data?.role!=='admin_secundario'||data?.active!==true)throw Error('Perfil secundario no activo');
+     if(cachedId===id)grants=Array.isArray(data.admin_modules)?data.admin_modules:[];
+   }catch(err){
+     // Denegar visualmente en caso de fallo; nunca mostrar funciones por defecto.
+     console.warn('LSB F231: No se pudieron verificar los permisos de esta sesión.',err);
+     if(cachedId===id)grants=[];
+   }finally{
+     if(loadingId===id)loadingId=null;
+     schedule();
+   }
+ }
+ function guardClick(e){
+   const profile=getProfile();
+   if(profile?.role!=='admin_secundario')return;
+   const target=e.target?.closest?.('[data-f231-denied="1"]');
+   if(target){e.preventDefault();e.stopImmediatePropagation();}
+ }
+ function schedule(){if(frame)return;frame=requestAnimationFrame(refresh);}
+ document.addEventListener('DOMContentLoaded',schedule,{once:true});
+ document.addEventListener('visibilitychange',()=>{if(!document.hidden)schedule();});
+ window.addEventListener('focus',schedule);
+ if(document.readyState!=='loading')schedule();
+})();
+</script>
+<!-- F231 | Menús y accesos visibles según permisos de administrador secundario; Dirección General no cambia. -->
 <!-- F229 | Validación de invitación confirmada, recuperación correcta del callback y fin del bloqueo de acceso. -->
 </body></html>
