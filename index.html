@@ -16786,4 +16786,150 @@ queueMicrotask(()=>{loadSecondary().catch(console.warn);syncDirection();inviteOn
 })();
 </script>
 <!-- F235 | Accesos rápidos visibles en Inicio de administración secundaria; base F234 intacta. -->
+
+<script id="lsb-f236-secondary-visibility">
+/* Plataforma LSB · F236 · Dirección Secundaria
+   Corrige exclusivamente la visibilidad y navegación de opciones no autorizadas.
+   Los permisos efectivos siguen siendo los que concede Supabase (RLS/RPC).
+*/
+(()=>{
+  'use strict';
+  const ROUTES={
+    home:[],menu:[],support:[],
+    catalog:['catalog','courses'],courses:['courses'],attendance:['attendance'],
+    families:['families'],payments:['payments'],exports:['reports'],school_reports:['reports'],
+    reports:['boletas'],published_grades:['boletas'],grade_center:['grade_review','grade_publish','boletas'],
+    students:['students'],teachers:['teachers'],schedule:['schedule'],cycles:['periods'],
+    periods:['periods'],notices:['notices'],accounts:['accounts'],lsb_ai:[],chatbot:[]
+  };
+  const AREAS={
+    inicio:['home'],academico:['catalog','attendance','grade_center'],
+    personas:['students','teachers','families'],gestion:['payments'],horarios:['schedule'],
+    ciclos:['cycles','periods'],archivos:['exports','reports','grade_center'],
+    comunicacion:['notices','school_reports'],soporte:['support'],ia:[]
+  };
+  const LABELS={
+    'estudiantes':'students','profesores':'teachers','asistencia':'attendance',
+    'calificaciones':'grade_center','notas':'grade_center','pagos':'payments',
+    'reportes':'exports','cuadros y descargas':'exports','cursos y asignaturas':'catalog',
+    'cursos':'catalog','padres de familia':'families','familias por grado':'families',
+    'familias':'families','encargados':'families','avisos':'notices','horarios':'schedule',
+    'bimestres':'periods','ciclos escolares':'cycles','boletas':'reports',
+    'reportes escolares':'school_reports','coordinación académica':'grade_center',
+    'asistente ia':'lsb_ai','chatbot de ayuda':'chatbot'
+  };
+  let accountId=null,grants=null,loading=false,observed=null,frame=0;
+  const profile=()=>typeof LSB18!=='undefined'&&LSB18.authenticated===true&&LSB18.profile?.active===true?LSB18.profile:null;
+  const secondary=()=>profile()?.role==='admin_secundario';
+  const labelRoute=v=>LABELS[String(v||'').trim().toLocaleLowerCase('es')]||null;
+  function allowed(route){
+    if(!secondary())return true;
+    if(['home','menu','support'].includes(route))return true;
+    const required=ROUTES[String(route||'')];
+    return Array.isArray(grants)&&Array.isArray(required)&&required.length>0&&required.some(p=>grants.includes(p));
+  }
+  function mark(el,ok){
+    if(!el)return;
+    if(ok){if(el.hasAttribute('data-f236-denied'))el.removeAttribute('data-f236-denied');}
+    else if(el.getAttribute('data-f236-denied')!=='1')el.setAttribute('data-f236-denied','1');
+  }
+  const css=[
+    ':host([data-f236-secondary="1"]) [data-f236-denied="1"]',
+    ':host([data-f236-secondary="1"]) [data-f231-denied="1"]',
+    ':host([data-f236-secondary="1"]) #home-view .main-grid > div:first-child .panel[data-f231-denied="1"]',
+    ':host([data-f236-secondary="1"]) #home-view .main-grid > div:first-child .panel[data-f236-denied="1"]',
+    ':host([data-f236-secondary="1"]) #home-view .folders [data-f231-denied="1"]',
+    ':host([data-f236-secondary="1"]) #home-view #customize[data-f231-denied="1"]',
+    ':host([data-f236-secondary="1"]) #home-view .rightcol[data-f231-denied="1"]'
+  ].join(',\n')+'{display:none!important;visibility:hidden!important;pointer-events:none!important;}';
+  function evaluate(root){
+    const host=root.host;
+    if(!secondary()){
+      host.removeAttribute('data-f236-secondary');
+      root.querySelectorAll('[data-f236-denied]').forEach(el=>el.removeAttribute('data-f236-denied'));
+      accountId=null;grants=null;loading=false;return;
+    }
+    host.setAttribute('data-f236-secondary','1');
+    const id=profile().id;
+    if(id!==accountId){accountId=id;grants=null;loading=false;}
+    if(grants===null&&!loading)fetchGrants(id);
+    root.querySelectorAll('[data-f132-go]').forEach(el=>mark(el,allowed(el.dataset.f132Go)));
+    root.querySelectorAll('[data-f23route]').forEach(el=>mark(el,allowed(el.dataset.f23route)));
+    root.querySelectorAll('.navlink:not([data-f23route])').forEach(el=>mark(el,false));
+    root.querySelectorAll('[data-f23group]').forEach(el=>mark(el,(AREAS[el.dataset.f23group]||[]).some(allowed)));
+    root.querySelectorAll('.railbtn[data-area]').forEach(el=>mark(el,(AREAS[el.dataset.area]||[]).some(allowed)));
+    root.querySelectorAll('#home-view .folder[data-open],#home-view [data-open]').forEach(el=>mark(el,allowed(labelRoute(el.dataset.open))));
+    root.querySelectorAll('#home-view .folder:not([data-open])').forEach(el=>mark(el,false));
+    root.querySelectorAll('#f32-shortcuts-modal .f32-choice[data-label]').forEach(el=>mark(el,allowed(labelRoute(el.dataset.label))));
+    root.querySelectorAll('#profile-menu [data-open]').forEach(el=>mark(el,['Mi perfil','Cerrar sesión'].includes(el.dataset.open)));
+    root.querySelectorAll('[data-f221-mobile-academic],[data-f221-academic]').forEach(el=>mark(el,allowed('grade_center')));
+    root.querySelectorAll('[data-f221-mobile-settings],[data-f221-administrators]').forEach(el=>mark(el,false));
+    root.querySelectorAll('#f132-overlay .f132-list button:not([data-f132-go])').forEach(el=>mark(el,false));
+    mark(root.getElementById('cycle'),allowed('periods'));
+    mark(root.getElementById('notif'),allowed('notices'));
+    mark(root.querySelector('.topbar .search'),allowed('students')||allowed('teachers'));
+    mark(root.getElementById('open-chat-card'),false);
+    mark(root.querySelector('#home-view .ai-note'),false);
+    mark(root.querySelector('#home-view .hint'),false);
+    mark(root.querySelector('#home-view .rightcol'),allowed('notices'));
+    mark(root.querySelector('#home-view .rightcol .panel'),allowed('notices'));
+    const metricRights=['students','teachers','families','notices'];
+    root.querySelectorAll('#home-view .metric').forEach((el,i)=>mark(el,allowed(metricRights[i])));
+    mark(root.querySelector('#home-view .metrics'),metricRights.some(allowed));
+    mark(root.getElementById('customize'),true);
+  }
+  function guardClick(e){
+    if(!secondary())return;
+    if(e.target?.closest?.('[data-f236-denied="1"],[data-f231-denied="1"]')){
+      e.preventDefault();e.stopImmediatePropagation();return;
+    }
+    const el=e.target?.closest?.('[data-f132-go],[data-f23route],.railbtn[data-area],#home-view [data-open],#f32-shortcuts-modal [data-label],#profile-menu [data-open]');
+    if(!el)return;
+    let ok=true;
+    if(el.hasAttribute('data-f132-go'))ok=allowed(el.dataset.f132Go);
+    else if(el.hasAttribute('data-f23route'))ok=allowed(el.dataset.f23route);
+    else if(el.matches('.railbtn[data-area]'))ok=(AREAS[el.dataset.area]||[]).some(allowed);
+    else if(el.closest('#profile-menu'))ok=['Mi perfil','Cerrar sesión'].includes(el.dataset.open);
+    else if(el.hasAttribute('data-label'))ok=allowed(labelRoute(el.dataset.label));
+    else if(el.hasAttribute('data-open'))ok=allowed(labelRoute(el.dataset.open));
+    if(!ok){e.preventDefault();e.stopImmediatePropagation();}
+  }
+  async function fetchGrants(id){
+    loading=true;
+    try{
+      const client=typeof lsb18Client==='function'?lsb18Client():typeof LSB18!=='undefined'?LSB18.client:null;
+      if(!client)throw Error('Cliente Supabase no disponible');
+      const {data,error}=await client.from('lsb_profiles').select('id,role,active,admin_modules').eq('id',id).single();
+      if(error||data?.role!=='admin_secundario'||data?.active!==true)throw error||Error('Perfil no autorizado');
+      if(accountId===id)grants=Array.isArray(data.admin_modules)?data.admin_modules:[];
+    }catch(err){
+      if(accountId===id)grants=[];
+      console.warn('LSB F236: sin permisos verificables, accesos restringidos.',err);
+    }finally{
+      if(accountId===id){loading=false;schedule();window.LSB233RefreshShortcuts?.();}
+    }
+  }
+  function refresh(){
+    frame=0;
+    const root=document.getElementById('lsb-f23-shell')?.shadowRoot;
+    if(!root)return;
+    if(observed!==root){
+      observed=root;
+      const style=document.createElement('style');style.id='lsb-f236-strict-style';style.textContent=css;root.appendChild(style);
+      root.addEventListener('click',guardClick,true);
+      new MutationObserver(schedule).observe(root,{childList:true,subtree:true});
+    }
+    evaluate(root);
+    window.LSB233RouteAllowed=allowed;
+  }
+  function schedule(){if(frame)return;frame=requestAnimationFrame(refresh);}
+  document.addEventListener('DOMContentLoaded',schedule,{once:true});
+  if(document.body)new MutationObserver(schedule).observe(document.body,{childList:true});
+  window.addEventListener('pageshow',schedule);
+  window.addEventListener('focus',()=>{if(secondary()){grants=null;loading=false;}schedule();});
+  if(document.readyState!=='loading')schedule();
+})();
+
+</script>
+<!-- F236 | Filtro de permisos Dirección Secundaria -->
 </body></html>
