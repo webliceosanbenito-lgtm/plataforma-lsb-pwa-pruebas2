@@ -11777,11 +11777,26 @@ action=function(name,arg){if(name==='lsb1574-goto-cycles'){go('cycles');return;}
   const s = v => String(v ?? "").trim();
   const esc = v => String(v ?? "").replace(/[&<>"']/g, c =>
     ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  // F234: autorizar SOLO la creación/edición de nombres de Cursos al módulo delegado.
+  // Crear grados, asignar docentes e importar datos conserva el control exclusivo de Dirección General.
   const admin = () => LSB18.authenticated === true &&
     LSB18.profile?.role === "admin_general" && LSB18.profile?.active === true;
+  const courseAdmin = () => admin() || (
+    LSB18.authenticated === true && LSB18.profile?.active === true &&
+    LSB18.profile?.role === "admin_secundario" &&
+    typeof window.LSB233RouteAllowed === 'function' &&
+    window.LSB233RouteAllowed('catalog') === true
+  );
   const requireAdmin = () => {
     if (!admin() || typeof isArchived === "function" && isArchived()) {
-      toast("Solo Dirección general puede modificar el ciclo activo.");
+      toast("Solo Dirección General puede modificar grados y asignaciones del ciclo activo.");
+      return false;
+    }
+    return true;
+  };
+  const requireCourseAdmin = () => {
+    if (!courseAdmin() || typeof isArchived === "function" && isArchived()) {
+      toast("Para modificar cursos necesitas autorización de Dirección y un ciclo activo.");
       return false;
     }
     return true;
@@ -11801,14 +11816,14 @@ action=function(name,arg){if(name==='lsb1574-goto-cycles'){go('cycles');return;}
       ". Comprueba el registro antes de repetir.");
   }
   courseForm6 = function (cid = "") {
-    if (!requireAdmin()) return;
+    if (!requireCourseAdmin()) return;
     const c = db.courses.find(x => x.id === cid);
     form(c ? "Editar curso en Supabase" : "Crear curso en Supabase",
       `<p class="sub">El registro se guarda en Supabase. No se muestra éxito sin confirmación del servidor.</p>
        <label class="field">Nombre del curso
        <input name="name" maxlength="90" required value="${esc(c?.name || "")}"></label>`,
       async data => {
-        if (!requireAdmin()) return;
+        if (!requireCourseAdmin()) return;
         const name = s(data.get("name"));
         if (name.length < 2) throw Error("Escribe un nombre de al menos dos caracteres.");
         let confirmed = false;
@@ -16681,6 +16696,94 @@ queueMicrotask(()=>{loadSecondary().catch(console.warn);syncDirection();inviteOn
  if(document.readyState!=='loading')schedule();
 })();
 </script>
+<!-- F234 | Permisos verificados para editar el catálogo de Cursos; respaldo completo de F233. -->
 <!-- F233 | Accesos rápidos personalizables por cuenta y estrictamente autorizados. -->
 <!-- F229 | Validación de invitación confirmada, recuperación correcta del callback y fin del bloqueo de acceso. -->
+<script id="lsb-f235-secondary-quick-recovery">
+/* F235: Restaurar accesos rápidos visuales de Inicio solo para Dirección Secundaria.
+   El CSS legado F174 ocultaba la primera columna incluso si F233 ya la había
+   personalizado. No modifica privilegios, datos, navegación ni Dirección General. */
+(()=>{
+  'use strict';
+  const mount=()=>{
+    const host=document.getElementById('lsb-f23-shell');
+    const root=host?.shadowRoot;
+    if(!root||root.getElementById('lsb-f235-secondary-shortcuts-style'))return;
+    const style=document.createElement('style');
+    style.id='lsb-f235-secondary-shortcuts-style';
+    style.textContent=`
+      :host([data-f231-secondary="1"]) #home-view .main-grid {
+        display:grid!important;
+        grid-template-columns:minmax(0,1fr)!important;
+        gap:16px!important;
+        min-width:0!important;
+      }
+      :host([data-f231-secondary="1"]) #home-view .main-grid > div:first-child {
+        display:block!important;
+        visibility:visible!important;
+        min-width:0!important;
+        width:100%!important;
+        max-width:100%!important;
+      }
+      :host([data-f231-secondary="1"]) #home-view .main-grid > div:first-child .panel {
+        display:block!important;
+        min-width:0!important;
+        width:100%!important;
+      }
+      :host([data-f231-secondary="1"]) #home-view #customize {
+        display:inline-flex!important;
+        visibility:visible!important;
+        align-items:center!important;
+        justify-content:center!important;
+        cursor:pointer!important;
+        max-width:100%!important;
+        white-space:normal!important;
+      }
+      :host([data-f231-secondary="1"]) #home-view .folders {
+        display:grid!important;
+        grid-template-columns:repeat(2,minmax(0,1fr))!important;
+        gap:12px!important;
+        min-width:0!important;
+      }
+      :host([data-f231-secondary="1"]) #home-view .folders .folder:not([data-f231-denied="1"]) {
+        min-width:0!important;
+      }
+      :host([data-f231-secondary="1"]) #home-view .main-grid .rightcol:not([data-f231-denied="1"]) {
+        min-width:0!important;
+        width:100%!important;
+      }
+      @media (max-width:540px){
+        :host([data-f231-secondary="1"]) #home-view .folders {
+          grid-template-columns:repeat(2,minmax(0,1fr))!important;
+          gap:9px!important;
+        }
+        :host([data-f231-secondary="1"]) #home-view .folders .folder {
+          min-height:132px!important;
+          height:auto!important;
+          padding:29px 12px 12px!important;
+        }
+        :host([data-f231-secondary="1"]) #home-view .main-grid > div:first-child .sectionhead {
+          display:flex!important;
+          flex-wrap:wrap!important;
+          gap:8px!important;
+          align-items:center!important;
+          justify-content:space-between!important;
+        }
+        :host([data-f231-secondary="1"]) #home-view #customize {
+          font-size:12px!important;
+        }
+      }
+    `;
+    root.appendChild(style);
+  };
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mount,{once:true});
+  else mount();
+  // La capa F23 se puede volver a montar después de entrar; reponer solo el estilo.
+  const watchdog=new MutationObserver(mount);
+  if(document.body)watchdog.observe(document.body,{childList:true});
+  window.addEventListener('pageshow',mount);
+  window.addEventListener('focus',mount);
+})();
+</script>
+<!-- F235 | Accesos rápidos visibles en Inicio de administración secundaria; base F234 intacta. -->
 </body></html>
