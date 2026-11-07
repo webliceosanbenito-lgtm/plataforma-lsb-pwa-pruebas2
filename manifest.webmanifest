@@ -1,35 +1,35 @@
 {
   "id": "./",
-  "name": "Plataforma Académica LSB",
-  "short_name": "Plataforma LSB",
-  "description": "Portal institucional del Liceo Mixto Particular San Benito: Dirección, Profesores y Familias.",
+  "name": "LSB Personal | Liceo Mixto Particular San Benito",
+  "short_name": "LSB Personal",
+  "description": "Acceso institucional para Dirección y personal docente del Liceo Mixto Particular San Benito.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "background_color": "#f5f7fd",
-  "theme_color": "#f5f7fd",
+  "theme_color": "#164b86",
   "lang": "es-GT",
   "icons": [
     {
-      "src": "./icon-192-f1577.png",
+      "src": "./lsb-personal-icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "./icon-512-f1577.png",
+      "src": "./lsb-personal-icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "./icon-maskable-192-f1577.png",
+      "src": "./lsb-personal-maskable-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "maskable"
     },
     {
-      "src": "./icon-maskable-512-f1577.png",
+      "src": "./lsb-personal-maskable-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
