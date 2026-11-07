@@ -9874,56 +9874,6 @@ html[data-theme="dark"] #login.access10 #familywelcome10 .f116-activation-help{c
     const doc=`<!doctype html><html lang="es"><head><meta charset="utf-8"><title>Credenciales · San Benito</title><style>${style}\nbody{font-family:Arial,sans-serif;background:#fff;margin:18px}.lsb118-credentials{grid-template-columns:repeat(2,minmax(0,1fr))}@media print{.lsb118-credentials{grid-template-columns:repeat(2,minmax(0,1fr))}}</style></head><body><h2>Credenciales familiares · San Benito</h2><p>Imprime esta hoja y recorta cada credencial. Entrega estas fichas de manera privada. Solo las cuentas pendientes incluyen códigos.</p><div class="lsb118-credentials">${cards.map(card).join('')}</div>
 
 
-<style id="lsb-f2372-personal-visual">
-/* Los iconos visuales no se presentan sobre cuadros blancos. */
-body.loginmode #login .localnote{display:none!important}
-body.loginmode #login .lsbp-brand-icon,body.loginmode #login .loginbrand .brand-logo{border:0!important;padding:0!important;background:transparent!important;box-shadow:none!important;border-radius:50%!important;object-fit:contain!important}
-body.loginmode #login .orbit10 img,body.loginmode #login .hero-crest img,body.loginmode #login .lsbp-card-logo{border:0!important;padding:0!important;background:transparent!important;box-shadow:none!important;object-fit:contain!important}
-#lsb-personal-pwa-install[hidden]{display:none!important}
-#lsb-personal-pwa-install{position:fixed;z-index:2147483000;left:12px;right:12px;bottom:max(12px,env(safe-area-inset-bottom));margin:0 auto;max-width:460px;display:flex;align-items:center;gap:12px;padding:14px 14px 14px 17px;background:rgba(255,255,255,.98);border:1px solid #dce5f1;border-radius:18px;box-shadow:0 18px 48px rgba(14,37,77,.2);color:#17335e;font:14px/1.35 system-ui,sans-serif}
-#lsb-personal-pwa-install .lsbp-pwa-text{flex:1;min-width:0}
-#lsb-personal-pwa-install strong{display:block;font-weight:800;font-size:14px}
-#lsb-personal-pwa-install small{display:block;color:#61718c;font-size:12px;margin-top:3px}
-#lsb-personal-pwa-install .lsbp-pwa-btn{border:0;background:#164b86;color:#fff;border-radius:11px;padding:11px 13px;font:800 12px system-ui;white-space:nowrap}
-#lsb-personal-pwa-install .lsbp-pwa-close{border:0;background:none;color:#64748b;font-size:23px;line-height:1;padding:6px;flex-shrink:0}
-#lsb-personal-pwa-install .lsbp-pwa-help{display:block;font-size:12px;line-height:1.5;color:#415475;margin-top:8px}
-#lsb-personal-pwa-install .lsbp-pwa-help:empty{display:none}
-@media(max-width:390px){#lsb-personal-pwa-install{gap:7px;padding:12px 10px}#lsb-personal-pwa-install .lsbp-pwa-btn{padding:9px 10px}}
-</style>
-
-<script id="lsb-f2372-install-personal">
-(()=>{
-'use strict';
-let deferred=null;
-const id='lsb-personal-pwa-install';
-const standalone=()=>window.matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
-const dismissed=()=>{try{return sessionStorage.getItem('lsb-personal-install-closed')==='1';}catch{return false;}};
-const inLogin=()=>document.body?.classList?.contains('loginmode')===true;
-const canShow=()=>!standalone()&&!dismissed()&&inLogin();
-function refresh(){const el=document.getElementById(id);if(el)el.hidden=!canShow();}
-function mount(){
- if(!document.body||document.getElementById(id))return;
- const el=document.createElement('aside');el.id=id;el.setAttribute('aria-label','Instalar LSB Personal');el.hidden=true;
- el.innerHTML='<div class="lsbp-pwa-text"><strong>LSB Personal</strong><small>Instala el portal de Dirección y Profesores en tu teléfono.</small><span class="lsbp-pwa-help" role="status" aria-live="polite"></span></div><button type="button" class="lsbp-pwa-btn">Instalar</button><button type="button" class="lsbp-pwa-close" aria-label="Cerrar aviso de instalación">×</button>';
- document.body.append(el);
- const help=el.querySelector('.lsbp-pwa-help');
- el.querySelector('.lsbp-pwa-btn').addEventListener('click',async()=>{
-  if(deferred){const event=deferred;deferred=null;try{await event.prompt();const choice=await event.userChoice;if(choice?.outcome==='accepted'){el.hidden=true;return;}}catch(err){console.warn('LSB: instalación no disponible',err);}}
-  if(/iPad|iPhone|iPod/i.test(navigator.userAgent))help.textContent='En Safari, toca Compartir y después «Añadir a pantalla de inicio».';
-  else if(/Android/i.test(navigator.userAgent))help.textContent='En Chrome, abre el menú ⋮ y elige «Instalar aplicación» o «Añadir a pantalla de inicio».';
-  else help.textContent='Abre el menú de tu navegador y selecciona «Instalar» si está disponible.';
-  el.hidden=false;
- });
- el.querySelector('.lsbp-pwa-close').addEventListener('click',()=>{try{sessionStorage.setItem('lsb-personal-install-closed','1');}catch{}el.hidden=true;});
- new MutationObserver(refresh).observe(document.body,{attributes:true,attributeFilter:['class']});
- refresh();
-}
-window.addEventListener('beforeinstallprompt',event=>{event.preventDefault();deferred=event;mount();refresh();});
-window.addEventListener('appinstalled',()=>{deferred=null;document.getElementById(id)?.remove();try{sessionStorage.setItem('lsb-personal-install-closed','1');}catch{}});
-if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mount,{once:true});else mount();
-window.addEventListener('pageshow',refresh);
-})();
-</script>
 </body></html>`;
     const url=URL.createObjectURL(new Blob([doc],{type:'text/html;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download='Credenciales_Familias_San_Benito.html';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
   }
@@ -16992,4 +16942,56 @@ queueMicrotask(()=>{loadSecondary().catch(console.warn);syncDirection();inviteOn
 
 </script>
 <!-- F236 | Filtro de permisos Dirección Secundaria -->
+
+<!-- F237.3: corrección ubicada después de los scripts de la aplicación -->
+<style id="lsb-f2372-personal-visual">
+/* Los iconos visuales no se presentan sobre cuadros blancos. */
+body.loginmode #login .localnote{display:none!important}
+body.loginmode #login .lsbp-brand-icon,body.loginmode #login .loginbrand .brand-logo{border:0!important;padding:0!important;background:transparent!important;box-shadow:none!important;border-radius:50%!important;object-fit:contain!important}
+body.loginmode #login .orbit10 img,body.loginmode #login .hero-crest img,body.loginmode #login .lsbp-card-logo{border:0!important;padding:0!important;background:transparent!important;box-shadow:none!important;object-fit:contain!important}
+#lsb-personal-pwa-install[hidden]{display:none!important}
+#lsb-personal-pwa-install{position:fixed;z-index:2147483000;left:12px;right:12px;bottom:max(12px,env(safe-area-inset-bottom));margin:0 auto;max-width:460px;display:flex;align-items:center;gap:12px;padding:14px 14px 14px 17px;background:rgba(255,255,255,.98);border:1px solid #dce5f1;border-radius:18px;box-shadow:0 18px 48px rgba(14,37,77,.2);color:#17335e;font:14px/1.35 system-ui,sans-serif}
+#lsb-personal-pwa-install .lsbp-pwa-text{flex:1;min-width:0}
+#lsb-personal-pwa-install strong{display:block;font-weight:800;font-size:14px}
+#lsb-personal-pwa-install small{display:block;color:#61718c;font-size:12px;margin-top:3px}
+#lsb-personal-pwa-install .lsbp-pwa-btn{border:0;background:#164b86;color:#fff;border-radius:11px;padding:11px 13px;font:800 12px system-ui;white-space:nowrap}
+#lsb-personal-pwa-install .lsbp-pwa-close{border:0;background:none;color:#64748b;font-size:23px;line-height:1;padding:6px;flex-shrink:0}
+#lsb-personal-pwa-install .lsbp-pwa-help{display:block;font-size:12px;line-height:1.5;color:#415475;margin-top:8px}
+#lsb-personal-pwa-install .lsbp-pwa-help:empty{display:none}
+@media(max-width:390px){#lsb-personal-pwa-install{gap:7px;padding:12px 10px}#lsb-personal-pwa-install .lsbp-pwa-btn{padding:9px 10px}}
+</style>
+
+<script id="lsb-f2372-install-personal">
+(()=>{
+'use strict';
+let deferred=null;
+const id='lsb-personal-pwa-install';
+const standalone=()=>window.matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+const dismissed=()=>{try{return sessionStorage.getItem('lsb-personal-install-closed')==='1';}catch{return false;}};
+const inLogin=()=>document.body?.classList?.contains('loginmode')===true;
+const canShow=()=>!standalone()&&!dismissed()&&inLogin();
+function refresh(){const el=document.getElementById(id);if(el)el.hidden=!canShow();}
+function mount(){
+ if(!document.body||document.getElementById(id))return;
+ const el=document.createElement('aside');el.id=id;el.setAttribute('aria-label','Instalar LSB Personal');el.hidden=true;
+ el.innerHTML='<div class="lsbp-pwa-text"><strong>LSB Personal</strong><small>Instala el portal de Dirección y Profesores en tu teléfono.</small><span class="lsbp-pwa-help" role="status" aria-live="polite"></span></div><button type="button" class="lsbp-pwa-btn">Instalar</button><button type="button" class="lsbp-pwa-close" aria-label="Cerrar aviso de instalación">×</button>';
+ document.body.append(el);
+ const help=el.querySelector('.lsbp-pwa-help');
+ el.querySelector('.lsbp-pwa-btn').addEventListener('click',async()=>{
+  if(deferred){const event=deferred;deferred=null;try{await event.prompt();const choice=await event.userChoice;if(choice?.outcome==='accepted'){el.hidden=true;return;}}catch(err){console.warn('LSB: instalación no disponible',err);}}
+  if(/iPad|iPhone|iPod/i.test(navigator.userAgent))help.textContent='En Safari, toca Compartir y después «Añadir a pantalla de inicio».';
+  else if(/Android/i.test(navigator.userAgent))help.textContent='En Chrome, abre el menú ⋮ y elige «Instalar aplicación» o «Añadir a pantalla de inicio».';
+  else help.textContent='Abre el menú de tu navegador y selecciona «Instalar» si está disponible.';
+  el.hidden=false;
+ });
+ el.querySelector('.lsbp-pwa-close').addEventListener('click',()=>{try{sessionStorage.setItem('lsb-personal-install-closed','1');}catch{}el.hidden=true;});
+ new MutationObserver(refresh).observe(document.body,{attributes:true,attributeFilter:['class']});
+ refresh();
+}
+window.addEventListener('beforeinstallprompt',event=>{event.preventDefault();deferred=event;mount();refresh();});
+window.addEventListener('appinstalled',()=>{deferred=null;document.getElementById(id)?.remove();try{sessionStorage.setItem('lsb-personal-install-closed','1');}catch{}});
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mount,{once:true});else mount();
+window.addEventListener('pageshow',refresh);
+})();
+</script>
 </body></html>
